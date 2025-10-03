@@ -7,6 +7,7 @@ import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/get_selected_role_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/get_user_session_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/login_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/auth/logout_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/save_selected_role_usecase.dart';
 // import 'package:consumo_combustible/domain/use_cases/auth/logout_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/save_user_session_usecase.dart';
@@ -59,7 +60,7 @@ abstract class AppModule {
       getUserSession: GetUserSessionUseCase(authRepository),
       saveSelectedRole: SaveSelectedRoleUseCase(authRepository),
       getSelectedRole: GetSelectedRoleUseCase(authRepository),
-      // logout: LogoutUseCase(authRepository),
+      logout: LogoutUseCase(authRepository),
     );
   }
   

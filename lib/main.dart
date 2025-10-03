@@ -76,6 +76,15 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
+        // Dismiss keyboard on tap outside - ocultar teclado al tocar fuera
+        builder: (context, child) {
+          return GestureDetector(
+            onTap: () {
+              FocusScope.of(context).unfocus();
+            },
+            child: child,
+          );
+        },
         initialRoute: 'splash',
         routes: {
           'splash': (context) => const SplashPage(),

@@ -1,5 +1,6 @@
 import 'package:consumo_combustible/core/custom_navigator_bar/curved_navigation_bar.dart';
 import 'package:consumo_combustible/core/widgets/appbar/smart_appbar.dart';
+import 'package:consumo_combustible/core/widgets/logout/logout_button.dart';
 import 'package:flutter/material.dart';
 
 
@@ -142,16 +143,17 @@ class HomePageContent extends StatelessWidget {
             style: TextStyle(fontSize: 16, color: Colors.grey),
           ),
           const SizedBox(height: 40),
-          // LogoutButton.profile(
-          //   text: 'Cerrar Sesión',
-          //   onLogoutSuccess: () {
-          //     Navigator.pushNamedAndRemoveUntil(
-          //       context,
-          //       'login',
-          //       (route) => false,
-          //     );
-          //   },
-          // ),
+          LogoutButton.profile(
+            text: 'Cerrar Sesión',
+            onLogoutSuccess: () {
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                'login',
+                (route) => false,
+              );
+            },
+            // onLogoutSuccess: (){},
+          ),
         ],
       ),
     );

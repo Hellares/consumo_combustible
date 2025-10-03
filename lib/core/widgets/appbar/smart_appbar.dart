@@ -2,20 +2,25 @@
 
 import 'package:consumo_combustible/core/fonts/app_fonts.dart';
 import 'package:consumo_combustible/core/theme/app_colors.dart';
+// import 'package:consumo_combustible/core/widgets/logout/logout_button.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart';
 import 'package:consumo_combustible/injection.dart';
+import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_bloc.dart';
+import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:lottie/lottie.dart';
 
 /// 🚀 SmartAppBar - AppBar inteligente todo-en-uno
-/// 
+///
 /// Modos de uso:
 /// 1. Con usuario automático (carga desde storage y mantiene cache interno)
 /// 2. Con usuario manual (pasas los datos)
 /// 3. Sin usuario (AppBar básico)
 /// 4. Personalizado (widgets custom en leading)
+/// 5. Logout integrado en menú de usuario
 class SmartAppBar extends StatefulWidget implements PreferredSizeWidget {
   // === PROPIEDADES BÁSICAS ===
   final String? title;
@@ -79,15 +84,8 @@ class SmartAppBar extends StatefulWidget implements PreferredSizeWidget {
   // === FACTORY CONSTRUCTORS ===
 
   /// AppBar básico sin usuario
-  factory SmartAppBar.basic({
-    String? title,
-    bool showLogo = true,
-  }) {
-    return SmartAppBar(
-      title: title,
-      showLogo: showLogo,
-      showUserInfo: false,
-    );
+  factory SmartAppBar.basic({String? title, bool showLogo = true}) {
+    return SmartAppBar(title: title, showLogo: showLogo, showUserInfo: false);
   }
 
   /// AppBar con usuario automático (carga desde storage)
@@ -180,17 +178,17 @@ class _SmartAppBarState extends State<SmartAppBar> {
   Future<void> _loadUserInfo() async {
     // Si ya está cargado, no volver a cargar
     if (_cachedUserInfo != null) return;
-    
+
     setState(() => _isLoading = true);
-    
+
     try {
       final authUseCases = locator<AuthUseCases>();
       final userSession = await authUseCases.getUserSession.run();
       final selectedRole = await authUseCases.getSelectedRole.run();
-      
+
       if (userSession != null && selectedRole != null) {
         final user = userSession.data?.user;
-        
+
         if (mounted) {
           setState(() {
             _cachedUserInfo = {
@@ -220,14 +218,13 @@ class _SmartAppBarState extends State<SmartAppBar> {
       elevation: widget.elevation,
       centerTitle: widget.centerTitle,
       automaticallyImplyLeading: false,
-      systemOverlayStyle: widget.systemOverlayStyle ?? _defaultSystemOverlayStyle,
+      systemOverlayStyle:
+          widget.systemOverlayStyle ?? _defaultSystemOverlayStyle,
       title: _buildTitle(),
       leading: _buildLeading(context),
       leadingWidth: _getLeadingWidth(),
       actions: widget.showLogo ? [_buildLogo()] : null,
-      iconTheme: IconThemeData(
-        color: widget.iconColor ?? AppColors.blue3,
-      ),
+      iconTheme: IconThemeData(color: widget.iconColor ?? AppColors.blue3),
     );
   }
 
@@ -235,13 +232,12 @@ class _SmartAppBarState extends State<SmartAppBar> {
 
   Widget? _buildTitle() {
     if (widget.title == null) return null;
-    
+
     return Text(
       widget.title!,
-      style: widget.titleStyle ?? AppFont.pirulentBold.style(
-        fontSize: 11,
-        color: AppColors.blue3,
-      ),
+      style:
+          widget.titleStyle ??
+          AppFont.pirulentBold.style(fontSize: 11, color: AppColors.blue3),
     );
   }
 
@@ -260,7 +256,7 @@ class _SmartAppBarState extends State<SmartAppBar> {
       if (_isLoading) {
         return _buildLoadingUserInfo();
       }
-      
+
       if (_cachedUserInfo != null && _cachedUserInfo!.isNotEmpty) {
         return _buildUserInfoWidget(
           role: _cachedUserInfo!['role'] ?? '',
@@ -269,7 +265,7 @@ class _SmartAppBarState extends State<SmartAppBar> {
           userData: _cachedUserInfo,
         );
       }
-      
+
       return const SizedBox.shrink();
     }
 
@@ -284,7 +280,10 @@ class _SmartAppBarState extends State<SmartAppBar> {
     // 4. Icono personalizado
     if (widget.leftIcon != null) {
       return IconButton(
-        icon: Icon(widget.leftIcon!, color: widget.iconColor ?? AppColors.blue3),
+        icon: Icon(
+          widget.leftIcon!,
+          color: widget.iconColor ?? AppColors.blue3,
+        ),
         onPressed: widget.onLeftTap,
       );
     }
@@ -352,11 +351,7 @@ class _SmartAppBarState extends State<SmartAppBar> {
                   width: 1.5,
                 ),
               ),
-              child: Icon(
-                Icons.person,
-                size: 18,
-                color: AppColors.blue2,
-              ),
+              child: Icon(Icons.person, size: 18, color: AppColors.blue2),
             ),
             const SizedBox(width: 8),
             // Rol y Nombre
@@ -368,10 +363,12 @@ class _SmartAppBarState extends State<SmartAppBar> {
                   if (role.isNotEmpty)
                     Text(
                       role,
-                      style: widget.userInfoStyle ?? AppFont.oxygenBold.style(
-                        fontSize: 11,
-                        color: AppColors.blue3,
-                      ),
+                      style:
+                          widget.userInfoStyle ??
+                          AppFont.oxygenBold.style(
+                            fontSize: 11,
+                            color: AppColors.blue3,
+                          ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   if (name.isNotEmpty)
@@ -436,49 +433,51 @@ class _SmartAppBarState extends State<SmartAppBar> {
   }
 
   Widget _buildLogo() {
-  if (widget.logoPath == null) return const SizedBox.shrink();
+    if (widget.logoPath == null) return const SizedBox.shrink();
 
-  final path = widget.logoPath!;
-  final size = widget.logoSize;
+    final path = widget.logoPath!;
+    final size = widget.logoSize;
 
-  Widget logoWidget;
+    Widget logoWidget;
 
-  if (path.endsWith('.json')) {
-    // Lottie
-    logoWidget = Lottie.asset(
-      path,
-      width: size,
-      height: size,
-      fit: BoxFit.contain,
-    );
-  } else if (path.endsWith('.svg')) {
-    // SVG
-    logoWidget = SvgPicture.asset(
-      path,
-      width: size,
-      height: size,
-      fit: BoxFit.contain,
-    );
-  } else {
-    // Imagen normal (png, jpg, etc.)
-    logoWidget = Image.asset(
-      path,
-      width: size,
-      height: size,
-      fit: BoxFit.contain,
+    if (path.endsWith('.json')) {
+      // Lottie
+      logoWidget = Lottie.asset(
+        path,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+      );
+    } else if (path.endsWith('.svg')) {
+      // SVG
+      logoWidget = SvgPicture.asset(
+        path,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+      );
+    } else {
+      // Imagen normal (png, jpg, etc.)
+      logoWidget = Image.asset(
+        path,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(right: 20),
+      child: Center(child: logoWidget),
     );
   }
-
-  return Container(
-    margin: const EdgeInsets.only(right: 20),
-    child: Center(child: logoWidget),
-  );
-}
 
   // === HELPERS ===
 
   double? _getLeadingWidth() {
-    if (widget.showUserInfo || widget.manualUserRole != null || widget.manualUserName != null) {
+    if (widget.showUserInfo ||
+        widget.manualUserRole != null ||
+        widget.manualUserName != null) {
       return 200;
     }
     return null;
@@ -495,14 +494,14 @@ class _SmartAppBarState extends State<SmartAppBar> {
     );
   }
 
-  // === USER MENU ===
+  // === MENÚ DE USUARIO CON LOGOUT INTEGRADO ===
 
   void _showUserMenu(BuildContext context, Map<String, String> userData) async {
     final authUseCases = locator<AuthUseCases>();
     final userSession = await authUseCases.getUserSession.run();
-    
+
     if (!context.mounted) return;
-    
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -536,10 +535,7 @@ class _SmartAppBarState extends State<SmartAppBar> {
                       const SizedBox(height: 4),
                       Text(
                         userData['email'] ?? '',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 4),
                       Chip(
@@ -556,14 +552,14 @@ class _SmartAppBarState extends State<SmartAppBar> {
             const SizedBox(height: 20),
             const Divider(),
             const SizedBox(height: 10),
-            
+
             // Cambiar Rol
             ListTile(
               leading: const Icon(Icons.swap_horiz, color: Colors.blue),
               title: const Text('Cambiar Rol'),
               onTap: () {
                 Navigator.pop(modalContext);
-                
+
                 if (userSession?.data?.user != null) {
                   Navigator.pushNamed(
                     context,
@@ -580,7 +576,7 @@ class _SmartAppBarState extends State<SmartAppBar> {
                 }
               },
             ),
-            
+
             ListTile(
               leading: const Icon(Icons.person_outline, color: Colors.blue),
               title: const Text('Mi Perfil'),
@@ -589,7 +585,7 @@ class _SmartAppBarState extends State<SmartAppBar> {
                 // TODO: Implementar
               },
             ),
-            
+
             ListTile(
               leading: const Icon(Icons.settings_outlined, color: Colors.blue),
               title: const Text('Configuración'),
@@ -598,18 +594,15 @@ class _SmartAppBarState extends State<SmartAppBar> {
                 // TODO: Implementar
               },
             ),
-            
+
             const Divider(),
-            
+
             ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text(
-                'Cerrar Sesión',
-                style: TextStyle(color: Colors.red),
-              ),
+              leading: const Icon(Icons.logout, color: AppColors.borderError, size: 24,),
+              title: const Text('Cerrar Sesion'),
               onTap: () {
-                Navigator.pop(modalContext);
-                _handleLogout(context);
+                Navigator.pop(context); // Cerrar modal
+                _handleLogout(context); // Mostrar confirmación y logout
               },
             ),
           ],
@@ -622,8 +615,12 @@ class _SmartAppBarState extends State<SmartAppBar> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
+        icon: Icon(Icons.logout, color: AppColors.red, size: 40),
         title: const Text('Cerrar Sesión'),
-        content: const Text('¿Estás seguro que deseas cerrar sesión?'),
+        content: const Text(
+          '¿Estás seguro que deseas cerrar sesión?',
+          textAlign: TextAlign.center,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
@@ -632,15 +629,9 @@ class _SmartAppBarState extends State<SmartAppBar> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(dialogContext);
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                'login',
-                (route) => false,
-              );
+              context.read<LoginBloc>().add(const LogoutRequested());
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.red),
             child: const Text('Cerrar Sesión'),
           ),
         ],

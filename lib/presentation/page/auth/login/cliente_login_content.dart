@@ -50,12 +50,23 @@ class _ClienteLoginContentState extends State<ClienteLoginContent> {
     super.didUpdateWidget(oldWidget);
     
     // ✅ OPTIMIZATION: Only update controllers if values actually changed
-    if (oldWidget.state.dni.value != widget.state.dni.value) {
-      _dniController.text = widget.state.dni.value;
-    }
-    if (oldWidget.state.password.value != widget.state.password.value) {
-      _passwordController.text = widget.state.password.value;
-    }
+    // if (oldWidget.state.dni.value != widget.state.dni.value) {
+    //   _dniController.text = widget.state.dni.value;
+    // }
+    // if (oldWidget.state.password.value != widget.state.password.value) {
+    //   _passwordController.text = widget.state.password.value;
+    // }
+    // ✅ Solo actualizar si el cursor NO está en el campo
+  if (!_dniController.selection.isValid &&
+      oldWidget.state.dni.value != widget.state.dni.value) {
+    _dniController.text = widget.state.dni.value;
+  }
+  
+  // Igual para password
+  if (!_passwordController.selection.isValid &&
+      oldWidget.state.password.value != widget.state.password.value) {
+    _passwordController.text = widget.state.password.value;
+  }
   }
 
   @override
@@ -88,16 +99,25 @@ class _ClienteLoginContentState extends State<ClienteLoginContent> {
         children: [
           CustomTextField(
             controller: _dniController,
+            enableRealTimeValidation: true,
+            validationDelay: const Duration(milliseconds: 800),
+            label: 'DNI',
             labelStyle: TextStyle( color: AppColors.blue3, fontSize: 12),
             borderColor: widget.state.dni.error != null 
                 ? Colors.red 
                 : AppColors.blue3,
-            fieldType: FieldType.dni,
-            enableRealTimeValidation: false,
-            onChanged: _onDniChanged,
+            fieldType: FieldType.dni,            
+            // onChanged: _onDniChanged,
+            onChanged: (text){
+              if(text != widget.state.dni.value){
+                widget.bloc?.add(DniChanged(dni: BlocFormItem(value: text)));
+
+              }
+            },
+            
           ),
-          if (widget.state.dni.error != null) 
-            _buildErrorText(widget.state.dni.error!),
+          // 
+          
         ],
       ),
     );
@@ -109,6 +129,8 @@ class _ClienteLoginContentState extends State<ClienteLoginContent> {
         children: [
           CustomTextField(
             controller: _passwordController,
+            enableRealTimeValidation: false,
+            // validationDelay: const Duration(milliseconds: 800),
             label: 'Contraseña',
             labelStyle: TextStyle( color: AppColors.blue3, fontSize: 12),
             hintText: 'Mínimo 6 caracteres',
@@ -116,9 +138,13 @@ class _ClienteLoginContentState extends State<ClienteLoginContent> {
                 ? Colors.red 
                 : AppColors.blue3,
             prefixIcon: Icon(Icons.lock_outlined, color: AppColors.blue3),
-            obscureText: true,
-            enableRealTimeValidation: false,
-            onChanged: _onPasswordChanged,
+            obscureText: true,   
+            onChanged: (text){
+              if(text != widget.state.password.value){
+                widget.bloc?.add(PasswordChanged(password: BlocFormItem(value: text)));
+              }
+            },         
+            // onChanged: _onPasswordChanged,
             onSubmitted: (_) => _handleSubmitIfValid(),
           ),
           if (widget.state.password.error != null) 
@@ -202,13 +228,13 @@ class _ClienteLoginContentState extends State<ClienteLoginContent> {
   }
 
   // ✅ OPTIMIZATION: Event handlers
-  void _onDniChanged(String text) {
-    widget.bloc?.add(DniChanged(dni: BlocFormItem(value: text)));
-  }
+  // void _onDniChanged(String text) {
+  //   widget.bloc?.add(DniChanged(dni: BlocFormItem(value: text)));
+  // }
 
-  void _onPasswordChanged(String text) {
-    widget.bloc?.add(PasswordChanged(password: BlocFormItem(value: text)));
-  }
+  // void _onPasswordChanged(String text) {
+  //   widget.bloc?.add(PasswordChanged(password: BlocFormItem(value: text)));
+  // }
 
   void _handleSubmit() {
     widget.bloc?.add(const LoginSubmit());
