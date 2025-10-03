@@ -128,8 +128,21 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                       context,
                       'location-selection',
                     );
-                    if (result != null) {
-                      setState(() => _location = result as SelectedLocation);
+                    
+                    // ✅ Verificar mounted antes de usar context
+                    if (!mounted) return;
+                    
+                    // Si se guardó exitosamente, recargar ubicación
+                    if (result == true) {
+                      final locationUseCases = locator<LocationUseCases>();
+                      final newLocation = await locationUseCases.getSelectedLocation.run();
+                      
+                      if (!mounted) return;
+                      
+                      if (newLocation != null) {
+                        setState(() => _location = newLocation);
+                        SnackBarHelper.showSuccess(context, 'Ubicación actualizada');
+                      }
                     }
                   },
                   child: const Text('Cambiar'),
@@ -265,6 +278,9 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
 
     final authUseCases = locator<AuthUseCases>();
     final userSession = await authUseCases.getUserSession.run();
+
+    // ✅ Verificar mounted después del await
+    if (!mounted) return;
 
     if (userSession == null) {
       SnackBarHelper.showError(context, 'Sesión no válida');
