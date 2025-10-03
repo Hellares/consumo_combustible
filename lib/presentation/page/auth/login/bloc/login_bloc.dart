@@ -36,7 +36,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     on<LoginSaveUserSession>(_onLoginSaveUserSession);
     on<ClearError>(_onClearError);
     on<LoginFormReset>(_onFormReset);
-    on<LogoutRequested>(_onLogoutRequested);
+    // on<LogoutRequested>(_onLogoutRequested);
   }
 
   final formKey = GlobalKey<FormState>();
@@ -272,57 +272,57 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     ***************************************************************************************
   */  
 
-  Future<void> _onLogoutRequested(LogoutRequested event,Emitter<LoginState> emit) async {
-    Stopwatch? stopwatch;
-    if (kDebugMode) {
-      stopwatch = Stopwatch()..start();
-      print('🚪 Iniciando logout...');
-    }
+  // Future<void> _onLogoutRequested(LogoutRequested event,Emitter<LoginState> emit) async {
+  //   Stopwatch? stopwatch;
+  //   if (kDebugMode) {
+  //     stopwatch = Stopwatch()..start();
+  //     print('🚪 Iniciando logout...');
+  //   }
 
-    try {
-      // Loading inmediato
-      emit(state.copyWith(response: Loading(), formKey: formKey));
+  //   try {
+  //     // Loading inmediato
+  //     emit(state.copyWith(response: Loading(), formKey: formKey));
 
-      // Ejecutar logout a través del use case
-      final logoutSuccess = await authUseCases.logout.run();
+  //     // Ejecutar logout a través del use case
+  //     final logoutSuccess = await authUseCases.logout.run();
 
-      if (kDebugMode) {
-        stopwatch?.stop();
-        print('✅ Logout completado en ${stopwatch?.elapsedMilliseconds}ms - Success: $logoutSuccess');
-      }
+  //     if (kDebugMode) {
+  //       stopwatch?.stop();
+  //       print('✅ Logout completado en ${stopwatch?.elapsedMilliseconds}ms - Success: $logoutSuccess');
+  //     }
 
-      if (logoutSuccess) {
-        // Reset completo del estado tras logout exitoso
-        _clearValidationCache();
-        _cancelPendingValidation();
+  //     if (logoutSuccess) {
+  //       // Reset completo del estado tras logout exitoso
+  //       _clearValidationCache();
+  //       _cancelPendingValidation();
         
-        // Estado limpio que indica logout exitoso
-        emit(const LoginState().copyWith(
-          response: Success('Sesión cerrada exitosamente'),
-          formKey: formKey,
-        ));
+  //       // Estado limpio que indica logout exitoso
+  //       emit(const LoginState().copyWith(
+  //         response: Success('Sesión cerrada exitosamente'),
+  //         formKey: formKey,
+  //       ));
         
-        if (kDebugMode) print('🔄 Estado reseteado después del logout');
-      } else {
-        // Error en logout
-        emit(state.copyWith(
-          response: Error('Error al cerrar sesión. Intenta nuevamente.'),
-          formKey: formKey,
-        ));
-      }
+  //       if (kDebugMode) print('🔄 Estado reseteado después del logout');
+  //     } else {
+  //       // Error en logout
+  //       emit(state.copyWith(
+  //         response: Error('Error al cerrar sesión. Intenta nuevamente.'),
+  //         formKey: formKey,
+  //       ));
+  //     }
 
-    } catch (e) {
-      if (kDebugMode) {
-        stopwatch?.stop();
-        print('💥 Error en logout (${stopwatch?.elapsedMilliseconds}ms): $e');
-      }
+  //   } catch (e) {
+  //     if (kDebugMode) {
+  //       stopwatch?.stop();
+  //       print('💥 Error en logout (${stopwatch?.elapsedMilliseconds}ms): $e');
+  //     }
 
-      emit(state.copyWith(
-        response: Error('Error al cerrar sesión: ${e.toString()}'),
-        formKey: formKey,
-      ));
-    }
-  }
+  //     emit(state.copyWith(
+  //       response: Error('Error al cerrar sesión: ${e.toString()}'),
+  //       formKey: formKey,
+  //     ));
+  //   }
+  // }
 
   // VALIDACIÓN OPTIMIZADA
   String? _validateDniOptimized(String dni) {

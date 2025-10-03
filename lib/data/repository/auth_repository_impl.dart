@@ -2,6 +2,7 @@ import 'package:consumo_combustible/core/fast_storage_service.dart';
 import 'package:consumo_combustible/data/api/dio_config.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/auth_service.dart';
 import 'package:consumo_combustible/domain/models/auth_response.dart';
+import 'package:consumo_combustible/domain/models/selected_role.dart';
 import 'package:consumo_combustible/domain/repository/auth_repository.dart';
 import 'package:consumo_combustible/domain/utils/resource.dart';
 import 'package:flutter/foundation.dart';
@@ -89,91 +90,91 @@ class AuthRepositoryImpl implements AuthRepository {
     return fastStorage.getStats();
   }
 
-  @override
-  Future<bool> logout() async {
-    Stopwatch? totalStopwatch;
-    if (kDebugMode) {
-      totalStopwatch = Stopwatch()..start();
-      print('Iniciando logout completo...');
-    }
+  // @override
+  // Future<bool> logout() async {
+  //   Stopwatch? totalStopwatch;
+  //   if (kDebugMode) {
+  //     totalStopwatch = Stopwatch()..start();
+  //     print('Iniciando logout completo...');
+  //   }
     
-    try {
-      // 1. PRIMERO: Notificar al servidor
-      Stopwatch? serverStopwatch;
-      if (kDebugMode) {
-        serverStopwatch = Stopwatch()..start();
-      }
+  //   try {
+  //     // 1. PRIMERO: Notificar al servidor
+  //     Stopwatch? serverStopwatch;
+  //     if (kDebugMode) {
+  //       serverStopwatch = Stopwatch()..start();
+  //     }
       
-      final serverLogoutResult = await authService.logout();
+  //     final serverLogoutResult = await authService.logout();
       
-      if (kDebugMode) {
-        serverStopwatch?.stop();
-        if (serverLogoutResult is Error) {
-          print('Error en logout del servidor (${serverStopwatch?.elapsedMilliseconds}ms): ${(serverLogoutResult as Error).message}');
-        } else {
-          print('Logout del servidor exitoso en ${serverStopwatch?.elapsedMilliseconds}ms');
-        }
-      }
+  //     if (kDebugMode) {
+  //       serverStopwatch?.stop();
+  //       if (serverLogoutResult is Error) {
+  //         print('Error en logout del servidor (${serverStopwatch?.elapsedMilliseconds}ms): ${(serverLogoutResult as Error).message}');
+  //       } else {
+  //         print('Logout del servidor exitoso en ${serverStopwatch?.elapsedMilliseconds}ms');
+  //       }
+  //     }
       
-      // 2. SEGUNDO: Limpiar almacenamiento local
-      Stopwatch? localStopwatch;
-      if (kDebugMode) {
-        localStopwatch = Stopwatch()..start();
-      }
+  //     // 2. SEGUNDO: Limpiar almacenamiento local
+  //     Stopwatch? localStopwatch;
+  //     if (kDebugMode) {
+  //       localStopwatch = Stopwatch()..start();
+  //     }
       
-      await _clearLocalSession();
+  //     await _clearLocalSession();
       
-      if (kDebugMode) {
-        localStopwatch?.stop();
-        print('Sesión local limpiada en ${localStopwatch?.elapsedMilliseconds}ms');
-      }
+  //     if (kDebugMode) {
+  //       localStopwatch?.stop();
+  //       print('Sesión local limpiada en ${localStopwatch?.elapsedMilliseconds}ms');
+  //     }
       
-      // 3. TERCERO: Limpiar cache del AuthInterceptor
-      _forceAuthInterceptorRefresh();
+  //     // 3. TERCERO: Limpiar cache del AuthInterceptor
+  //     _forceAuthInterceptorRefresh();
       
-      if (kDebugMode) {
-        totalStopwatch?.stop();
-        print('Logout completo exitoso en ${totalStopwatch?.elapsedMilliseconds}ms');
-      }
+  //     if (kDebugMode) {
+  //       totalStopwatch?.stop();
+  //       print('Logout completo exitoso en ${totalStopwatch?.elapsedMilliseconds}ms');
+  //     }
       
-      return true;
+  //     return true;
       
-    } catch (e) {
-      if (kDebugMode) {
-        totalStopwatch?.stop();
-        print('Error en logout (${totalStopwatch?.elapsedMilliseconds}ms): $e');
-      }
+  //   } catch (e) {
+  //     if (kDebugMode) {
+  //       totalStopwatch?.stop();
+  //       print('Error en logout (${totalStopwatch?.elapsedMilliseconds}ms): $e');
+  //     }
       
-      // Si falla, al menos intentar limpiar local
-      try {
-        await _clearLocalSession();
-        _forceAuthInterceptorRefresh();
+  //     // Si falla, al menos intentar limpiar local
+  //     try {
+  //       await _clearLocalSession();
+  //       _forceAuthInterceptorRefresh();
         
-        if (kDebugMode) print('Logout local completado a pesar del error');
-        return true;
-      } catch (localError) {
-        // Este error SÍ debe ser visible en producción para debugging
-        print('Error crítico en logout: $localError');
-        return false;
-      }
-    }
-  }
+  //       if (kDebugMode) print('Logout local completado a pesar del error');
+  //       return true;
+  //     } catch (localError) {
+  //       // Este error SÍ debe ser visible en producción para debugging
+  //       print('Error crítico en logout: $localError');
+  //       return false;
+  //     }
+  //   }
+  // }
 
   // ✅ Método privado para limpiar sesión local usando FastStorage
- Future<void> _clearLocalSession() async {
-    try {
-      // Limpiar tanto user como token
-      await Future.wait([
-        fastStorage.delete('user'),
-        fastStorage.delete('token'),
-      ]);
+//  Future<void> _clearLocalSession() async {
+//     try {
+//       // Limpiar tanto user como token
+//       await Future.wait([
+//         fastStorage.delete('user'),
+//         fastStorage.delete('token'),
+//       ]);
       
-      if (kDebugMode) print('Sesión local limpiada');
-    } catch (e) {
-      if (kDebugMode) print('Error limpiando sesión local: $e');
-      rethrow;
-    }
-  }
+//       if (kDebugMode) print('Sesión local limpiada');
+//     } catch (e) {
+//       if (kDebugMode) print('Error limpiando sesión local: $e');
+//       rethrow;
+//     }
+//   }
 
   // ✅ Método privado para limpiar cache del AuthInterceptor
   void _forceAuthInterceptorRefresh() {
@@ -261,6 +262,66 @@ class AuthRepositoryImpl implements AuthRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<void> saveSelectedRole(SelectedRole selectedRole) async {
+    try {
+      final roleJson = selectedRole.toJson();
+      await fastStorage.write('selected_role', roleJson);
+      
+      if (kDebugMode) print('✅ Rol seleccionado guardado: ${selectedRole.role.rol.nombre}');
+    } catch (e) {
+      if (kDebugMode) print('❌ Error guardando rol seleccionado: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<SelectedRole?> getSelectedRole() async {
+    try {
+      final roleData = await fastStorage.read('selected_role');
+      if (roleData != null) {
+        return SelectedRole.fromJson(roleData);
+      }
+      return null;
+    } catch (e) {
+      if (kDebugMode) print('❌ Error obteniendo rol seleccionado: $e');
+      return null;
+    }
+  }
+
+  @override
+  Future<void> clearSelectedRole() async {
+    try {
+      await fastStorage.delete('selected_role');
+      if (kDebugMode) print('🗑️ Rol seleccionado eliminado');
+    } catch (e) {
+      if (kDebugMode) print('❌ Error eliminando rol seleccionado: $e');
+    }
+  }
+
+
+//!revisar para implementar el logout completo (servidor + local + rol)
+//   @override
+//   Future<bool> logout() async {
+//     // ... código existente de logout
+    
+//     try {
+//       // Limpiar rol seleccionado además de sesión
+//       await Future.wait([
+//         _clearLocalSession(),
+//         clearSelectedRole(), // 🆕 Agregar esto
+//       ]);
+      
+//       _forceAuthInterceptorRefresh();
+      
+//       if (kDebugMode) print('✅ Logout completo (sesión + rol)');
+//       return true;
+//     } catch (e) {
+//       // ... manejo de errores
+//     }
+//   }
+// }
 
   
 }

@@ -1,4 +1,5 @@
 import 'package:consumo_combustible/core/custom_navigator_bar/curved_navigation_bar.dart';
+import 'package:consumo_combustible/core/widgets/appbar/smart_appbar.dart';
 import 'package:flutter/material.dart';
 
 
@@ -53,6 +54,8 @@ class _HomePageAlternativeState extends State<HomePageAlternative>
     _animationController.forward();
   }
 
+ 
+
   @override
   void dispose() {
     _animationController.dispose();
@@ -61,22 +64,13 @@ class _HomePageAlternativeState extends State<HomePageAlternative>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_titles[_currentIndex]),
-        centerTitle: true,
-        actions: [
-          // Botón de logout en el AppBar
-          // LogoutButton.appBar(
-          //   onLogoutSuccess: () {
-          //     Navigator.pushNamedAndRemoveUntil(
-          //       context,
-          //       'login',
-          //       (route) => false,
-          //     );
-          //   },
-          // ),
-        ],
+    return Scaffold(     
+      appBar: SmartAppBar.withUser(
+        title: _titles[_currentIndex],
+        logoPath: "assets/img/6.svg",
+        showLogo: true,
+        isLottieLogo: false,
+
       ),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),

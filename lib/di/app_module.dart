@@ -4,9 +4,11 @@ import 'package:consumo_combustible/data/datasource/remote/service/auth_service.
 import 'package:consumo_combustible/data/repository/auth_repository_impl.dart';
 import 'package:consumo_combustible/domain/repository/auth_repository.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart';
+import 'package:consumo_combustible/domain/use_cases/auth/get_selected_role_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/get_user_session_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/login_use_case.dart';
-import 'package:consumo_combustible/domain/use_cases/auth/logout_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/auth/save_selected_role_usecase.dart';
+// import 'package:consumo_combustible/domain/use_cases/auth/logout_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/save_user_session_usecase.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -55,7 +57,9 @@ abstract class AppModule {
       // register: RegisterUseCase(authRepository),
       saveUserSession: SaveUserSessionUseCase(authRepository),
       getUserSession: GetUserSessionUseCase(authRepository),
-      logout: LogoutUseCase(authRepository),
+      saveSelectedRole: SaveSelectedRoleUseCase(authRepository),
+      getSelectedRole: GetSelectedRoleUseCase(authRepository),
+      // logout: LogoutUseCase(authRepository),
     );
   }
   

@@ -2,9 +2,12 @@ import 'package:consumo_combustible/core/fonts/app_fonts.dart';
 import 'package:consumo_combustible/core/theme/app_colors.dart';
 import 'package:consumo_combustible/core/theme/app_gradients.dart';
 import 'package:consumo_combustible/core/theme/gradient_container.dart';
+import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_bloc.dart';
+import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_event.dart';
 import 'package:consumo_combustible/presentation/page/auth/login/cliente_login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 
 
@@ -13,9 +16,20 @@ class MainLoginPage extends StatefulWidget {
 
   @override
   State<MainLoginPage> createState() => _MainLoginPageState();
+
+  
 }
 
+
 class _MainLoginPageState extends State<MainLoginPage> {
+  @override
+void initState() {
+  super.initState();
+  // Solo inicializar cuando realmente se muestra el login
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    context.read<LoginBloc>().add(const InitEvent());
+  });
+}
   @override
   Widget build(BuildContext context) {
     _transparentBar();
@@ -81,7 +95,7 @@ class _MainLoginPageState extends State<MainLoginPage> {
         'Bienvenido',
         style: AppFont.airstrikeBold3d.style(
           fontSize: 24,
-          color: AppColors.blue,
+          color: AppColors.blue3,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -93,16 +107,22 @@ class _MainLoginPageState extends State<MainLoginPage> {
       mainAxisSize: MainAxisSize.min,
       children: [
         SvgPicture.asset(
-          'assets/img/logoplano2.svg',
-          height: 110,
-          width: 110,
+          'assets/img/6.svg',
+          height: 150,
+          width: 150,
         ),
-        const SizedBox(height: 10),
+        // Image.asset(
+        //   'assets/img/4.png',
+        //   height: 150,
+        //   width: 150,
+        //   fit: BoxFit.contain,
+        // ),
+        const SizedBox(height: 18),
         Text(
-          'Syncronize',
-          style: AppFont.airstrikeBold3d.style(
-            fontSize: 20,
-            color: AppColors.blue2,
+          'Sistema de Control de Combustible',
+          style: AppFont.orbitronMedium.style(
+            fontSize: 14,
+            color: AppColors.blue3,
             fontWeight: FontWeight.w700,
           ),
         ),

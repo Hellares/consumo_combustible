@@ -2,6 +2,7 @@ import 'package:consumo_combustible/bloc_provider.dart';
 import 'package:consumo_combustible/core/fast_storage_service.dart';
 import 'package:consumo_combustible/injection.dart';
 import 'package:consumo_combustible/presentation/page/auth/login/main_login_page.dart';
+import 'package:consumo_combustible/presentation/page/auth/rol_selection/role_selection_page.dart';
 import 'package:consumo_combustible/presentation/page/home_page.dart';
 import 'package:consumo_combustible/presentation/splash/splash_page.dart';
 import 'package:flutter/foundation.dart';
@@ -79,6 +80,7 @@ class MyApp extends StatelessWidget {
         routes: {
           'splash': (context) => const SplashPage(),
           'login': (context) => const MainLoginPage(),
+          'role-selection': (context) => const RoleSelectionPage(),
           'home': (context) => const HomePageAlternative(),
           
         },

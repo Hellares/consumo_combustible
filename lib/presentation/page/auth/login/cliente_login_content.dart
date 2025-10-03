@@ -88,10 +88,10 @@ class _ClienteLoginContentState extends State<ClienteLoginContent> {
         children: [
           CustomTextField(
             controller: _dniController,
-            label: 'DNI',
+            labelStyle: TextStyle( color: AppColors.blue3, fontSize: 12),
             borderColor: widget.state.dni.error != null 
                 ? Colors.red 
-                : AppColors.blue,
+                : AppColors.blue3,
             fieldType: FieldType.dni,
             enableRealTimeValidation: false,
             onChanged: _onDniChanged,
@@ -110,11 +110,12 @@ class _ClienteLoginContentState extends State<ClienteLoginContent> {
           CustomTextField(
             controller: _passwordController,
             label: 'Contraseña',
+            labelStyle: TextStyle( color: AppColors.blue3, fontSize: 12),
             hintText: 'Mínimo 6 caracteres',
             borderColor: widget.state.password.error != null 
                 ? Colors.red 
-                : AppColors.blue,
-            prefixIcon: Icon(Icons.lock_outlined, color: AppColors.blue),
+                : AppColors.blue3,
+            prefixIcon: Icon(Icons.lock_outlined, color: AppColors.blue3),
             obscureText: true,
             enableRealTimeValidation: false,
             onChanged: _onPasswordChanged,
@@ -154,7 +155,7 @@ class _ClienteLoginContentState extends State<ClienteLoginContent> {
         child: Text(
           '¿Olvidaste tu contraseña?',
           style: TextStyle(
-            color: AppColors.blue,
+            color: AppColors.blue3,
             fontSize: 11,
             fontWeight: FontWeight.w500,
           ),
@@ -169,7 +170,7 @@ class _ClienteLoginContentState extends State<ClienteLoginContent> {
         text: 'Iniciar Sesión',
         borderWidth: 0.5,
         textStyle: AppFont.pirulentBold.style(fontSize: 12),
-        backgroundColor: AppColors.blue,
+        backgroundColor: AppColors.blue3,
         borderRadius: 28,
         onPressed: _canSubmit() ? _handleSubmit : null,
       ),
@@ -188,9 +189,9 @@ class _ClienteLoginContentState extends State<ClienteLoginContent> {
           CustomButton(
             text: 'Crear Cuenta',
             textStyle: AppFont.pirulentBold.style(fontSize: 12),
-            backgroundColor: AppColors.green,
+            backgroundColor: AppColors.orange,
             enableShadows: false,
-            borderColor: AppColors.green,
+            borderColor: AppColors.orange,
             textColor: AppColors.white,
             borderRadius: 28,
             // onPressed: _navigateToRegister,

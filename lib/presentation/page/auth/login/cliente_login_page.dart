@@ -1,11 +1,15 @@
 import 'package:consumo_combustible/core/widgets/loadings/custom_loading.dart';
 import 'package:consumo_combustible/core/widgets/snack.dart';
 import 'package:consumo_combustible/domain/models/auth_response.dart';
+import 'package:consumo_combustible/domain/models/roles.dart';
+import 'package:consumo_combustible/domain/models/selected_role.dart';
+import 'package:consumo_combustible/domain/models/user.dart';
 import 'package:consumo_combustible/domain/utils/resource.dart';
 import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_bloc.dart';
 import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_event.dart';
 import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_state.dart';
 import 'package:consumo_combustible/presentation/page/auth/login/cliente_login_content.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -114,16 +118,88 @@ class _ClienteLoginPageState extends State<ClienteLoginPage> {
 
   // Método para manejar éxito
   void _handleSuccess(BuildContext context, AuthResponse authResponse) {
-    if (!mounted) return;
-    
-    // Mostrar mensaje de bienvenida
+  if (!mounted) return;
+  
+  try {
+    // 1. Mostrar mensaje de bienvenida
     final userName = authResponse.data?.user.nombres ?? 'Usuario';
-    SnackBarHelper.showSuccess(
-      context, 
-      'Bienvenido $userName'
-    );   
+    SnackBarHelper.showSuccess(context, 'Bienvenido $userName');
     
+    // 2. ✅ CAPTURAR referencias ANTES del async gap
+    final navigator = Navigator.of(context);
+    
+    // 3. ✅ LÓGICA DE ROLES
+    final user = authResponse.data?.user;
+    
+    if (user == null || user.roles.isEmpty) {
+      // Sin roles - error
+      SnackBarHelper.showError(context, 'Usuario sin roles asignados');
+      return;
+    }
+    
+    // 4. Esperar para mejor UX
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (!mounted) return;
+        
+        // 5. ✅ DECISIÓN SEGÚN CANTIDAD DE ROLES
+        if (user.roles.length == 1) {
+          // 🎯 UN SOLO ROL - Guardar automáticamente y navegar a home
+          _saveRoleAndNavigateHome(user, user.roles.first);
+        } else {
+          // 🎯 MÚLTIPLES ROLES - Navegar a selección de rol
+          _navigateToRoleSelection(navigator, user);
+        }
+      });
+    });
+    
+  } catch (e) {
+    if (kDebugMode) print('❌ Error en _handleSuccess: $e');
+    SnackBarHelper.showError(context, 'Error procesando login');
   }
+}
+
+// 🆕 Método para guardar rol automáticamente
+void _saveRoleAndNavigateHome(User user, Role role) {
+  final selectedRole = SelectedRole(
+    userId: user.id,
+    role: role,
+    selectedAt: DateTime.now(),
+  );
+  
+  // Guardar rol seleccionado
+  _bloc?.authUseCases.saveSelectedRole.run(selectedRole).then((_) {
+    if (mounted) {
+      if (kDebugMode) {
+        print('✅ Rol único guardado automáticamente: ${role.rol.nombre}');
+      }
+      
+      // Navegar a home
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        'home',
+        (route) => false,
+      );
+    }
+  }).catchError((e) {
+    if (kDebugMode) print('❌ Error guardando rol: $e');
+    if (mounted) {
+      SnackBarHelper.showError(context, 'Error guardando rol');
+    }
+  });
+}
+
+// 🆕 Método para navegar a selección de rol
+void _navigateToRoleSelection(NavigatorState navigator, User user) {
+  if (kDebugMode) {
+    print('📋 Usuario tiene ${user.roles.length} roles - Mostrando selector');
+  }
+  
+  navigator.pushNamedAndRemoveUntil(
+    'role-selection',
+    (route) => false,
+    arguments: user, // Pasar usuario como argumento
+  );
+}
 
   // Diálogo para errores de red
   void _showNetworkErrorDialog(BuildContext context) {

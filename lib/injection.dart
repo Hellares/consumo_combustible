@@ -10,7 +10,7 @@ Future<void> configureDependencies() async {
   if (kDebugMode){
     print('📦 Iniciando configuración de GetIt...');
   }  
-  await locator.init();
+  locator.init();
   if (kDebugMode){
     print('✅ GetIt configurado exitosamente');
   } 

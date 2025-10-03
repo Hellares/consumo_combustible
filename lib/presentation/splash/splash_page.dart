@@ -2,6 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:consumo_combustible/core/fast_storage_service.dart';
 import 'package:consumo_combustible/domain/models/auth_response.dart';
+import 'package:consumo_combustible/domain/models/selected_role.dart';
+import 'package:consumo_combustible/domain/models/user.dart';
+import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart';
+import 'package:consumo_combustible/injection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -9,12 +13,14 @@ import 'package:get_it/get_it.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
+  
 
   @override
   State<SplashPage> createState() => _SplashPageState();
 }
 
 class _SplashPageState extends State<SplashPage> 
+
     with SingleTickerProviderStateMixin {
   
   late AnimationController _animationController;
@@ -22,6 +28,7 @@ class _SplashPageState extends State<SplashPage>
   late Animation<double> _scaleAnimation;
   
   final _storage = GetIt.instance<FastStorageService>();
+  final _authUseCases = locator<AuthUseCases>();
   
   String _statusText = 'Inicializando...';
   bool _hasNavigated = false;
@@ -175,25 +182,75 @@ class _SplashPageState extends State<SplashPage>
         final authResponse = _parseUserDataSync(userData);
         
         if (authResponse != null) {
-          if (kDebugMode) {
-            print('✅ Sesión activa para: ${authResponse.data?.user.nombres}');
-          }
+          final user = authResponse.data?.user;
           
+          // ✅ Ahora _authUseCases está disponible
+          final selectedRole = await _authUseCases.getSelectedRole.run();
           
-          // if (authResponse.data!.needsEmpresaSelection) {
-          //   _navigateToEmpresaSelection();
-          // } else {
+          if (selectedRole != null) {
+            // ✅ Tiene rol seleccionado - ir a home
+            if (kDebugMode) {
+              print('✅ Rol guardado encontrado: ${selectedRole.role.rol.nombre}');
+            }
             _navigateToHome();
-          // }
-          // return;
+          } else if (user != null && user.roles.length == 1) {
+            // ✅ Un solo rol - guardarlo y ir a home
+            if (kDebugMode) {
+              print('✅ Usuario con 1 rol - guardando automáticamente');
+            }
+            await _saveDefaultRoleAndNavigate(user);
+          } else if (user != null && user.roles.length > 1) {
+            // ✅ Múltiples roles - ir a selección
+            if (kDebugMode) {
+              print('📋 Usuario con ${user.roles.length} roles - ir a selección');
+            }
+            _navigateToRoleSelection(user);
+          } else {
+            // ❌ Sin roles o error
+            if (kDebugMode) print('❌ Usuario sin roles - ir a login');
+            _navigateToLogin();
+          }
+          return;
         }
       }
     } catch (e) {
       if (kDebugMode) print('⚠️ Error navegando usuario logueado: $e');
     }
     
-    // Fallback a login si hay error
     _navigateToLogin();
+  }
+
+Future<void> _saveDefaultRoleAndNavigate(User user) async {
+    try {
+      final selectedRole = SelectedRole(
+        userId: user.id,
+        role: user.roles.first,
+        selectedAt: DateTime.now(),
+      );
+      
+      await _authUseCases.saveSelectedRole.run(selectedRole);
+      
+      if (kDebugMode) {
+        print('✅ Rol único guardado: ${selectedRole.role.rol.nombre}');
+      }
+      
+      _navigateToHome();
+    } catch (e) {
+      if (kDebugMode) print('❌ Error guardando rol default: $e');
+      _navigateToLogin();
+    }
+  }
+
+
+void _navigateToRoleSelection(User user) {
+    if (mounted && !_hasNavigated) {
+      _hasNavigated = true;
+      Navigator.pushReplacementNamed(
+        context,
+        'role-selection',
+        arguments: user,
+      );
+    }
   }
 
   AuthResponse? _parseUserDataSync(dynamic userData) {
