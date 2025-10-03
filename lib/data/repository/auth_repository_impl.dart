@@ -145,9 +145,10 @@ Future<void> _clearLocalSession() async {
     await Future.wait([
       fastStorage.delete('user'),           // Usuario
       fastStorage.delete('token'),          // Token
-      fastStorage.delete('selected_role'),  // Rol seleccionado
-      fastStorage.delete('user_preferences'), // Preferencias (opcional)
-      fastStorage.delete('app_settings'),     // Configuraciones (opcional)
+      fastStorage.delete('selected_role'), 
+      fastStorage.delete('selected_location'), // Rol seleccionado
+      // fastStorage.delete('user_preferences'), // Preferencias (opcional)
+      // fastStorage.delete('app_settings'),     // Configuraciones (opcional)
     ]);
     
     if (kDebugMode) {
@@ -155,6 +156,7 @@ Future<void> _clearLocalSession() async {
       print('   - user: eliminado');
       print('   - token: eliminado');
       print('   - selected_role: eliminado');
+      print('   - selected_location: eliminado');
     }
     
   } catch (e) {

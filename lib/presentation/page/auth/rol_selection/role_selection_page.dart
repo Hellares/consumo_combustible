@@ -10,7 +10,9 @@ import 'package:consumo_combustible/domain/models/roles.dart';
 import 'package:consumo_combustible/domain/models/selected_role.dart';
 import 'package:consumo_combustible/domain/models/user.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart';
+import 'package:consumo_combustible/domain/use_cases/location/location_use_cases.dart';
 import 'package:consumo_combustible/injection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -21,14 +23,13 @@ class RoleSelectionPage extends StatefulWidget {
   State<RoleSelectionPage> createState() => _RoleSelectionPageState();
 }
 
-class _RoleSelectionPageState extends State<RoleSelectionPage> 
+class _RoleSelectionPageState extends State<RoleSelectionPage>
     with SingleTickerProviderStateMixin {
-  
   Role? _selectedRole;
   bool _isLoading = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  
+
   final _authUseCases = locator<AuthUseCases>();
 
   @override
@@ -94,9 +95,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                   const SizedBox(height: 40),
                   _buildInstructions(),
                   const SizedBox(height: 30),
-                  Expanded(
-                    child: _buildRolesList(user.roles),
-                  ),
+                  Expanded(child: _buildRolesList(user.roles)),
                   const SizedBox(height: 20),
                   _buildContinueButton(user),
                 ],
@@ -114,10 +113,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
       children: [
         Text(
           'Hola, ${user.nombres}',
-          style: AppFont.oxygenBold.style(
-            fontSize: 18,
-            color: AppColors.blue3,
-          ),
+          style: AppFont.oxygenBold.style(fontSize: 18, color: AppColors.blue3),
         ),
         const SizedBox(height: 8),
         Text(
@@ -175,13 +171,13 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isSelected 
+                  color: isSelected
                       ? AppColors.blue.withValues(alpha: 0.1)
                       : Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isSelected 
-                        ? AppColors.blue 
+                    color: isSelected
+                        ? AppColors.blue
                         : AppColors.grey.withValues(alpha: 0.3),
                     width: isSelected ? 2 : 1,
                   ),
@@ -201,8 +197,8 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: isSelected 
-                            ? AppColors.blue 
+                        color: isSelected
+                            ? AppColors.blue
                             : AppColors.grey.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
@@ -238,11 +234,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                       ),
                     ),
                     if (isSelected)
-                      Icon(
-                        Icons.check_circle,
-                        color: AppColors.blue,
-                        size: 28,
-                      ),
+                      Icon(Icons.check_circle, color: AppColors.blue, size: 28),
                   ],
                 ),
               ),
@@ -297,26 +289,40 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
       // Guardar rol
       await _authUseCases.saveSelectedRole.run(selectedRole);
 
-      if (mounted) {
-        SnackBarHelper.showSuccess(
-          context,
-          'Rol ${_selectedRole!.rol.nombre} seleccionado',
-        );
+      if (!mounted) return;
 
-        // Capturar navigator antes del async gap
-        final navigator = Navigator.of(context);
+      SnackBarHelper.showSuccess(
+        context,
+        'Rol ${_selectedRole!.rol.nombre} seleccionado',
+      );
 
-        // Navegar a home
-        Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted) {
-            navigator.pushNamedAndRemoveUntil(
-              'home',
-              (route) => false,
-            );
-          }
-        });
-      }
+      // Verificar ubicación
+      final locationUseCases = locator<LocationUseCases>();
+      final location = await locationUseCases.getSelectedLocation.run();
+
+      if (!mounted) return;
+
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (!mounted) return;
+
+      // ✅ SOLUCIÓN: No capturar navigator, usarlo directamente
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+
+        if (location != null) {
+          // Tiene ubicación → Home
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil('home', (route) => false);
+        } else {
+          // Sin ubicación → Selección de ubicación
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil('location-selection', (route) => false);
+        }
+      });
     } catch (e) {
+      if (kDebugMode) print('❌ Error guardando rol: $e');
       if (mounted) {
         setState(() => _isLoading = false);
         SnackBarHelper.showError(context, 'Error al guardar rol');

@@ -2,14 +2,11 @@
 
 import 'package:consumo_combustible/core/fonts/app_fonts.dart';
 import 'package:consumo_combustible/core/theme/app_colors.dart';
-// import 'package:consumo_combustible/core/widgets/logout/logout_button.dart';
+import 'package:consumo_combustible/core/widgets/logout/logout_button.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart';
 import 'package:consumo_combustible/injection.dart';
-import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_bloc.dart';
-import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:lottie/lottie.dart';
 
@@ -598,43 +595,21 @@ class _SmartAppBarState extends State<SmartAppBar> {
             const Divider(),
 
             ListTile(
-              leading: const Icon(Icons.logout, color: AppColors.borderError, size: 24,),
-              title: const Text('Cerrar Sesion'),
-              onTap: () {
-                Navigator.pop(context); // Cerrar modal
-                _handleLogout(context); // Mostrar confirmación y logout
-              },
+              // leading: const Icon(Icons.logout, color: AppColors.borderError, size: 24,),
+              title: LogoutButton.profile(
+                text: 'Cerrar Sesión',
+                onLogoutSuccess: () {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    'login',
+                    (route) => false,
+                  );
+                },
+                // onLogoutSuccess: (){},
+              ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _handleLogout(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        icon: Icon(Icons.logout, color: AppColors.red, size: 40),
-        title: const Text('Cerrar Sesión'),
-        content: const Text(
-          '¿Estás seguro que deseas cerrar sesión?',
-          textAlign: TextAlign.center,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              context.read<LoginBloc>().add(const LogoutRequested());
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.red),
-            child: const Text('Cerrar Sesión'),
-          ),
-        ],
       ),
     );
   }
