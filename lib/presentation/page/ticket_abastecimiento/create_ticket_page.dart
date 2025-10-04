@@ -1,6 +1,10 @@
 import 'package:consumo_combustible/core/fonts/app_fonts.dart';
 import 'package:consumo_combustible/core/fonts/app_text_widgets.dart';
 import 'package:consumo_combustible/core/theme/app_colors.dart';
+import 'package:consumo_combustible/core/theme/app_gradients.dart';
+import 'package:consumo_combustible/core/theme/gradient_container.dart';
+import 'package:consumo_combustible/core/widgets/custom_date_textfiels_container/custom_dropdown.dart';
+import 'package:consumo_combustible/core/widgets/custom_date_textfiels_container/custom_textfield.dart';
 import 'package:consumo_combustible/core/widgets/snack.dart';
 import 'package:consumo_combustible/domain/models/create_ticket_request.dart';
 import 'package:consumo_combustible/domain/models/selected_location.dart';
@@ -63,48 +67,57 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return Scaffold(
-      // appBar: AppBar(title: const Text('Crear Ticket de Abastecimiento')),
-      appBar: AppBar( title: AppSubtitle('CREAR TICKET DE ABASTECIMIENTO'),),
-      body: BlocConsumer<TicketBloc, TicketState>(
-        bloc: _bloc,
-        listener: (context, state) {
-          if (state.createResponse is Success) {
-            final ticket =
-                (state.createResponse as Success).data as TicketAbastecimiento;
-
-            _showSuccessDialog(ticket);
-          } else if (state.createResponse is Error) {
-            final error = state.createResponse as Error;
-            SnackBarHelper.showError(context, error.message);
-          }
-        },
-        builder: (context, state) {
-          final isLoading = state.createResponse is Loading;
-
-          return Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildLocationCard(),
-                  const SizedBox(height: 24),
-                  _buildUnidadSelector(),
-                  const SizedBox(height: 16),
-                  _buildKilometrajeField(),
-                  const SizedBox(height: 16),
-                  _buildPrecintoField(),
-                  const SizedBox(height: 16),
-                  _buildCantidadField(),
-                  const SizedBox(height: 32),
-                  _buildSubmitButton(isLoading),
-                ],
+    return GradientContainer(
+      gradient: AppGradients.custom(
+        startColor: AppColors.white,
+        middleColor: AppColors.white,
+        endColor: AppColors.white,
+        stops: [0.0, 0.5, 1.0],
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        // appBar: AppBar(title: const Text('Crear Ticket de Abastecimiento')),
+        appBar: AppBar( title: AppSubtitle('CREAR TICKET DE ABASTECIMIENTO'),backgroundColor: Colors.transparent,),
+        body: BlocConsumer<TicketBloc, TicketState>(
+          bloc: _bloc,
+          listener: (context, state) {
+            if (state.createResponse is Success) {
+              final ticket =
+                  (state.createResponse as Success).data as TicketAbastecimiento;
+      
+              _showSuccessDialog(ticket);
+            } else if (state.createResponse is Error) {
+              final error = state.createResponse as Error;
+              SnackBarHelper.showError(context, error.message);
+            }
+          },
+          builder: (context, state) {
+            final isLoading = state.createResponse is Loading;
+      
+            return Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildLocationCard(),
+                    const SizedBox(height: 24),
+                    _buildUnidadSelector(),
+                    const SizedBox(height: 16),
+                    _buildKilometrajeField(),
+                    const SizedBox(height: 16),
+                    _buildPrecintoField(),
+                    const SizedBox(height: 16),
+                    _buildCantidadField(),
+                    const SizedBox(height: 32),
+                    _buildSubmitButton(isLoading),
+                  ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -165,35 +178,26 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     );
   }
 
-  Widget _buildUnidadSelector() {
-    return DropdownButtonFormField<int>(
-      decoration: const InputDecoration(
-        labelText: 'Unidad *',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.directions_bus),
-      ),
-      initialValue: _selectedUnidadId,
-      items: const [
-        DropdownMenuItem(value: 1, child: Text('Unidad 001')),
-        DropdownMenuItem(value: 2, child: Text('Unidad 002')),
+  Widget _buildUnidadSelector(){
+    return CustomDropdown<int>(
+      items: [
+        DropdownItem(value: 1, label: 'Unidad 001'),
+        DropdownItem(value: 2, label: 'Unidad 002'),
       ],
-      onChanged: (value) => setState(() => _selectedUnidadId = value),
-      validator: (value) => value == null ? 'Selecciona una unidad' : null,
+      borderColor: AppColors.blue3,
     );
   }
 
   Widget _buildKilometrajeField() {
-    return TextFormField(
+    return CustomTextField(
       controller: _kilometrajeController,
-      decoration: const InputDecoration(
-        labelText: 'Kilometraje Actual *',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.speed),
-        suffixText: 'km',
-      ),
+      hintText: 'Kilometraje Actual *',
+      borderColor: AppColors.blue3,
+      prefixIcon: Icon(Icons.speed),
+      suffixText: 'km',
       keyboardType: TextInputType.number,
-      validator: (value) {
-        if (value == null || value.isEmpty) return 'Ingresa el kilometraje';
+      validator: (value){
+        if (value == null || value.isEmpty) return 'Ingrese el kilometraje';
         if (double.tryParse(value) == null) return 'Número inválido';
         return null;
       },

@@ -89,9 +89,6 @@ class _LocationSelectionPageState extends State<LocationSelectionPage> {
   Widget build(BuildContext context) {
     return GradientContainer(
       gradient: AppGradients.custom(
-        // startColor: AppColors.white,
-        // middleColor: AppColors.white,
-        // endColor: const Color.fromARGB(255, 175, 213, 250),
         startColor: const Color.fromARGB(255, 175, 213, 250),
         middleColor: AppColors.white,
         endColor: AppColors.white,

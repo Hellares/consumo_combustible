@@ -82,7 +82,7 @@ class CustomDropdown<T> extends StatefulWidget {
     this.hintStyle,
     this.filled = true,
     this.focusNode,
-    this.height = 40,
+    this.height = 35,
     this.borderWidth = 0.5,
     this.prefixIcon,
     this.suffixIcon,
