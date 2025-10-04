@@ -16,6 +16,8 @@ import 'package:consumo_combustible/data/datasource/remote/service/location_serv
     as _i200;
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_service.dart'
     as _i1037;
+import 'package:consumo_combustible/data/datasource/remote/service/unidad_service.dart'
+    as _i599;
 import 'package:consumo_combustible/di/app_module.dart' as _i564;
 import 'package:consumo_combustible/domain/repository/auth_repository.dart'
     as _i120;
@@ -23,12 +25,16 @@ import 'package:consumo_combustible/domain/repository/location_repository.dart'
     as _i611;
 import 'package:consumo_combustible/domain/repository/ticket_repository.dart'
     as _i107;
+import 'package:consumo_combustible/domain/repository/unidad_repository.dart'
+    as _i41;
 import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart'
     as _i960;
 import 'package:consumo_combustible/domain/use_cases/location/location_use_cases.dart'
     as _i636;
 import 'package:consumo_combustible/domain/use_cases/ticket/ticket_use_cases.dart'
     as _i453;
+import 'package:consumo_combustible/domain/use_cases/unidad/unidad_use_cases.dart'
+    as _i911;
 import 'package:dio/dio.dart' as _i361;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
@@ -52,11 +58,23 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i1037.TicketService>(
       () => appModule.ticketService(gh<_i361.Dio>()),
     );
+    gh.factory<_i599.UnidadService>(
+      () => appModule.unidadService(gh<_i361.Dio>()),
+    );
     gh.singleton<_i611.LocationRepository>(
       () => appModule.locationRepository(
         gh<_i200.LocationService>(),
         gh<_i782.FastStorageService>(),
       ),
+    );
+    gh.singleton<_i41.UnidadRepository>(
+      () => appModule.unidadRepository(
+        gh<_i599.UnidadService>(),
+        gh<_i782.FastStorageService>(),
+      ),
+    );
+    gh.singleton<_i911.UnidadUseCases>(
+      () => appModule.unidadUseCases(gh<_i41.UnidadRepository>()),
     );
     gh.singleton<_i636.LocationUseCases>(
       () => appModule.locationUseCases(gh<_i611.LocationRepository>()),

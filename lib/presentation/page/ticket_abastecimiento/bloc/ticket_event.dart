@@ -19,3 +19,21 @@ class ResetTicketState extends TicketEvent {
   @override
   List<Object?> get props => [];
 }
+
+/// Evento para cargar unidades por zona
+class LoadUnidadesByZona extends TicketEvent {
+  final int zonaId;
+
+  const LoadUnidadesByZona(this.zonaId);
+
+  @override
+  List<Object?> get props => [zonaId];
+}
+
+///  Evento para resetear solo las unidades
+class ResetUnidades extends TicketEvent {
+  const ResetUnidades();
+
+  @override
+  List<Object?> get props => [];
+}

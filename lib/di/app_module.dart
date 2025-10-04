@@ -3,12 +3,15 @@ import 'package:consumo_combustible/data/api/dio_config.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/auth_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/location_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_service.dart';
+import 'package:consumo_combustible/data/datasource/remote/service/unidad_service.dart';
 import 'package:consumo_combustible/data/repository/auth_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/location_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/ticket_repository_impl.dart';
+import 'package:consumo_combustible/data/repository/unidad_repository_impl.dart';
 import 'package:consumo_combustible/domain/repository/auth_repository.dart';
 import 'package:consumo_combustible/domain/repository/location_repository.dart';
 import 'package:consumo_combustible/domain/repository/ticket_repository.dart';
+import 'package:consumo_combustible/domain/repository/unidad_repository.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/get_selected_role_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/get_user_session_usecase.dart';
@@ -26,6 +29,11 @@ import 'package:consumo_combustible/domain/use_cases/location/location_use_cases
 import 'package:consumo_combustible/domain/use_cases/location/save_selected_location_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/ticket/create_ticket_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/ticket/ticket_use_cases.dart';
+import 'package:consumo_combustible/domain/use_cases/unidad/clear_unidades_cache.dart';
+import 'package:consumo_combustible/domain/use_cases/unidad/get_all_unidades.dart';
+import 'package:consumo_combustible/domain/use_cases/unidad/get_unidad_by_id.dart';
+import 'package:consumo_combustible/domain/use_cases/unidad/get_unidades_by_zona.dart';
+import 'package:consumo_combustible/domain/use_cases/unidad/unidad_use_cases.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
@@ -77,6 +85,21 @@ abstract class AppModule {
   @singleton
   TicketRepository ticketRepository(TicketService service) => 
     TicketRepositoryImpl(service);
+
+  // NUEVO: UNIDAD SERVICE
+  @injectable
+  UnidadService unidadService(Dio dio) {
+    if (kDebugMode) print('🚗 Creando UnidadService');
+    return UnidadService(dio);
+  }
+
+  // NUEVO: UNIDAD REPOSITORY
+  @singleton
+  UnidadRepository unidadRepository(UnidadService service, FastStorageService storage,) {
+    if (kDebugMode) print('📦 Creando UnidadRepository con caché');
+    return UnidadRepositoryImpl(service, storage);
+  }
+  
   
   // ✅ USE CASES CONTAINERS - Singleton optimizado
   @singleton
@@ -110,6 +133,19 @@ abstract class AppModule {
   TicketUseCases ticketUseCases(TicketRepository repository) {
     return TicketUseCases(
       createTicket: CreateTicketUseCase(repository),
+    );
+  }
+
+  // NUEVO: UNIDAD USE CASES
+  @singleton
+  UnidadUseCases unidadUseCases(UnidadRepository repository) {
+    if (kDebugMode) print('🎯 Creando UnidadUseCases singleton');
+    
+    return UnidadUseCases(
+      getUnidadesByZona: GetUnidadesByZona(repository),
+      getAllUnidades: GetAllUnidades(repository),
+      getUnidadById: GetUnidadById(repository),
+      clearUnidadesCache: ClearUnidadesCache(repository),
     );
   }
 }

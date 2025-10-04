@@ -1,6 +1,7 @@
 import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/location/location_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/ticket/ticket_use_cases.dart';
+import 'package:consumo_combustible/domain/use_cases/unidad/unidad_use_cases.dart';
 import 'package:consumo_combustible/injection.dart';
 import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_bloc.dart';
 import 'package:consumo_combustible/presentation/page/location/bloc/location_bloc.dart';
@@ -24,6 +25,6 @@ List<BlocProvider> blocProviders = [
   ),
 
   BlocProvider<TicketBloc>(
-    create: (context) => TicketBloc(locator<TicketUseCases>())
+    create: (context) => TicketBloc(locator<TicketUseCases>(), locator<UnidadUseCases>())
   ),
 ];
