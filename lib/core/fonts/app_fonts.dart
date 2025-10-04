@@ -1,4 +1,5 @@
 
+import 'package:consumo_combustible/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 /// Enum que representa las fuentes disponibles
@@ -90,19 +91,26 @@ extension AppFontExtension on AppFont {
 extension AppFontPresetStyles on AppFont {
   TextStyle get label => style(
         fontSize: 11,
-        fontWeight: FontWeight.w400,
+        // fontWeight: FontWeight.w400,
         color: Colors.black87,
         
       );
 
   TextStyle get title => style(
-        fontSize: 20,
+        fontSize: 14,
         fontWeight: FontWeight.bold,
-        color: Colors.black,
+        color: AppColors.blue3,
       );
 
+  TextStyle get subtitle => style(
+        fontSize: 12,
+        // fontWeight: FontWeight.bold,
+        color: AppColors.blue3,
+      );
+
+
   TextStyle get heading => style(
-        fontSize: 24,
+        fontSize: 16,
         fontWeight: FontWeight.w600,
         color: Colors.blueGrey[900],
       );

@@ -1,3 +1,4 @@
+import 'package:consumo_combustible/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 
@@ -15,7 +16,18 @@ class AppGradients {
       Color(0xFFD2EDFF),  // azul claro
       Color(0xFFF8CCFF),  // rosa claro
     ],
-    stops: [0.0, 0.7, 1.0],
+    stops: [0.0, 0.9, 1.0],
+  );
+
+   static LinearGradient get fondopollo => const LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      AppColors.white,  // blanco
+      AppColors.white,
+      AppColors.white,// rosa claro
+    ],
+    stops: [0.0, 0.5, 1.0],
   );
 
   // VARIACIONES DEL GRADIENTE PRINCIPAL

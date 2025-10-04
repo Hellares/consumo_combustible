@@ -1,3 +1,6 @@
+import 'package:consumo_combustible/core/fonts/app_fonts.dart';
+import 'package:consumo_combustible/core/fonts/app_text_widgets.dart';
+import 'package:consumo_combustible/core/theme/app_colors.dart';
 import 'package:consumo_combustible/core/widgets/snack.dart';
 import 'package:consumo_combustible/domain/models/create_ticket_request.dart';
 import 'package:consumo_combustible/domain/models/selected_location.dart';
@@ -61,7 +64,8 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Crear Ticket de Abastecimiento')),
+      // appBar: AppBar(title: const Text('Crear Ticket de Abastecimiento')),
+      appBar: AppBar( title: AppSubtitle('CREAR TICKET DE ABASTECIMIENTO'),),
       body: BlocConsumer<TicketBloc, TicketState>(
         bloc: _bloc,
         listener: (context, state) {
@@ -81,7 +85,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
           return Form(
             key: _formKey,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 15),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -109,18 +113,19 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     return Card(
       color: Colors.blue.shade50,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal:15),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(Icons.location_on, color: Colors.blue.shade700),
+                Icon(Icons.location_on, color: AppColors.red),
                 const SizedBox(width: 8),
-                const Text(
-                  'Ubicación de abastecimiento',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
+                // const Text(
+                //   'Ubicación de abastecimiento',
+                //   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                // ),
+                AppSubtitle('Ubicacion de abastecimiento'),
                 const Spacer(),
                 TextButton(
                   onPressed: () async {
@@ -145,7 +150,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                       }
                     }
                   },
-                  child: const Text('Cambiar'),
+                  child: AppSubtitle('Cambiar', font: AppFont.oxygenBold,color: AppColors.orange,),
                 ),
               ],
             ),
@@ -257,17 +262,14 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 5),
       child: Row(
         children: [
           SizedBox(
             width: 100,
-            child: Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
+            child: AppLabelText(label),
           ),
-          Expanded(child: Text(value)),
+          Expanded(child: AppLabelText(value)),
         ],
       ),
     );
@@ -325,7 +327,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: ticket.estado.colorValue.withOpacity(0.1),
+                color: ticket.estado.colorValue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(

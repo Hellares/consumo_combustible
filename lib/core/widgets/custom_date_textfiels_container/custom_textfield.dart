@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 
 // Enums para tipos de campo
-enum FieldType { text, email, phone, currency, url, dni, ruc }
+enum FieldType { text, email, phone, currency, url, dni, ruc, password }
 
 // 🚀 MEJORA: Usar sealed classes para type safety
 sealed class ValidationState {
@@ -46,7 +46,7 @@ enum CountryCode {
 class CustomTextFieldConstants {
   static const Duration defaultValidationDelay = Duration(milliseconds: 800);
   static const Duration defaultAnimationDuration = Duration(milliseconds: 300);
-  static const double defaultHeight = 40.0;
+  static const double defaultHeight = 35.0; //!ALTURA DEL TEXTBOX
   static const double defaultBorderRadius = 6.0;
   static const double defaultBorderWidth = 0.5;
   static const int defaultDecimalPlaces = 2;
@@ -58,8 +58,8 @@ class CustomTextFieldConstants {
 
   // 🚀 MEJORA: Widgets constantes para mejor performance
   static const Widget loadingIndicator = SizedBox(
-    width: 14,
-    height: 14,
+    width: 18,
+    height: 18,
     child: CircularProgressIndicator(strokeWidth: 2),
   );
 
@@ -140,6 +140,9 @@ class ValidationManager {
         break;
       case FieldType.ruc:
         error = FieldValidators.validateRuc(value);
+        break;
+      case FieldType.password:
+        error = FieldValidators.validatePassword(value);
         break;
       default:
         break;
@@ -548,6 +551,18 @@ class FieldValidators {
 
     return null;
   }
+
+  static String? validatePassword(String? value) {
+  if (value == null || value.isEmpty) {
+    return 'Campo requerido';
+  }
+
+  if (value.length < 6) {
+    return 'La contraseña debe tener al menos 6 caracteres';
+  }
+
+  return null;
+}
 }
 
 // 🚀 WIDGET PRINCIPAL OPTIMIZADO
@@ -599,7 +614,8 @@ class CustomTextField extends StatefulWidget {
     this.onChanged,
     this.onSubmitted,
     this.keyboardType = TextInputType.text,
-    this.obscureText = false,
+    // this.obscureText = false,
+    bool? obscureText,
     this.enabled = true,
     this.maxLines = 1,
     this.maxLength,
@@ -627,7 +643,7 @@ class CustomTextField extends StatefulWidget {
     this.country = CountryCode.peru,
     this.currencySymbol = 'S/',
     this.enableRealTimeValidation = true,
-  });
+  }) : obscureText = fieldType == FieldType.password ? true : (obscureText ?? false);
 
   @override
   State<CustomTextField> createState() => _CustomTextFieldState();
@@ -897,6 +913,9 @@ class _CustomTextFieldState extends State<CustomTextField>
       case FieldType.ruc:
         icon = Icons.business_outlined;
         break;
+      case FieldType.password:
+        icon = Icons.lock_outlined;
+        break;
       default:
         return null;
     }
@@ -1062,7 +1081,7 @@ class _CustomTextFieldState extends State<CustomTextField>
             state.error,
             style: const TextStyle(
               color: Colors.red,
-              fontSize: 10,
+              fontSize: 8,
               fontWeight: FontWeight.w400,
             ),
           ),
@@ -1090,7 +1109,7 @@ class _CustomTextFieldState extends State<CustomTextField>
         widget.textStyle ??
         TextStyle(
           color: widget.enabled ? AppColors.blue2 : AppColors.blue,
-          fontSize: 13,
+          fontSize: 12,
           fontWeight: FontWeight.w600,
           fontFamily: 'Oxygen-Regular'
         );
@@ -1101,7 +1120,7 @@ class _CustomTextFieldState extends State<CustomTextField>
         widget.hintStyle ??
         TextStyle(
           color: Colors.grey[500],
-          fontSize: 12,
+          fontSize: 10,
           fontWeight: FontWeight.w400,
           height: 1.2,
         );
@@ -1111,7 +1130,7 @@ class _CustomTextFieldState extends State<CustomTextField>
     return _cachedLabelStyle ??=
         widget.labelStyle ??
         const TextStyle(
-          fontSize: 12,
+          fontSize: 10,
           fontWeight: FontWeight.w500,
           color: AppColors.blue,
         );
@@ -1235,7 +1254,7 @@ class _CustomTextFieldState extends State<CustomTextField>
   Widget _buildValidationIndicator(ValidationState state) {
   if (state is ValidationLoading) {
     return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
       child: CustomTextFieldConstants.loadingIndicator,
     );
   }
@@ -1506,12 +1525,14 @@ class CustomTextFieldHelpers {
     Color? borderColor,
     Function(String)? onChanged,
     bool enableRealTimeValidation = true,
-    TextStyle? labelStyle
+    TextStyle? labelStyle,
+    TextStyle? hintStyle
   }) {
     return CustomTextField(
       label: label,
       labelStyle: labelStyle,
-      hintText: hintText ?? '12345678',
+      hintText: '12345678',
+      hintStyle: hintStyle,
       controller: controller,
       fieldType: FieldType.dni,
       maxLength: 8,
@@ -1580,25 +1601,25 @@ class CustomTextFieldHelpers {
     Color? borderColor,
     Function(String)? onChanged,
     String? Function(String?)? validator,
-    bool enableRealTimeValidation = true,
-    TextStyle? labelStyle
+    bool enableRealTimeValidation = false,
+    TextStyle? labelStyle,
   }) {
     return CustomTextField(
       label: label,
       hintText: hintText ?? 'Ingresa tu contraseña',
       controller: controller,
-      fieldType: FieldType.text,
+      fieldType: FieldType.password,
       borderColor: borderColor,
       obscureText: true,
       labelStyle: labelStyle,
       enableRealTimeValidation: enableRealTimeValidation,
-      validator:
-          validator ??
-          (value) {
-            if (value == null || value.isEmpty) return 'Campo requerido';
-            if (value.length < 6) return 'Mínimo 6 caracteres';
-            return null;
-          },
+      // validator:
+      //     validator ??
+      //     (value) {
+      //       if (value == null || value.isEmpty) return 'Campo requerido';
+      //       if (value.length < 6) return 'Mínimo 6 caracteres';
+      //       return null;
+      //     },
       onChanged: onChanged,
     );
   }

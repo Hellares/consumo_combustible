@@ -1,4 +1,5 @@
 import 'package:consumo_combustible/core/fonts/app_fonts.dart';
+import 'package:consumo_combustible/core/fonts/app_text_widgets.dart';
 import 'package:consumo_combustible/core/theme/app_colors.dart';
 import 'package:consumo_combustible/core/theme/app_gradients.dart';
 import 'package:consumo_combustible/core/theme/gradient_container.dart';
@@ -58,9 +59,9 @@ void initState() {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // const SizedBox(height: 20),
+                    const SizedBox(height: 10),
                     _buildWelcomeText(),
-                    const SizedBox(height: 50),
+                    const SizedBox(height: 30),
                     _buildLogoSection(),
                     const SizedBox(height: 30),
                     _buildContent(),
@@ -94,7 +95,7 @@ void initState() {
       child: Text(
         'Bienvenido',
         style: AppFont.airstrikeBold3d.style(
-          fontSize: 24,
+          fontSize: 18,
           color: AppColors.blue3,
           fontWeight: FontWeight.w600,
         ),
@@ -108,23 +109,17 @@ void initState() {
       children: [
         SvgPicture.asset(
           'assets/img/6.svg',
-          height: 150,
-          width: 150,
+          height: 140,
+          width: 140,
         ),
         // Image.asset(
         //   height: 150,
         //   width: 150,
         //   fit: BoxFit.contain,
         // ),
-        const SizedBox(height: 18),
-        Text(
-          'Sistema de Control de Combustible',
-          style: AppFont.orbitronMedium.style(
-            fontSize: 14,
-            color: AppColors.blue3,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+        const SizedBox(height: 25),
+        AppTitle('Control de Combustible', font: AppFont.pirulentBold, fontSize: 9,)
+        
       ],
     );
   }

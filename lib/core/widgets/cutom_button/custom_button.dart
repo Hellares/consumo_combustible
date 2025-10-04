@@ -14,7 +14,7 @@ enum ButtonState {
 class CustomButtonConstants {
   static const Duration defaultAnimationDuration = Duration(milliseconds: 300);
   static const double defaultBorderRadius = 6.0;
-  static const double defaultHeight = 40.0;
+  static const double defaultHeight = 37.0;
 }
 
 // 🚀 WIDGET PRINCIPAL - CON CONTROL DE SOMBRAS

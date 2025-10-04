@@ -99,15 +99,13 @@ class _ClienteLoginContentState extends State<ClienteLoginContent> {
         children: [
           CustomTextField(
             controller: _dniController,
-            enableRealTimeValidation: true,
-            validationDelay: const Duration(milliseconds: 800),
+            fieldType: FieldType.dni,            
+            hintText: '12345678',
             label: 'DNI',
-            labelStyle: TextStyle( color: AppColors.blue3, fontSize: 12),
+            labelStyle: TextStyle( color: AppColors.blue3, fontSize: 9),
             borderColor: widget.state.dni.error != null 
                 ? Colors.red 
                 : AppColors.blue3,
-            fieldType: FieldType.dni,            
-            // onChanged: _onDniChanged,
             onChanged: (text){
               if(text != widget.state.dni.value){
                 widget.bloc?.add(DniChanged(dni: BlocFormItem(value: text)));
@@ -129,44 +127,21 @@ class _ClienteLoginContentState extends State<ClienteLoginContent> {
         children: [
           CustomTextField(
             controller: _passwordController,
-            enableRealTimeValidation: false,
-            // validationDelay: const Duration(milliseconds: 800),
+            fieldType:FieldType.password,
             label: 'Contraseña',
-            labelStyle: TextStyle( color: AppColors.blue3, fontSize: 12),
+            labelStyle: TextStyle( color: AppColors.blue3, fontSize: 10),
             hintText: 'Mínimo 6 caracteres',
             borderColor: widget.state.password.error != null 
                 ? Colors.red 
-                : AppColors.blue3,
-            prefixIcon: Icon(Icons.lock_outlined, color: AppColors.blue3),
-            obscureText: true,   
+                : AppColors.blue3, 
             onChanged: (text){
               if(text != widget.state.password.value){
                 widget.bloc?.add(PasswordChanged(password: BlocFormItem(value: text)));
               }
             },         
-            // onChanged: _onPasswordChanged,
             onSubmitted: (_) => _handleSubmitIfValid(),
           ),
-          if (widget.state.password.error != null) 
-            _buildErrorText(widget.state.password.error!),
         ],
-      ),
-    );
-  }
-
-  Widget _buildErrorText(String error) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          error,
-          style: const TextStyle(
-            color: Colors.red,
-            fontSize: 12,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
       ),
     );
   }
