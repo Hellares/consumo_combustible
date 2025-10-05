@@ -14,6 +14,8 @@ import 'package:consumo_combustible/data/datasource/remote/service/auth_service.
     as _i14;
 import 'package:consumo_combustible/data/datasource/remote/service/location_service.dart'
     as _i200;
+import 'package:consumo_combustible/data/datasource/remote/service/ticket_aprobacion_service.dart'
+    as _i425;
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_service.dart'
     as _i1037;
 import 'package:consumo_combustible/data/datasource/remote/service/unidad_service.dart'
@@ -23,6 +25,8 @@ import 'package:consumo_combustible/domain/repository/auth_repository.dart'
     as _i120;
 import 'package:consumo_combustible/domain/repository/location_repository.dart'
     as _i611;
+import 'package:consumo_combustible/domain/repository/ticket_aprobacion_repository.dart'
+    as _i407;
 import 'package:consumo_combustible/domain/repository/ticket_repository.dart'
     as _i107;
 import 'package:consumo_combustible/domain/repository/unidad_repository.dart'
@@ -33,6 +37,8 @@ import 'package:consumo_combustible/domain/use_cases/location/location_use_cases
     as _i636;
 import 'package:consumo_combustible/domain/use_cases/ticket/ticket_use_cases.dart'
     as _i453;
+import 'package:consumo_combustible/domain/use_cases/ticket_aprobacion/ticket_aprobacion_use_cases.dart'
+    as _i148;
 import 'package:consumo_combustible/domain/use_cases/unidad/unidad_use_cases.dart'
     as _i911;
 import 'package:dio/dio.dart' as _i361;
@@ -61,10 +67,23 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i599.UnidadService>(
       () => appModule.unidadService(gh<_i361.Dio>()),
     );
+    gh.factory<_i425.TicketAprobacionService>(
+      () => appModule.ticketAprobacionService(gh<_i361.Dio>()),
+    );
+    gh.singleton<_i407.TicketAprobacionRepository>(
+      () => appModule.ticketAprobacionRepository(
+        gh<_i425.TicketAprobacionService>(),
+      ),
+    );
     gh.singleton<_i611.LocationRepository>(
       () => appModule.locationRepository(
         gh<_i200.LocationService>(),
         gh<_i782.FastStorageService>(),
+      ),
+    );
+    gh.singleton<_i148.TicketAprobacionUseCases>(
+      () => appModule.ticketAprobacionUseCases(
+        gh<_i407.TicketAprobacionRepository>(),
       ),
     );
     gh.singleton<_i41.UnidadRepository>(

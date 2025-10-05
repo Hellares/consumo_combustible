@@ -2,14 +2,17 @@ import 'package:consumo_combustible/core/fast_storage_service.dart';
 import 'package:consumo_combustible/data/api/dio_config.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/auth_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/location_service.dart';
+import 'package:consumo_combustible/data/datasource/remote/service/ticket_aprobacion_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/unidad_service.dart';
 import 'package:consumo_combustible/data/repository/auth_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/location_repository_impl.dart';
+import 'package:consumo_combustible/data/repository/ticket_aprobacion_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/ticket_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/unidad_repository_impl.dart';
 import 'package:consumo_combustible/domain/repository/auth_repository.dart';
 import 'package:consumo_combustible/domain/repository/location_repository.dart';
+import 'package:consumo_combustible/domain/repository/ticket_aprobacion_repository.dart';
 import 'package:consumo_combustible/domain/repository/ticket_repository.dart';
 import 'package:consumo_combustible/domain/repository/unidad_repository.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart';
@@ -29,6 +32,10 @@ import 'package:consumo_combustible/domain/use_cases/location/location_use_cases
 import 'package:consumo_combustible/domain/use_cases/location/save_selected_location_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/ticket/create_ticket_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/ticket/ticket_use_cases.dart';
+import 'package:consumo_combustible/domain/use_cases/ticket_aprobacion/aprobar_ticket.dart';
+import 'package:consumo_combustible/domain/use_cases/ticket_aprobacion/get_tickets_solicitados.dart';
+import 'package:consumo_combustible/domain/use_cases/ticket_aprobacion/rechazar_ticket.dart';
+import 'package:consumo_combustible/domain/use_cases/ticket_aprobacion/ticket_aprobacion_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/unidad/clear_unidades_cache.dart';
 import 'package:consumo_combustible/domain/use_cases/unidad/get_all_unidades.dart';
 import 'package:consumo_combustible/domain/use_cases/unidad/get_unidad_by_id.dart';
@@ -99,8 +106,24 @@ abstract class AppModule {
     if (kDebugMode) print('📦 Creando UnidadRepository con caché');
     return UnidadRepositoryImpl(service, storage);
   }
+
+  //TICKET APROBACION SERVICE
+  @injectable
+  TicketAprobacionService ticketAprobacionService(Dio dio) {
+    if (kDebugMode) print('📋 Creando TicketAprobacionService');
+    return TicketAprobacionService(dio);
+  }
   
+  //TICKET APROBACION REPOSITORY
+  @singleton
+  TicketAprobacionRepository ticketAprobacionRepository(
+    TicketAprobacionService service,
+  ) {
+    if (kDebugMode) print('📦 Creando TicketAprobacionRepository singleton');
+    return TicketAprobacionRepositoryImpl(service);
+  }
   
+  //---------------------------------------------------------------------------------//
   // ✅ USE CASES CONTAINERS - Singleton optimizado
   @singleton
   AuthUseCases authUseCases(AuthRepository authRepository) {
@@ -146,6 +169,19 @@ abstract class AppModule {
       getAllUnidades: GetAllUnidades(repository),
       getUnidadById: GetUnidadById(repository),
       clearUnidadesCache: ClearUnidadesCache(repository),
+    );
+  }
+
+  @singleton
+  TicketAprobacionUseCases ticketAprobacionUseCases(
+    TicketAprobacionRepository repository,
+  ) {
+    if (kDebugMode) print('🎯 Creando TicketAprobacionUseCases singleton');
+    
+    return TicketAprobacionUseCases(
+      getTicketsSolicitados: GetTicketsSolicitados(repository),
+      aprobarTicket: AprobarTicket(repository),
+      rechazarTicket: RechazarTicket(repository),
     );
   }
 }

@@ -7,6 +7,7 @@ import 'package:consumo_combustible/presentation/page/auth/rol_selection/role_se
 import 'package:consumo_combustible/presentation/page/home_page.dart';
 import 'package:consumo_combustible/presentation/page/location/location_selection_page.dart';
 import 'package:consumo_combustible/presentation/page/ticket_abastecimiento/create_ticket_page.dart';
+import 'package:consumo_combustible/presentation/page/ticket_aprobacion/tickets_aprobacion_page.dart';
 import 'package:consumo_combustible/presentation/splash/splash_page.dart';
 import 'package:consumo_combustible/domain/utils/resource.dart';
 import 'package:flutter/foundation.dart';
@@ -23,7 +24,7 @@ Future<void> setupAppDependencies() async {
   final stopwatch = Stopwatch()..start();
   
   try {
-    // ✅ Injectable configura TODO (incluyendo FastStorageService)
+    // ✅ Injectable configura (incluyendo FastStorageService)
     await configureDependencies();
     
     stopwatch.stop();
@@ -101,6 +102,7 @@ class MyApp extends StatelessWidget {
             'home': (context) => const HomePageAlternative(),
             'location-selection': (context) => const LocationSelectionPage(),
             'create-ticket': (context) => const CreateTicketPage(),
+            'tickets-aprobacion': (context) => const TicketsAprobacionPage(),
           },
         ),
       ),
