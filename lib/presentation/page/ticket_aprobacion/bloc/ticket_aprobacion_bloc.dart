@@ -25,7 +25,7 @@ class TicketAprobacionBloc extends Bloc<TicketAprobacionEvent, TicketAprobacionS
       print('📋 [TicketAprobacionBloc] Cargando tickets solicitados...');
     }
 
-    emit(state.copyWith(ticketsResponse: Loading()));
+    emit(state.copyWith(ticketsResponse: Loading<List<TicketAbastecimiento>>()));
 
     final response = await useCases.getTicketsSolicitados.run();
 
@@ -57,7 +57,7 @@ class TicketAprobacionBloc extends Bloc<TicketAprobacionEvent, TicketAprobacionS
       print('✅ [TicketAprobacionBloc] Aprobando ticket: ${event.ticketId}');
     }
 
-    emit(state.copyWith(aprobarResponse: Loading()));
+    emit(state.copyWith(aprobarResponse: Loading<Map<String, dynamic>>()));
 
     final response = await useCases.aprobarTicket.run(
       ticketId: event.ticketId,
@@ -91,7 +91,7 @@ class TicketAprobacionBloc extends Bloc<TicketAprobacionEvent, TicketAprobacionS
       print('❌ [TicketAprobacionBloc] Rechazando ticket: ${event.ticketId}');
     }
 
-    emit(state.copyWith(rechazarResponse: Loading()));
+    emit(state.copyWith(rechazarResponse: Loading<Map<String, dynamic>>()));
 
     final response = await useCases.rechazarTicket.run(
       ticketId: event.ticketId,
@@ -163,7 +163,7 @@ class TicketAprobacionBloc extends Bloc<TicketAprobacionEvent, TicketAprobacionS
       print('✅ [BLoC] Aprobando ${event.ticketIds.length} tickets en lote');
     }
 
-    emit(state.copyWith(aprobarResponse: Loading()));
+    emit(state.copyWith(aprobarResponse: Loading<Map<String, dynamic>>()));
 
     final response = await useCases.aprobarTicketsLote.run(
       ticketIds: event.ticketIds,

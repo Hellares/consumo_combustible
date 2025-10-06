@@ -23,7 +23,7 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
 
   Future<void> _onLoadZonas(LoadZonas event, Emitter emit) async {
     try {
-      emit(state.copyWith(zonasResponse: Loading()));
+      emit(state.copyWith(zonasResponse: Loading<dynamic>()));
       
       final response = await locationUseCases.getZonas.run();
       emit(state.copyWith(zonasResponse: response));
@@ -40,7 +40,7 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
 
   Future<void> _onLoadSedesByZona(LoadSedesByZona event, Emitter emit) async {
     try {
-      emit(state.copyWith(sedesResponse: Loading()));
+      emit(state.copyWith(sedesResponse: Loading<dynamic>()));
       
       final response = await locationUseCases.getSedesByZona.run(event.zonaId);
       emit(state.copyWith(sedesResponse: response));
@@ -57,7 +57,7 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
 
   Future<void> _onLoadGrifosBySede(LoadGrifosBySede event, Emitter emit) async {
     try {
-      emit(state.copyWith(grifosResponse: Loading()));
+      emit(state.copyWith(grifosResponse: Loading<dynamic>()));
       
       final response = await locationUseCases.getGrifosBySede.run(event.sedeId);
       emit(state.copyWith(grifosResponse: response));

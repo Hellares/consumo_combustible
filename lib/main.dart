@@ -4,6 +4,7 @@ import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_bloc
 import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_state.dart';
 import 'package:consumo_combustible/presentation/page/auth/login/main_login_page.dart';
 import 'package:consumo_combustible/presentation/page/auth/rol_selection/role_selection_page.dart';
+import 'package:consumo_combustible/presentation/page/detalle_abastecimiento/detalles_abastecimiento_page.dart';
 import 'package:consumo_combustible/presentation/page/home_page.dart';
 import 'package:consumo_combustible/presentation/page/location/location_selection_page.dart';
 import 'package:consumo_combustible/presentation/page/ticket_abastecimiento/create_ticket_page.dart';
@@ -103,6 +104,7 @@ class MyApp extends StatelessWidget {
             'location-selection': (context) => const LocationSelectionPage(),
             'create-ticket': (context) => const CreateTicketPage(),
             'tickets-aprobacion': (context) => const TicketsAprobacionPage(),
+            'detalles-abastecimiento': (context) => const DetallesAbastecimientoPage(),
           },
         ),
       ),

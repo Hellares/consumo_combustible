@@ -12,6 +12,8 @@
 import 'package:consumo_combustible/core/fast_storage_service.dart' as _i782;
 import 'package:consumo_combustible/data/datasource/remote/service/auth_service.dart'
     as _i14;
+import 'package:consumo_combustible/data/datasource/remote/service/detalle_abastecimiento_service.dart'
+    as _i14;
 import 'package:consumo_combustible/data/datasource/remote/service/location_service.dart'
     as _i200;
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_aprobacion_service.dart'
@@ -23,6 +25,8 @@ import 'package:consumo_combustible/data/datasource/remote/service/unidad_servic
 import 'package:consumo_combustible/di/app_module.dart' as _i564;
 import 'package:consumo_combustible/domain/repository/auth_repository.dart'
     as _i120;
+import 'package:consumo_combustible/domain/repository/detalle_abastecimiento_repository.dart'
+    as _i343;
 import 'package:consumo_combustible/domain/repository/location_repository.dart'
     as _i611;
 import 'package:consumo_combustible/domain/repository/ticket_aprobacion_repository.dart'
@@ -33,6 +37,8 @@ import 'package:consumo_combustible/domain/repository/unidad_repository.dart'
     as _i41;
 import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart'
     as _i960;
+import 'package:consumo_combustible/domain/use_cases/detalle_abastecimiento/detalle_abastecimiento_use_cases.dart'
+    as _i58;
 import 'package:consumo_combustible/domain/use_cases/location/location_use_cases.dart'
     as _i636;
 import 'package:consumo_combustible/domain/use_cases/ticket/ticket_use_cases.dart'
@@ -70,6 +76,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i425.TicketAprobacionService>(
       () => appModule.ticketAprobacionService(gh<_i361.Dio>()),
     );
+    gh.factory<_i14.DetalleAbastecimientoService>(
+      () => appModule.detalleAbastecimientoService(gh<_i361.Dio>()),
+    );
+    gh.singleton<_i343.DetalleAbastecimientoRepository>(
+      () => appModule.detalleAbastecimientoRepository(
+        gh<_i14.DetalleAbastecimientoService>(),
+      ),
+    );
     gh.singleton<_i407.TicketAprobacionRepository>(
       () => appModule.ticketAprobacionRepository(
         gh<_i425.TicketAprobacionService>(),
@@ -79,6 +93,11 @@ extension GetItInjectableX on _i174.GetIt {
       () => appModule.locationRepository(
         gh<_i200.LocationService>(),
         gh<_i782.FastStorageService>(),
+      ),
+    );
+    gh.singleton<_i58.DetalleAbastecimientoUseCases>(
+      () => appModule.detalleAbastecimientoUseCases(
+        gh<_i343.DetalleAbastecimientoRepository>(),
       ),
     );
     gh.singleton<_i148.TicketAprobacionUseCases>(

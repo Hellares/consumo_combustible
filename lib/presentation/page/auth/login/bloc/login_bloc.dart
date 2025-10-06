@@ -197,7 +197,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     }
 
     // Loading inmediato
-    emit(state.copyWith(response: Loading(), formKey: formKey));
+    emit(state.copyWith(response: Loading<dynamic>(), formKey: formKey));
 
     try {
       if (kDebugMode && submitStartTime != null) {
@@ -281,7 +281,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
     try {
       // Loading inmediato
-      emit(state.copyWith(response: Loading(), formKey: formKey));
+      emit(state.copyWith(response: Loading<dynamic>(), formKey: formKey));
 
       // Ejecutar logout a través del use case
       final logoutSuccess = await authUseCases.logout.run();

@@ -2,15 +2,18 @@ import 'package:consumo_combustible/core/fast_storage_service.dart';
 import 'package:consumo_combustible/data/api/dio_config.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/auth_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/location_service.dart';
+import 'package:consumo_combustible/data/datasource/remote/service/detalle_abastecimiento_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_aprobacion_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/unidad_service.dart';
 import 'package:consumo_combustible/data/repository/auth_repository_impl.dart';
+import 'package:consumo_combustible/data/repository/detalle_abastecimiento_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/location_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/ticket_aprobacion_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/ticket_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/unidad_repository_impl.dart';
 import 'package:consumo_combustible/domain/repository/auth_repository.dart';
+import 'package:consumo_combustible/domain/repository/detalle_abastecimiento_repository.dart';
 import 'package:consumo_combustible/domain/repository/location_repository.dart';
 import 'package:consumo_combustible/domain/repository/ticket_aprobacion_repository.dart';
 import 'package:consumo_combustible/domain/repository/ticket_repository.dart';
@@ -30,6 +33,10 @@ import 'package:consumo_combustible/domain/use_cases/location/get_selected_locat
 import 'package:consumo_combustible/domain/use_cases/location/get_zonas_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/location/location_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/location/save_selected_location_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/detalle_abastecimiento/actualizar_detalle.dart';
+import 'package:consumo_combustible/domain/use_cases/detalle_abastecimiento/concluir_detalle.dart';
+import 'package:consumo_combustible/domain/use_cases/detalle_abastecimiento/detalle_abastecimiento_use_cases.dart';
+import 'package:consumo_combustible/domain/use_cases/detalle_abastecimiento/get_detalles_abastecimiento.dart';
 import 'package:consumo_combustible/domain/use_cases/ticket/create_ticket_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/ticket/ticket_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/ticket_aprobacion/aprobar_ticket.dart';
@@ -123,6 +130,22 @@ abstract class AppModule {
     if (kDebugMode) print('📦 Creando TicketAprobacionRepository singleton');
     return TicketAprobacionRepositoryImpl(service);
   }
+
+  // DETALLE ABASTECIMIENTO SERVICE
+  @injectable
+  DetalleAbastecimientoService detalleAbastecimientoService(Dio dio) {
+    if (kDebugMode) print('📊 Creando DetalleAbastecimientoService');
+    return DetalleAbastecimientoService(dio);
+  }
+
+  // DETALLE ABASTECIMIENTO REPOSITORY
+  @singleton
+  DetalleAbastecimientoRepository detalleAbastecimientoRepository(
+    DetalleAbastecimientoService service,
+  ) {
+    if (kDebugMode) print('📦 Creando DetalleAbastecimientoRepository singleton');
+    return DetalleAbastecimientoRepositoryImpl(service);
+  }
   
   //---------------------------------------------------------------------------------//
   // ✅ USE CASES CONTAINERS - Singleton optimizado
@@ -184,6 +207,19 @@ abstract class AppModule {
       aprobarTicket: AprobarTicket(repository),
       rechazarTicket: RechazarTicket(repository),
       aprobarTicketsLote: AprobarTicketsLote(repository),
+    );
+  }
+
+  @singleton
+  DetalleAbastecimientoUseCases detalleAbastecimientoUseCases(
+    DetalleAbastecimientoRepository repository,
+  ) {
+    if (kDebugMode) print('🎯 Creando DetalleAbastecimientoUseCases singleton');
+
+    return DetalleAbastecimientoUseCases(
+      getDetallesAbastecimiento: GetDetallesAbastecimiento(repository),
+      actualizarDetalle: ActualizarDetalle(repository),
+      concluirDetalle: ConcluirDetalle(repository),
     );
   }
 }
