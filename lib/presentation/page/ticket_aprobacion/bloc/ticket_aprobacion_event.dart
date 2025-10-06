@@ -75,3 +75,16 @@ class ResetAprobacionState extends TicketAprobacionEvent {
   @override
   List<Object?> get props => [];
 }
+
+class AprobarTicketsLoteEvent extends TicketAprobacionEvent {
+  final List<int> ticketIds;
+  final int aprobadoPorId;
+
+  const AprobarTicketsLoteEvent({
+    required this.ticketIds,
+    required this.aprobadoPorId,
+  });
+
+  @override
+  List<Object?> get props => [ticketIds, aprobadoPorId];
+}

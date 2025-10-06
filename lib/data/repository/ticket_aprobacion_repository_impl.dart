@@ -36,4 +36,15 @@ class TicketAprobacionRepositoryImpl implements TicketAprobacionRepository {
       motivo: motivo,
     );
   }
+  
+  @override
+  Future<Resource<Map<String, dynamic>>> aprobarTicketsLote(
+    {required List<int> ticketIds, 
+    required int aprobadoPorId
+    }) {
+    return service.aprobarTicketsLote(
+      ticketIds: ticketIds,
+      aprobadoPorId: aprobadoPorId,
+    );
+  }
 }

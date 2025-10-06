@@ -12,4 +12,9 @@ abstract class TicketAprobacionRepository {
     required int rechazadoPorId,
     required String motivo,
   });
+
+  Future<Resource<Map<String, dynamic>>> aprobarTicketsLote({
+    required List<int> ticketIds,
+    required int aprobadoPorId,
+  });
 }

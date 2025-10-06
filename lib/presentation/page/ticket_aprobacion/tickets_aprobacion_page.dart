@@ -1,3 +1,5 @@
+// lib/presentation/page/ticket_aprobacion/tickets_aprobacion_page.dart
+
 import 'package:consumo_combustible/core/widgets/snack.dart';
 import 'package:consumo_combustible/domain/models/ticket_abastecimiento.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart';
@@ -6,7 +8,6 @@ import 'package:consumo_combustible/injection.dart';
 import 'package:consumo_combustible/presentation/page/ticket_aprobacion/bloc/ticket_aprobacion_bloc.dart';
 import 'package:consumo_combustible/presentation/page/ticket_aprobacion/bloc/ticket_aprobacion_event.dart';
 import 'package:consumo_combustible/presentation/page/ticket_aprobacion/bloc/ticket_aprobacion_state.dart';
-import 'package:consumo_combustible/presentation/page/ticket_aprobacion/widgets/aprobar_ticket_dialog.dart';
 import 'package:consumo_combustible/presentation/page/ticket_aprobacion/widgets/rechazar_ticket_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -53,13 +54,29 @@ class _TicketsAprobacionPageState extends State<TicketsAprobacionPage> {
       body: BlocConsumer<TicketAprobacionBloc, TicketAprobacionState>(
         bloc: _bloc,
         listener: (context, state) {
-          // Listener para aprobación exitosa
-          if (state.aprobarResponse is Success) {
-            SnackBarHelper.showSuccess(context, 'Ticket aprobado exitosamente');
+          // Listener para aprobación en lote
+          if (state.aprobarResponse is Success<Map<String, dynamic>>) {
+            final data = (state.aprobarResponse as Success<Map<String, dynamic>>).data;
+            final exitosos = data['exitosos'] ?? 0;
+            final fallidos = data['fallidos'] ?? 0;
+            
+            if (fallidos == 0) {
+              SnackBarHelper.showSuccess(
+                context, 
+                '$exitosos ticket(s) aprobado(s) exitosamente'
+              );
+            } else {
+              SnackBarHelper.showWarning(
+                context,
+                '$exitosos exitosos, $fallidos fallidos. Revisa los errores.'
+              );
+            }
+            
             _bloc.add(const ResetAprobacionState());
           } else if (state.aprobarResponse is Error) {
             final error = state.aprobarResponse as Error;
             SnackBarHelper.showError(context, error.message);
+            _bloc.add(const ResetAprobacionState());
           }
 
           // Listener para rechazo exitoso
@@ -69,6 +86,7 @@ class _TicketsAprobacionPageState extends State<TicketsAprobacionPage> {
           } else if (state.rechazarResponse is Error) {
             final error = state.rechazarResponse as Error;
             SnackBarHelper.showError(context, error.message);
+            _bloc.add(const ResetAprobacionState());
           }
         },
         builder: (context, state) {
@@ -94,10 +112,7 @@ class _TicketsAprobacionPageState extends State<TicketsAprobacionPage> {
 
           return Column(
             children: [
-              // Header con selección
               _buildSelectionHeader(state),
-
-              // Lista de tickets
               Expanded(
                 child: ListView.builder(
                   itemCount: state.tickets.length,
@@ -108,8 +123,6 @@ class _TicketsAprobacionPageState extends State<TicketsAprobacionPage> {
                   },
                 ),
               ),
-
-              // Bottom bar con acciones
               if (state.hasSelectedTickets) _buildActionBar(state),
             ],
           );
@@ -143,9 +156,10 @@ class _TicketsAprobacionPageState extends State<TicketsAprobacionPage> {
             ),
           ),
           if (state.hasSelectedTickets)
-            TextButton(
+            TextButton.icon(
               onPressed: () => _bloc.add(const DeselectAllTickets()),
-              child: const Text('Limpiar'),
+              icon: const Icon(Icons.clear, size: 18),
+              label: const Text('Limpiar'),
             ),
         ],
       ),
@@ -154,88 +168,57 @@ class _TicketsAprobacionPageState extends State<TicketsAprobacionPage> {
 
   Widget _buildTicketCard(TicketAbastecimiento ticket, bool isSelected) {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      elevation: isSelected ? 4 : 1,
       color: isSelected ? Colors.blue.shade50 : null,
-      child: ListTile(
-        leading: Checkbox(
-          value: isSelected,
-          onChanged: (value) {
-            _bloc.add(ToggleTicketSelection(ticket.id));
-          },
-        ),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                ticket.numeroTicket,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: ticket.estado.colorValue.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                ticket.estado.nombre,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: ticket.estado.colorValue,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(Icons.local_shipping, size: 14),
-                const SizedBox(width: 4),
-                Text('${ticket.unidad.placa} - ${ticket.unidad.marca}'),
-              ],
-            ),
-            const SizedBox(height: 2),
-            Row(
-              children: [
-                const Icon(Icons.local_gas_station, size: 14),
-                const SizedBox(width: 4),
-                Text('${ticket.cantidad} gal - ${ticket.grifo.nombre}'),
-              ],
-            ),
-            const SizedBox(height: 2),
-            Row(
-              children: [
-                const Icon(Icons.person, size: 14),
-                const SizedBox(width: 4),
-                Text(
-                  '${ticket.solicitadoPor.nombres} ${ticket.solicitadoPor.apellidos}',
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ],
-            ),
-          ],
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.check_circle, color: Colors.green),
-              onPressed: () => _aprobarTicket(ticket),
-              tooltip: 'Aprobar',
-            ),
-            IconButton(
-              icon: const Icon(Icons.cancel, color: Colors.red),
-              onPressed: () => _rechazarTicket(ticket),
-              tooltip: 'Rechazar',
-            ),
-          ],
-        ),
+      child: InkWell(
         onTap: () => _verDetalleTicket(ticket),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Checkbox(
+                value: isSelected,
+                onChanged: (value) {
+                  _bloc.add(ToggleTicketSelection(ticket.id));
+                },
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      ticket.numeroTicket,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text('Unidad: ${ticket.unidad.placa}'),
+                    Text('Conductor: ${ticket.conductor.nombres} ${ticket.conductor.apellidos}'),
+                    Text('Cantidad: ${ticket.cantidad} gal'),
+                    Text('Fecha: ${ticket.fecha}'),
+                  ],
+                ),
+              ),
+              Column(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.check_circle, color: Colors.green),
+                    onPressed: () => _aprobarTicket(ticket),
+                    tooltip: 'Aprobar',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.cancel, color: Colors.red),
+                    onPressed: () => _rechazarTicket(ticket),
+                    tooltip: 'Rechazar',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -257,26 +240,36 @@ class _TicketsAprobacionPageState extends State<TicketsAprobacionPage> {
         children: [
           Expanded(
             child: ElevatedButton.icon(
-              onPressed: () => _aprobarSeleccionados(state),
-              icon: const Icon(Icons.check),
+              onPressed: state.aprobarResponse is Loading 
+                ? null 
+                : () => _aprobarSeleccionados(state),
+              icon: state.aprobarResponse is Loading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.check_circle),
               label: Text('Aprobar (${state.selectedCount})'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: ElevatedButton.icon(
-              onPressed: () => _rechazarSeleccionados(state),
-              icon: const Icon(Icons.close),
+              onPressed: state.rechazarResponse is Loading
+                ? null
+                : () => _rechazarSeleccionados(state),
+              icon: const Icon(Icons.cancel),
               label: Text('Rechazar (${state.selectedCount})'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ),
           ),
@@ -293,7 +286,20 @@ class _TicketsAprobacionPageState extends State<TicketsAprobacionPage> {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AprobarTicketDialog(ticket: ticket),
+      builder: (context) => AlertDialog(
+        title: const Text('Aprobar Ticket'),
+        content: Text('¿Confirmas la aprobación del ticket ${ticket.numeroTicket}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Aprobar'),
+          ),
+        ],
+      ),
     );
 
     if (confirmed == true) {
@@ -313,9 +319,9 @@ class _TicketsAprobacionPageState extends State<TicketsAprobacionPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Aprobar Tickets'),
+        title: Text('Aprobar ${state.selectedCount} Ticket(s)'),
         content: Text(
-          '¿Aprobar ${state.selectedCount} ticket(s) seleccionado(s)?',
+          '¿Confirmas la aprobación de ${state.selectedCount} ticket(s) seleccionado(s)?'
         ),
         actions: [
           TextButton(
@@ -331,12 +337,10 @@ class _TicketsAprobacionPageState extends State<TicketsAprobacionPage> {
     );
 
     if (confirmed == true) {
-      for (final ticketId in state.selectedTicketIds) {
-        _bloc.add(AprobarTicketEvent(
-          ticketId: ticketId,
-          aprobadoPorId: _currentUserId!,
-        ));
-      }
+      _bloc.add(AprobarTicketsLoteEvent(
+        ticketIds: state.selectedTicketIds.toList(),
+        aprobadoPorId: _currentUserId!,
+      ));
     }
   }
 
@@ -409,6 +413,54 @@ class _TicketsAprobacionPageState extends State<TicketsAprobacionPage> {
   }
 
   void _verDetalleTicket(TicketAbastecimiento ticket) {
-    // Implementar navegación a detalle
+    // TODO: Implementar navegación a detalle
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(ticket.numeroTicket),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildDetailRow('Unidad', ticket.unidad.placa),
+              _buildDetailRow('Conductor', '${ticket.conductor.nombres} ${ticket.conductor.apellidos}'),
+              _buildDetailRow('Grifo', ticket.grifo.nombre),
+              _buildDetailRow('Cantidad', '${ticket.cantidad} gal'),
+              _buildDetailRow('Km Actual', ticket.kilometrajeActual.toString()),
+              if (ticket.kilometrajeAnterior != null)
+                _buildDetailRow('Km Anterior', ticket.kilometrajeAnterior.toString()),
+              _buildDetailRow('Precinto', ticket.precintoNuevo),
+              _buildDetailRow('Fecha', ticket.fecha),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              '$label:',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          Expanded(child: Text(value)),
+        ],
+      ),
+    );
   }
 }

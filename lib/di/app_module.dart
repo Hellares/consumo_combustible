@@ -33,6 +33,7 @@ import 'package:consumo_combustible/domain/use_cases/location/save_selected_loca
 import 'package:consumo_combustible/domain/use_cases/ticket/create_ticket_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/ticket/ticket_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/ticket_aprobacion/aprobar_ticket.dart';
+import 'package:consumo_combustible/domain/use_cases/ticket_aprobacion/aprobar_tickets_lote.dart';
 import 'package:consumo_combustible/domain/use_cases/ticket_aprobacion/get_tickets_solicitados.dart';
 import 'package:consumo_combustible/domain/use_cases/ticket_aprobacion/rechazar_ticket.dart';
 import 'package:consumo_combustible/domain/use_cases/ticket_aprobacion/ticket_aprobacion_use_cases.dart';
@@ -177,11 +178,12 @@ abstract class AppModule {
     TicketAprobacionRepository repository,
   ) {
     if (kDebugMode) print('🎯 Creando TicketAprobacionUseCases singleton');
-    
+
     return TicketAprobacionUseCases(
       getTicketsSolicitados: GetTicketsSolicitados(repository),
       aprobarTicket: AprobarTicket(repository),
       rechazarTicket: RechazarTicket(repository),
+      aprobarTicketsLote: AprobarTicketsLote(repository),
     );
   }
 }

@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 class ApiConfig {
   // static const String localApi = "api-gateway.syncronize.net.pe";
   static const String localApi = "192.168.100.3:3000";
-  static const String productionApi = 'api-gateway.syncronize.net.pe';
+  static const String productionApi = 'combustible-api.syncronize.net.pe';
   // static const String productionApi = '192.168.100.3:3000';
   
   static bool get isProduction => kReleaseMode;

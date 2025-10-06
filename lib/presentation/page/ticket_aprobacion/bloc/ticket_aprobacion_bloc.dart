@@ -17,6 +17,7 @@ class TicketAprobacionBloc extends Bloc<TicketAprobacionEvent, TicketAprobacionS
     on<SelectAllTickets>(_onSelectAllTickets);
     on<DeselectAllTickets>(_onDeselectAllTickets);
     on<ResetAprobacionState>(_onResetAprobacionState);
+    on<AprobarTicketsLoteEvent>(_onAprobarTicketsLote);
   }
 
   Future<void> _onLoadTicketsSolicitados(LoadTicketsSolicitados event,Emitter<TicketAprobacionState> emit,) async {
@@ -152,5 +153,38 @@ class TicketAprobacionBloc extends Bloc<TicketAprobacionEvent, TicketAprobacionS
     Emitter<TicketAprobacionState> emit,
   ) async {
     emit(const TicketAprobacionState());
+  }
+
+  Future<void> _onAprobarTicketsLote(
+    AprobarTicketsLoteEvent event,
+    Emitter<TicketAprobacionState> emit,
+  ) async {
+    if (kDebugMode) {
+      print('✅ [BLoC] Aprobando ${event.ticketIds.length} tickets en lote');
+    }
+
+    emit(state.copyWith(aprobarResponse: Loading()));
+
+    final response = await useCases.aprobarTicketsLote.run(
+      ticketIds: event.ticketIds,
+      aprobadoPorId: event.aprobadoPorId,
+    );
+
+    if (response is Success<Map<String, dynamic>>) {
+      final data = response.data;
+      final exitosos = data['exitosos'] ?? 0;
+      final fallidos = data['fallidos'] ?? 0;
+
+      if (kDebugMode) {
+        print('✅ [BLoC] Lote procesado: $exitosos exitosos, $fallidos fallidos');
+      }
+
+      emit(state.copyWith(aprobarResponse: response));
+      
+      // Recargar tickets
+      add(const LoadTicketsSolicitados());
+    } else if (response is Error) {
+      emit(state.copyWith(aprobarResponse: response));
+    }
   }
 }

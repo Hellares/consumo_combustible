@@ -114,7 +114,7 @@ class TicketAprobacionService {
   /// Rechazar ticket
   Future<Resource<TicketAbastecimiento>> rechazarTicket({
     required int ticketId,
-    required int rechazadoPorId,
+    required int rechazadoPorId, // Ya no se usa pero mantener por compatibilidad
     required String motivo,
   }) async {
     try {
@@ -125,7 +125,6 @@ class TicketAprobacionService {
       final response = await _dio.patch(
         '/api/tickets-abastecimiento/$ticketId/rechazar',
         data: {
-          'rechazadoPorId': rechazadoPorId,
           'motivoRechazo': motivo,
         },
       );
@@ -163,4 +162,40 @@ class TicketAprobacionService {
       return Error('Error inesperado: $e');
     }
   }
+
+  Future<Resource<Map<String, dynamic>>> aprobarTicketsLote({
+  required List<int> ticketIds,
+  required int aprobadoPorId,
+}) async {
+  try {
+    if (kDebugMode) {
+      print('✅ Aprobando ${ticketIds.length} tickets en lote');
+    }
+
+    final response = await _dio.post(
+      '/api/tickets-abastecimiento/admin/aprobar-lote',
+      data: {'ids': ticketIds},
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final data = response.data['data'];
+      
+      if (kDebugMode) {
+        print('✅ Resultado: ${data['exitosos']} exitosos, ${data['fallidos']} fallidos');
+      }
+
+      return Success(data);
+    }
+
+    return Error('Error ${response.statusCode}');
+
+  } on DioException catch (e) {
+    if (kDebugMode) {
+      print('❌ Error en aprobación lote: ${e.message}');
+    }
+    return Error(e.response?.data['message'] ?? 'Error al aprobar tickets');
+  } catch (e) {
+    return Error('Error inesperado: $e');
+  }
+}
 }
