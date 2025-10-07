@@ -23,6 +23,8 @@ class CurvedNavigationBar extends StatefulWidget {
   final Duration animationDuration;
   final double height;
   final double? maxWidth;
+  final double iconSize;
+  final double curveDepth;
 
   CurvedNavigationBar({
     super.key,
@@ -36,13 +38,17 @@ class CurvedNavigationBar extends StatefulWidget {
     _LetIndexPage? letIndexChange,
     this.animationCurve = Curves.easeOut,
     this.animationDuration = const Duration(milliseconds: 600),
-    this.height = 75.0,
+    this.height = 70.0,
     this.maxWidth,
+    this.iconSize = 8.0,
+    this.curveDepth = 0.40,
   })  : letIndexChange = letIndexChange ?? ((_) => true),
         assert(items.isNotEmpty),
         assert(0 <= index && index < items.length),
-        assert(0 <= height && height <= 75.0),
-        assert(maxWidth == null || 0 <= maxWidth);
+        assert(0 <= height && height <= 70.0),
+        assert(maxWidth == null || 0 <= maxWidth),
+        assert(iconSize > 0),
+        assert(0.0 <= curveDepth && curveDepth <= 1.0);
 
   @override
   CurvedNavigationBarState createState() => CurvedNavigationBarState();
@@ -145,7 +151,7 @@ class CurvedNavigationBarState extends State<CurvedNavigationBar>
                             color: widget.buttonBackgroundColor ?? widget.color,
                             type: MaterialType.circle,
                             child: Padding(
-                              padding: const EdgeInsets.all(8.0),
+                              padding: EdgeInsets.all(widget.iconSize),
                               child: _icon,
                             ),
                           ),
@@ -158,7 +164,12 @@ class CurvedNavigationBarState extends State<CurvedNavigationBar>
                       bottom: 0 - (75.0 - widget.height),
                       child: CustomPaint(
                         painter: NavCustomPainter(
-                            _pos, _length, widget.color, textDirection),
+                          _pos,
+                          _length,
+                          widget.color,
+                          textDirection,
+                          curveDepth: widget.curveDepth,
+                        ),
                         child: Container(
                           height: 75.0,
                         ),

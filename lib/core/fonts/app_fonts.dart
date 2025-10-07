@@ -97,38 +97,38 @@ extension AppFontPresetStyles on AppFont {
       );
 
   TextStyle get title => style(
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: FontWeight.bold,
         color: AppColors.blue3,
       );
 
   TextStyle get subtitle => style(
-        fontSize: 12,
+        fontSize: 10,
         // fontWeight: FontWeight.bold,
         color: AppColors.blue3,
       );
 
 
   TextStyle get heading => style(
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: FontWeight.w600,
         color: Colors.blueGrey[900],
       );
 
   TextStyle get caption => style(
-        fontSize: 12,
+        fontSize: 10,
         fontWeight: FontWeight.w300,
         color: Colors.grey[700],
       );
 
   TextStyle get button => style(
-        fontSize: 16,
+        fontSize: 12,
         fontWeight: FontWeight.w500,
         color: Colors.white,
       );
 
   TextStyle get link => style(
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: FontWeight.w400,
         color: Colors.blue,
         decoration: TextDecoration.underline,

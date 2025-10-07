@@ -61,7 +61,7 @@ class SmartAppBar extends StatefulWidget implements PreferredSizeWidget {
     // Logo
     this.showLogo = true,
     this.logoPath = 'assets/animations/logo1.json',
-    this.logoSize = 27,
+    this.logoSize = 25,
     this.isLottieLogo = true,
     // Usuario automático
     this.showUserInfo = false,
@@ -234,7 +234,7 @@ class _SmartAppBarState extends State<SmartAppBar> {
       widget.title!,
       style:
           widget.titleStyle ??
-          AppFont.pirulentBold.style(fontSize: 11, color: AppColors.blue3),
+          AppFont.pirulentBold.style(fontSize: 8, color: AppColors.blue3),
     );
   }
 
@@ -338,17 +338,17 @@ class _SmartAppBarState extends State<SmartAppBar> {
           children: [
             // Avatar
             Container(
-              width: 32,
-              height: 32,
+              width: 26,
+              height: 26,
               decoration: BoxDecoration(
                 color: AppColors.blue3.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: AppColors.blue3.withValues(alpha: 0.3),
-                  width: 1.5,
+                  width: 1.0,
                 ),
               ),
-              child: Icon(Icons.person, size: 18, color: AppColors.blue2),
+              child: Icon(Icons.person, size: 15, color: AppColors.blue2),
             ),
             const SizedBox(width: 8),
             // Rol y Nombre
@@ -363,7 +363,7 @@ class _SmartAppBarState extends State<SmartAppBar> {
                       style:
                           widget.userInfoStyle ??
                           AppFont.oxygenBold.style(
-                            fontSize: 11,
+                            fontSize: 9,
                             color: AppColors.blue3,
                           ),
                       overflow: TextOverflow.ellipsis,
@@ -372,7 +372,7 @@ class _SmartAppBarState extends State<SmartAppBar> {
                     Text(
                       name,
                       style: AppFont.oxygenRegular.style(
-                        fontSize: 9,
+                        fontSize: 7,
                         color: AppColors.grey,
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -505,7 +505,7 @@ class _SmartAppBarState extends State<SmartAppBar> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (modalContext) => Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(15),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -513,9 +513,9 @@ class _SmartAppBarState extends State<SmartAppBar> {
             Row(
               children: [
                 CircleAvatar(
-                  radius: 30,
+                  radius: 25,
                   backgroundColor: AppColors.blue3.withValues(alpha: 0.1),
-                  child: const Icon(Icons.person, size: 30, color: Colors.blue),
+                  child: const Icon(Icons.person, size: 25, color: Colors.blue),
                 ),
                 const SizedBox(width: 16),
                 Expanded(

@@ -152,8 +152,8 @@ class _LocationSelectionPageState extends State<LocationSelectionPage> {
                             : details.onStepContinue,
                         child: _isSaving
                             ? const SizedBox(
-                                width: 20,
-                                height: 20,
+                                width: 18,
+                                height: 18,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                 ),

@@ -5,9 +5,14 @@ class NavCustomPainter extends CustomPainter {
   late double s;
   Color color;
   TextDirection textDirection;
+  final double curveDepth;
 
   NavCustomPainter(
-      double startingLoc, int itemsLength, this.color, this.textDirection) {
+      double startingLoc,
+      int itemsLength,
+      this.color,
+      this.textDirection,
+      {this.curveDepth = 0.40}) {
     final span = 1.0 / itemsLength;
     s = 0.2;
     double l = startingLoc + (span - s) / 2;
@@ -27,13 +32,13 @@ class NavCustomPainter extends CustomPainter {
         (loc + s * 0.20) * size.width,
         size.height * 0.05,
         loc * size.width,
-        size.height * 0.60,
+        size.height * curveDepth,
         (loc + s * 0.50) * size.width,
-        size.height * 0.60,
+        size.height * curveDepth,
       )
       ..cubicTo(
         (loc + s) * size.width,
-        size.height * 0.60,
+        size.height * curveDepth,
         (loc + s - s * 0.20) * size.width,
         size.height * 0.05,
         (loc + s + 0.1) * size.width,

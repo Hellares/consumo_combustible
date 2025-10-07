@@ -4,6 +4,7 @@ import 'package:consumo_combustible/core/theme/app_gradients.dart';
 import 'package:consumo_combustible/core/theme/gradient_container.dart';
 import 'package:consumo_combustible/core/widgets/custom_date_textfiels_container/custom_dropdown.dart';
 import 'package:consumo_combustible/core/widgets/custom_date_textfiels_container/custom_textfield.dart';
+import 'package:consumo_combustible/core/widgets/cutom_button/custom_button.dart';
 import 'package:consumo_combustible/core/widgets/snack.dart';
 import 'package:consumo_combustible/domain/models/create_ticket_request.dart';
 import 'package:consumo_combustible/domain/models/selected_location.dart';
@@ -126,67 +127,79 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          title: AppSubtitle('CREAR TICKET DE ABASTECIMIENTO'),
-          backgroundColor: Colors.transparent,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              tooltip: 'Refrescar unidades',
-              onPressed: _refreshUnidades, // ✅ Simple y limpio
+        body: Column(
+          children: [
+            Container(
+            height: 25,
+            padding: const EdgeInsets.only(left: 16, right: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                AppTitle('CREAR TICKET DE ABASTECIMIENTO', fontSize: 10,),
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: const Icon(Icons.refresh, size: 20, color: Colors.blue),
+                  onPressed: _refreshUnidades,
+                ),
+              ],
+            ),
+          ),
+            Expanded(
+              child: BlocConsumer<TicketBloc, TicketState>(
+                bloc: _bloc,
+                listener: (context, state) {
+                  // Listener para errores de unidades
+                  if (state.unidadesResponse is Error) {
+                    final error = state.unidadesResponse as Error;
+                    SnackBarHelper.showError(context, error.message);
+                  }
+              
+                  // Listener para creación de ticket
+                  if (state.createResponse is Success) {
+                    final ticket =
+                        (state.createResponse as Success).data
+                            as TicketAbastecimiento;
+                    _showSuccessDialog(ticket);
+                  } else if (state.createResponse is Error) {
+                    final error = state.createResponse as Error;
+                    SnackBarHelper.showError(context, error.message);
+                  }
+                },
+                builder: (context, state) {
+                  final isLoadingTicket = state.createResponse is Loading;
+              
+                  return Form(
+                    key: _formKey,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildLocationCard(),
+                          const SizedBox(height: 24),
+              
+                          // ✅ DROPDOWN DINÁMICO
+                          _buildUnidadSelector(state),
+              
+                          const SizedBox(height: 16),
+                          _buildKilometrajeField(),
+              
+                          const SizedBox(height: 16),
+                          _buildPrecintoField(),
+                          const SizedBox(height: 16),
+                          _buildCantidadField(),
+                          const SizedBox(height: 32),
+                          _buildSubmitButton(isLoadingTicket),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           ],
-        ),
-        body: BlocConsumer<TicketBloc, TicketState>(
-          bloc: _bloc,
-          listener: (context, state) {
-            // Listener para errores de unidades
-            if (state.unidadesResponse is Error) {
-              final error = state.unidadesResponse as Error;
-              SnackBarHelper.showError(context, error.message);
-            }
-
-            // Listener para creación de ticket
-            if (state.createResponse is Success) {
-              final ticket =
-                  (state.createResponse as Success).data
-                      as TicketAbastecimiento;
-              _showSuccessDialog(ticket);
-            } else if (state.createResponse is Error) {
-              final error = state.createResponse as Error;
-              SnackBarHelper.showError(context, error.message);
-            }
-          },
-          builder: (context, state) {
-            final isLoadingTicket = state.createResponse is Loading;
-
-            return Form(
-              key: _formKey,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildLocationCard(),
-                    const SizedBox(height: 24),
-
-                    // ✅ DROPDOWN DINÁMICO
-                    _buildUnidadSelector(state),
-
-                    const SizedBox(height: 16),
-                    _buildKilometrajeField(),
-
-                    const SizedBox(height: 16),
-                    _buildPrecintoField(),
-                    const SizedBox(height: 16),
-                    _buildCantidadField(),
-                    const SizedBox(height: 32),
-                    _buildSubmitButton(isLoadingTicket),
-                  ],
-                ),
-              ),
-            );
-          },
         ),
       ),
     );
@@ -210,23 +223,16 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     return Card(
       color: Colors.blue.shade50,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(Icons.location_on, color: Colors.blue.shade700),
+                Icon(Icons.location_on, color: AppColors.red),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    'Ubicación Actual',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue.shade700,
-                    ),
-                  ),
+                  child: AppSubtitle('UBICACION ACTUAL', fontSize: 9,),
                 ),
                 // ✅ BOTÓN PARA CAMBIAR UBICACIÓN
                 InkWell(
@@ -244,11 +250,11 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
-                      vertical: 4,
+                      vertical: 2,
                     ),
                     decoration: BoxDecoration(
                       color: Colors.blue.shade100,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.blue.shade300),
                     ),
                     child: Row(
@@ -257,17 +263,10 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                         Icon(
                           Icons.edit_location,
                           size: 16,
-                          color: Colors.blue.shade700,
+                          color: AppColors.red,
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          'Cambiar',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.blue.shade700,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
+                        AppLabelText('Cambiar',fontSize: 8,)
                       ],
                     ),
                   ),
@@ -287,7 +286,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 5),
+      padding: const EdgeInsets.only(bottom: 3),
       child: Row(
         children: [
           SizedBox(width: 100, child: AppLabelText(label)),
@@ -446,28 +445,6 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     );
   }
 
-  // Widget _buildCantidadField() {
-  //   return CustomTextField(
-  //     controller: _cantidadController,
-  //     hintText: 'Cantidad de Combustible *',
-  //     borderColor: AppColors.blue3,
-  //     prefixIcon: const Icon(Icons.local_gas_station),
-  //     suffixText: 'gal',
-  //     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-  //     inputFormatters: [
-  //       FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-  //     ],
-  //     validator: (value) {
-  //       if (value == null || value.isEmpty) return 'Ingresa la cantidad';
-  //       final cantidad = double.tryParse(value);
-  //       if (cantidad == null) return 'Número inválido';
-  //       if (cantidad <= 0) return 'Debe ser mayor a 0';
-  //       if (cantidad > 1000) return 'Cantidad muy alta';
-  //       return null;
-  //     },
-  //   );
-  // }
-
   Widget _buildCantidadField() {
   // Obtener unidad seleccionada si existe
   final unidadSeleccionada = _selectedUnidadId != null
@@ -533,61 +510,22 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
 }
 
   Widget _buildSubmitButton(bool isLoading) {
-    return SizedBox(
+    return CustomButton(
+      text: 'Crear Ticket',
       width: double.infinity,
-      child: ElevatedButton(
-        onPressed: isLoading ? null : _createTicket,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-        ),
-        child: isLoading
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
-            : const Text(
-                'Crear Ticket',
-                style: TextStyle(fontSize: 16, color: Colors.white),
-              ),
-      ),
+      backgroundColor: AppColors.blue,
+      buttonState: isLoading ? ButtonState.loading : ButtonState.idle,
+      loadingText: 'Creando...',
+      loadingIndicatorColor: AppColors.green,
+      enabled: !isLoading,
+      onPressed: _createTicket,
+      enableShadows: true,
     );
   }
 
-  // Future<void> _createTicket() async {
-  //   if (!_formKey.currentState!.validate()) return;
+ 
 
-  //   // ✅ Validar unidad seleccionada
-  //   if (_selectedUnidadId == null) {
-  //     SnackBarHelper.showError(context, 'Selecciona una unidad');
-  //     return;
-  //   }
 
-  //   final authUseCases = locator<AuthUseCases>();
-  //   final userSession = await authUseCases.getUserSession.run();
-
-  //   if (!mounted) return;
-
-  //   if (userSession == null) {
-  //     SnackBarHelper.showError(context, 'Sesión no válida');
-  //     return;
-  //   }
-
-  //   final request = CreateTicketRequest(
-  //     unidadId: _selectedUnidadId!,
-  //     conductorId: userSession.data!.user.id,
-  //     grifoId: _location!.grifo.id,
-  //     kilometrajeActual: double.parse(_kilometrajeController.text),
-  //     precintoNuevo: _precintoController.text,
-  //     cantidad: double.parse(_cantidadController.text),
-  //   );
-
-  //   _bloc.add(CreateTicket(request));
-  // }
 
   Future<void> _createTicket() async {
   if (!_formKey.currentState!.validate()) return;

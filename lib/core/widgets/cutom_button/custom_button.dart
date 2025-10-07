@@ -13,7 +13,7 @@ enum ButtonState {
 // 🚀 CONSTANTES
 class CustomButtonConstants {
   static const Duration defaultAnimationDuration = Duration(milliseconds: 300);
-  static const double defaultBorderRadius = 6.0;
+  static const double defaultBorderRadius = 18.0;
   static const double defaultHeight = 37.0;
 }
 
@@ -393,7 +393,7 @@ class _CustomButtonState extends State<CustomButton>
 
   TextStyle _getTextStyle() {
     final defaultStyle = TextStyle(
-      fontSize: widget.fontSize ?? 14,
+      fontSize: widget.fontSize ?? 12,
       fontWeight: widget.fontWeight ?? FontWeight.w600,
       color: widget.textColor ??
           (widget.enabled ? Colors.white : Colors.grey.shade600),

@@ -1,3 +1,5 @@
+import 'package:consumo_combustible/core/fonts/app_text_widgets.dart';
+import 'package:consumo_combustible/core/theme/app_colors.dart';
 import 'package:consumo_combustible/domain/models/ticket_abastecimiento.dart';
 import 'package:flutter/material.dart';
 
@@ -36,11 +38,15 @@ class _RechazarTicketDialogState extends State<RechazarTicketDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      titlePadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
       title: Row(
         children: [
           Icon(Icons.cancel_outlined, color: Colors.red.shade700),
           const SizedBox(width: 12),
-          const Text('Rechazar Ticket'),
+          const Text('Rechazar Ticket',style: TextStyle(fontSize: 12),),
         ],
       ),
       content: SingleChildScrollView(
@@ -52,30 +58,32 @@ class _RechazarTicketDialogState extends State<RechazarTicketDialog> {
             children: [
               // Info del ticket
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: Colors.red.shade50,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.red.shade200),
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      'Ticket: ${widget.ticket.numeroTicket}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                    Center(
+                      child: Text(
+                        'Ticket: ${widget.ticket.numeroTicket}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Unidad: ${widget.ticket.unidad.placa}',
-                      style: const TextStyle(fontSize: 13),
+                      'Unidad:      ${widget.ticket.unidad.placa}',
+                      style: const TextStyle(fontSize: 12),
                     ),
                     Text(
-                      'Cantidad: ${widget.ticket.cantidad} gal',
-                      style: const TextStyle(fontSize: 13),
+                      'Cantidad:   ${widget.ticket.cantidad} gal',
+                      style: const TextStyle(fontSize: 12),
                     ),
                   ],
                 ),
@@ -86,7 +94,7 @@ class _RechazarTicketDialogState extends State<RechazarTicketDialog> {
               const Text(
                 'Motivo del rechazo:',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -95,14 +103,16 @@ class _RechazarTicketDialogState extends State<RechazarTicketDialog> {
               DropdownButtonFormField<String>(
                 initialValue: _selectedMotivo,
                 decoration: const InputDecoration(
+                  isDense: true,
                   labelText: 'Selecciona un motivo',
+                  labelStyle: TextStyle(fontSize: 12),
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.list),
                 ),
                 items: _motivosComunes.map((motivo) {
                   return DropdownMenuItem(
                     value: motivo,
-                    child: Text(motivo),
+                    child: Text(motivo, style: TextStyle(fontSize: 10),),
                   );
                 }).toList(),
                 onChanged: (value) {
@@ -128,8 +138,10 @@ class _RechazarTicketDialogState extends State<RechazarTicketDialog> {
                   controller: _motivoController,
                   decoration: const InputDecoration(
                     labelText: 'Especifica el motivo *',
+                    labelStyle: TextStyle(fontSize: 12),
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.edit_note),
+                    isDense: true
                   ),
                   maxLines: 3,
                   validator: (value) {
@@ -145,31 +157,35 @@ class _RechazarTicketDialogState extends State<RechazarTicketDialog> {
                   controller: _motivoController,
                   decoration: const InputDecoration(
                     labelText: 'Detalles adicionales (opcional)',
+                    labelStyle: TextStyle(fontSize: 12),
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.note),
+                    isDense: true
                   ),
                   maxLines: 2,
+                  style: TextStyle(fontSize: 12),
                 ),
               ],
 
               const SizedBox(height: 16),
 
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(6),
+                
                 decoration: BoxDecoration(
                   color: Colors.orange.shade50,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(4),
                   border: Border.all(color: Colors.orange.shade200),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.warning_amber, color: Colors.orange.shade700, size: 20),
+                    Icon(Icons.warning_amber, color: Colors.orange.shade700, size: 15),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Esta acción no se puede deshacer',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 10,
                           color: Colors.orange.shade900,
                         ),
                       ),
@@ -184,15 +200,21 @@ class _RechazarTicketDialogState extends State<RechazarTicketDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
+          style: TextButton.styleFrom(
+            minimumSize: const Size(80, 36),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          ),
+          child: AppLabelText('Cancelar'),
         ),
         ElevatedButton(
           onPressed: _rechazar,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.red,
             foregroundColor: Colors.white,
+            minimumSize: const Size(100, 36),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           ),
-          child: const Text('Rechazar'),
+          child: AppLabelText('Rechazar', color: AppColors.white,),
         ),
       ],
     );
