@@ -1,5 +1,6 @@
 // lib/presentation/page/licencias/bloc/licencia_event.dart
 
+import 'package:consumo_combustible/domain/models/create_licencia_request.dart';
 import 'package:equatable/equatable.dart';
 
 abstract class LicenciaEvent extends Equatable {
@@ -71,6 +72,16 @@ class FilterLicencias extends LicenciaEvent {
 
   @override
   List<Object?> get props => [query];
+}
+
+/// Crear nueva licencia
+class CreateLicencia extends LicenciaEvent {
+  final CreateLicenciaRequest request;
+
+  const CreateLicencia(this.request);
+
+  @override
+  List<Object?> get props => [request];
 }
 
 /// Resetear estado

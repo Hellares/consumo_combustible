@@ -10,6 +10,7 @@ import 'package:consumo_combustible/domain/utils/resource.dart';
 import 'package:consumo_combustible/presentation/page/licencias/bloc/licencia_bloc.dart';
 import 'package:consumo_combustible/presentation/page/licencias/bloc/licencia_event.dart';
 import 'package:consumo_combustible/presentation/page/licencias/bloc/licencia_state.dart';
+import 'package:consumo_combustible/presentation/page/licencias/create_licencia_page.dart';
 import 'package:consumo_combustible/presentation/page/licencias/widgets/licencia_card.dart';
 import 'package:consumo_combustible/presentation/page/licencias/widgets/licencia_filter_chips.dart';
 import 'package:flutter/material.dart';
@@ -112,11 +113,18 @@ class _LicenciasPageState extends State<LicenciasPage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Navegar a página de creación de licencia
-          // Navigator.push(context, MaterialPageRoute(
-          //   builder: (_) => const CreateLicenciaPage(),
-          // ));
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const CreateLicenciaPage(),
+            ),
+          );
+          
+          // Si se creó exitosamente, recargar la lista
+          if (result == true && mounted) {
+            context.read<LicenciaBloc>().add(const LoadLicencias(page: 1));
+          }
         },
         backgroundColor: AppColors.blue3,
         child: const Icon(Icons.add, color: Colors.white),

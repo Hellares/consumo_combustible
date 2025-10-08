@@ -1,5 +1,6 @@
 // lib/domain/repository/licencia_repository.dart
 
+import 'package:consumo_combustible/domain/models/create_licencia_request.dart';
 import 'package:consumo_combustible/domain/models/licencia_conducir.dart';
 import 'package:consumo_combustible/domain/utils/resource.dart';
 
@@ -16,4 +17,6 @@ abstract class LicenciaRepository {
   Future<Resource<List<LicenciaConducir>>> getLicenciasVencidas();
   
   Future<Resource<List<LicenciaConducir>>> getLicenciasProximasVencer();
+  
+  Future<Resource<LicenciaConducir>> createLicencia(CreateLicenciaRequest request);
 }

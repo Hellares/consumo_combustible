@@ -29,6 +29,7 @@ import 'package:consumo_combustible/domain/use_cases/auth/logout_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/save_selected_role_usecase.dart';
 // import 'package:consumo_combustible/domain/use_cases/auth/logout_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/save_user_session_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/licencia/create_licencia_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/licencia/get_licencia_by_id_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/licencia/get_licencias_by_usuario_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/licencia/get_licencias_proximas_vencer_use_case.dart';
@@ -253,6 +254,7 @@ abstract class AppModule {
       getLicenciasByUsuario: GetLicenciasByUsuarioUseCase(repository),
       getLicenciasVencidas: GetLicenciasVencidasUseCase(repository),
       getLicenciasProximasVencer: GetLicenciasProximasVencerUseCase(repository),
+      createLicencia: CreateLicenciaUseCase(repository),
     );
   }
 }

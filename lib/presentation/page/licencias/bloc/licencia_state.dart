@@ -6,7 +6,7 @@ import 'package:equatable/equatable.dart';
 
 class LicenciaState extends Equatable {
   // Response principal
-  final Resource<LicenciasResponse>? response;
+  final Resource? response;
   
   // Licencias cargadas
   final List<LicenciaConducir> licencias;
@@ -64,7 +64,7 @@ class LicenciaState extends Equatable {
   int get proximasCount => licencias.where((l) => l.proximaVencimiento).length;
 
   LicenciaState copyWith({
-    Resource<LicenciasResponse>? response,
+    Resource? response,
     List<LicenciaConducir>? licencias,
     List<LicenciaConducir>? licenciasFiltradas,
     int? currentPage,

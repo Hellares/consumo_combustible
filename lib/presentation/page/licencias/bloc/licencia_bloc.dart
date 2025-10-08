@@ -20,6 +20,7 @@ class LicenciaBloc extends Bloc<LicenciaEvent, LicenciaState> {
     on<LoadLicenciasProximasVencer>(_onLoadLicenciasProximasVencer);
     on<RefreshLicencias>(_onRefreshLicencias);
     on<FilterLicencias>(_onFilterLicencias);
+    on<CreateLicencia>(_onCreateLicencia);
     on<ResetLicenciaState>(_onResetState);
   }
 
@@ -343,6 +344,55 @@ class LicenciaBloc extends Bloc<LicenciaEvent, LicenciaState> {
       licenciasFiltradas: filtered,
       searchQuery: query,
     ));
+  }
+
+  /// Crear nueva licencia
+  Future<void> _onCreateLicencia(
+    CreateLicencia event,
+    Emitter<LicenciaState> emit,
+  ) async {
+    try {
+      emit(state.copyWith(isLoading: true));
+
+      if (kDebugMode) {
+        print('➕ [LicenciaBloc] Creando licencia...');
+        print('📦 Request: ${event.request.toJson()}');
+      }
+
+      final response = await useCases.createLicencia.run(event.request);
+
+      if (response is Success<LicenciaConducir>) {
+        if (kDebugMode) {
+          print('✅ Licencia ${response.data.numeroLicencia} creada exitosamente');
+        }
+
+        // Recargar la lista de licencias después de crear una nueva
+        add(const LoadLicencias(page: 1));
+
+        emit(state.copyWith(
+          response: Success('Licencia creada exitosamente'),
+          isLoading: false,
+        ));
+      } else if (response is Error<LicenciaConducir>) {
+        if (kDebugMode) {
+          print('❌ Error: ${response.message}');
+        }
+
+        emit(state.copyWith(
+          response: response,
+          isLoading: false,
+        ));
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Exception en _onCreateLicencia: $e');
+      }
+
+      emit(state.copyWith(
+        response: Error('Error inesperado: $e'),
+        isLoading: false,
+      ));
+    }
   }
 
   /// Resetear estado
