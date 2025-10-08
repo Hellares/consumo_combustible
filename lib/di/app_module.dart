@@ -1,6 +1,7 @@
 import 'package:consumo_combustible/core/fast_storage_service.dart';
 import 'package:consumo_combustible/data/api/dio_config.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/auth_service.dart';
+import 'package:consumo_combustible/data/datasource/remote/service/licencia_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/location_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/detalle_abastecimiento_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_aprobacion_service.dart';
@@ -8,12 +9,14 @@ import 'package:consumo_combustible/data/datasource/remote/service/ticket_servic
 import 'package:consumo_combustible/data/datasource/remote/service/unidad_service.dart';
 import 'package:consumo_combustible/data/repository/auth_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/detalle_abastecimiento_repository_impl.dart';
+import 'package:consumo_combustible/data/repository/licencia_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/location_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/ticket_aprobacion_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/ticket_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/unidad_repository_impl.dart';
 import 'package:consumo_combustible/domain/repository/auth_repository.dart';
 import 'package:consumo_combustible/domain/repository/detalle_abastecimiento_repository.dart';
+import 'package:consumo_combustible/domain/repository/licencia_repository.dart';
 import 'package:consumo_combustible/domain/repository/location_repository.dart';
 import 'package:consumo_combustible/domain/repository/ticket_aprobacion_repository.dart';
 import 'package:consumo_combustible/domain/repository/ticket_repository.dart';
@@ -26,6 +29,12 @@ import 'package:consumo_combustible/domain/use_cases/auth/logout_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/save_selected_role_usecase.dart';
 // import 'package:consumo_combustible/domain/use_cases/auth/logout_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/save_user_session_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/licencia/get_licencia_by_id_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/licencia/get_licencias_by_usuario_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/licencia/get_licencias_proximas_vencer_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/licencia/get_licencias_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/licencia/get_licencias_vencidas_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/licencia/licencia_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/location/clear_selected_location_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/location/get_grifosby_sede_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/location/get_sedesby_zona_usecase.dart';
@@ -146,6 +155,16 @@ abstract class AppModule {
     if (kDebugMode) print('📦 Creando DetalleAbastecimientoRepository singleton');
     return DetalleAbastecimientoRepositoryImpl(service);
   }
+
+  @injectable
+  LicenciaService licenciaService(Dio dio) {
+    if (kDebugMode) print('📊 Creando licenciaService');
+    return LicenciaService(dio);
+  }
+
+  @singleton
+  LicenciaRepository licenciaRepository(LicenciaService service) =>
+      LicenciaRepositoryImpl(service);
   
   //---------------------------------------------------------------------------------//
   // ✅ USE CASES CONTAINERS - Singleton optimizado
@@ -220,6 +239,20 @@ abstract class AppModule {
       getDetallesAbastecimiento: GetDetallesAbastecimiento(repository),
       actualizarDetalle: ActualizarDetalle(repository),
       concluirDetalle: ConcluirDetalle(repository),
+    );
+  }
+
+  @singleton
+  LicenciaUseCases licenciaUseCases(
+    LicenciaRepository repository,
+  ){
+    if (kDebugMode) print('🎯 Creando LicenciaUseCases singleton');
+    return LicenciaUseCases(
+      getLicencias: GetLicenciasUseCase(repository),
+      getLicenciaById: GetLicenciaByIdUseCase(repository),
+      getLicenciasByUsuario: GetLicenciasByUsuarioUseCase(repository),
+      getLicenciasVencidas: GetLicenciasVencidasUseCase(repository),
+      getLicenciasProximasVencer: GetLicenciasProximasVencerUseCase(repository),
     );
   }
 }

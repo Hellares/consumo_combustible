@@ -5,6 +5,14 @@ allprojects {
     }
 }
 
+// Configure Java version for all subprojects
+subprojects {
+    tasks.withType<JavaCompile> {
+        sourceCompatibility = JavaVersion.VERSION_17.toString()
+        targetCompatibility = JavaVersion.VERSION_17.toString()
+    }
+}
+
 val newBuildDir: Directory =
     rootProject.layout.buildDirectory
         .dir("../../build")

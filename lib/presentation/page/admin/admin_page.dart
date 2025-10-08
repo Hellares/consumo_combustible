@@ -1,4 +1,5 @@
 import 'package:consumo_combustible/core/fonts/app_text_widgets.dart';
+import 'package:consumo_combustible/presentation/page/licencias/licencias_page.dart';
 import 'package:flutter/material.dart';
 
 class AdminPage extends StatefulWidget {
@@ -110,6 +111,20 @@ class _AdminPageState extends State<AdminPage> {
             ),
           ),
           _buildDrawerItem(
+          icon: Icons.badge, // Icono de licencia
+          title: 'Licencias de Conducir',
+          subtitle: 'Gestionar licencias de conductores',
+          onTap: () {
+            Navigator.pop(context); // Cierra el drawer
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const LicenciasPage(),
+              ),
+            );
+          },
+        ),
+          _buildDrawerItem(
             icon: Icons.person,
             title: 'Conductores',
             subtitle: 'Registrar y gestionar conductores',
@@ -177,14 +192,14 @@ class _AdminPageState extends State<AdminPage> {
       title: Text(
         title,
         style: const TextStyle(
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: FontWeight.w500,
         ),
       ),
       subtitle: subtitle != null
           ? Text(
               subtitle,
-              style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: 9, color: Colors.grey.shade600),
             )
           : null,
       trailing: const Icon(Icons.arrow_forward_ios, size: 12),

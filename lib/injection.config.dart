@@ -14,6 +14,8 @@ import 'package:consumo_combustible/data/datasource/remote/service/auth_service.
     as _i14;
 import 'package:consumo_combustible/data/datasource/remote/service/detalle_abastecimiento_service.dart'
     as _i14;
+import 'package:consumo_combustible/data/datasource/remote/service/licencia_service.dart'
+    as _i858;
 import 'package:consumo_combustible/data/datasource/remote/service/location_service.dart'
     as _i200;
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_aprobacion_service.dart'
@@ -27,6 +29,8 @@ import 'package:consumo_combustible/domain/repository/auth_repository.dart'
     as _i120;
 import 'package:consumo_combustible/domain/repository/detalle_abastecimiento_repository.dart'
     as _i343;
+import 'package:consumo_combustible/domain/repository/licencia_repository.dart'
+    as _i1047;
 import 'package:consumo_combustible/domain/repository/location_repository.dart'
     as _i611;
 import 'package:consumo_combustible/domain/repository/ticket_aprobacion_repository.dart'
@@ -39,6 +43,8 @@ import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart'
     as _i960;
 import 'package:consumo_combustible/domain/use_cases/detalle_abastecimiento/detalle_abastecimiento_use_cases.dart'
     as _i58;
+import 'package:consumo_combustible/domain/use_cases/licencia/licencia_use_cases.dart'
+    as _i767;
 import 'package:consumo_combustible/domain/use_cases/location/location_use_cases.dart'
     as _i636;
 import 'package:consumo_combustible/domain/use_cases/ticket/ticket_use_cases.dart'
@@ -78,6 +84,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i14.DetalleAbastecimientoService>(
       () => appModule.detalleAbastecimientoService(gh<_i361.Dio>()),
+    );
+    gh.factory<_i858.LicenciaService>(
+      () => appModule.licenciaService(gh<_i361.Dio>()),
     );
     gh.singleton<_i343.DetalleAbastecimientoRepository>(
       () => appModule.detalleAbastecimientoRepository(
@@ -126,8 +135,14 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i782.FastStorageService>(),
       ),
     );
+    gh.singleton<_i1047.LicenciaRepository>(
+      () => appModule.licenciaRepository(gh<_i858.LicenciaService>()),
+    );
     gh.singleton<_i960.AuthUseCases>(
       () => appModule.authUseCases(gh<_i120.AuthRepository>()),
+    );
+    gh.singleton<_i767.LicenciaUseCases>(
+      () => appModule.licenciaUseCases(gh<_i1047.LicenciaRepository>()),
     );
     gh.singleton<_i453.TicketUseCases>(
       () => appModule.ticketUseCases(gh<_i107.TicketRepository>()),
