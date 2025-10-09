@@ -125,6 +125,15 @@ class _AdminPageState extends State<AdminPage> {
           },
         ),
           _buildDrawerItem(
+            icon: Icons.people,
+            title: 'Usuarios',
+            subtitle: 'Gestionar usuarios del sistema',
+            onTap: () {
+              Navigator.pop(context); // Cierra el drawer
+              Navigator.pushNamed(context, 'users');
+            },
+          ),
+          _buildDrawerItem(
             icon: Icons.person,
             title: 'Conductores',
             subtitle: 'Registrar y gestionar conductores',

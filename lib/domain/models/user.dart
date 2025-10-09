@@ -1,3 +1,4 @@
+import 'package:consumo_combustible/domain/models/simple_role.dart';
 import 'package:consumo_combustible/domain/models/roles.dart';
 
 class User {
@@ -10,7 +11,7 @@ class User {
     String codigoEmpleado;
     DateTime fechaIngreso;
     bool activo;
-    List<Role> roles;
+    dynamic roles; // Can be List<Role> or List<SimpleRole> depending on endpoint
 
     User({
         required this.id,
@@ -25,18 +26,36 @@ class User {
         required this.roles,
     });
 
-    factory User.fromJson(Map<String, dynamic> json) => User(
-        id: json["id"],
-        nombres: json["nombres"],
-        apellidos: json["apellidos"],
-        email: json["email"],
-        telefono: json["telefono"],
-        dni: json["dni"],
-        codigoEmpleado: json["codigoEmpleado"],
-        fechaIngreso: DateTime.parse(json["fechaIngreso"]),
-        activo: json["activo"],
-        roles: List<Role>.from(json["roles"].map((x) => Role.fromJson(x))),
-    );
+    factory User.fromJson(Map<String, dynamic> json) {
+        // Check if roles have the 'rol' property (full Role) or just 'id' and 'nombre' (SimpleRole)
+        List<dynamic> rolesData = json["roles"] ?? [];
+        dynamic parsedRoles;
+        
+        if (rolesData.isNotEmpty) {
+            if (rolesData.first is Map && rolesData.first.containsKey('rol')) {
+                // Full Role structure from auth
+                parsedRoles = List<Role>.from(rolesData.map((x) => Role.fromJson(x)));
+            } else {
+                // Simple role structure from user list
+                parsedRoles = List<SimpleRole>.from(rolesData.map((x) => SimpleRole.fromJson(x)));
+            }
+        } else {
+            parsedRoles = <SimpleRole>[];
+        }
+
+        return User(
+            id: json["id"],
+            nombres: json["nombres"],
+            apellidos: json["apellidos"],
+            email: json["email"],
+            telefono: json["telefono"],
+            dni: json["dni"],
+            codigoEmpleado: json["codigoEmpleado"],
+            fechaIngreso: DateTime.parse(json["fechaIngreso"]),
+            activo: json["activo"],
+            roles: parsedRoles,
+        );
+    }
 
     Map<String, dynamic> toJson() => {
         "id": id,
@@ -48,6 +67,14 @@ class User {
         "codigoEmpleado": codigoEmpleado,
         "fechaIngreso": fechaIngreso.toIso8601String(),
         "activo": activo,
-        "roles": List<dynamic>.from(roles.map((x) => x.toJson())),
+        "roles": roles is List<Role>
+            ? List<dynamic>.from((roles as List<Role>).map((x) => x.toJson()))
+            : List<dynamic>.from((roles as List<SimpleRole>).map((x) => x.toJson())),
     };
+    
+    // Helper methods to safely access roles
+    List<Role> get fullRoles => roles is List<Role> ? roles as List<Role> : [];
+    List<SimpleRole> get simpleRoles => roles is List<SimpleRole> ? roles as List<SimpleRole> : [];
+    
+    bool get hasRoles => (roles is List && (roles as List).isNotEmpty);
 }

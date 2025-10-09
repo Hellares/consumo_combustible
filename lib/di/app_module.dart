@@ -36,6 +36,12 @@ import 'package:consumo_combustible/domain/use_cases/licencia/get_licencias_prox
 import 'package:consumo_combustible/domain/use_cases/licencia/get_licencias_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/licencia/get_licencias_vencidas_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/licencia/licencia_use_cases.dart';
+import 'package:consumo_combustible/data/datasource/remote/service/user_service.dart';
+import 'package:consumo_combustible/data/repository/user_repository_impl.dart';
+import 'package:consumo_combustible/domain/repository/user_repository.dart';
+import 'package:consumo_combustible/domain/use_cases/user/get_users_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/user/search_users_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/user/user_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/location/clear_selected_location_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/location/get_grifosby_sede_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/location/get_sedesby_zona_usecase.dart';
@@ -166,6 +172,16 @@ abstract class AppModule {
   @singleton
   LicenciaRepository licenciaRepository(LicenciaService service) =>
       LicenciaRepositoryImpl(service);
+
+  @injectable
+  UserService userService(Dio dio) {
+    if (kDebugMode) print('📊 Creando userService');
+    return UserService(dio);
+  }
+
+  @singleton
+  UserRepository userRepository(UserService service) =>
+      UserRepositoryImpl(service);
   
   //---------------------------------------------------------------------------------//
   // ✅ USE CASES CONTAINERS - Singleton optimizado
@@ -255,6 +271,17 @@ abstract class AppModule {
       getLicenciasVencidas: GetLicenciasVencidasUseCase(repository),
       getLicenciasProximasVencer: GetLicenciasProximasVencerUseCase(repository),
       createLicencia: CreateLicenciaUseCase(repository),
+    );
+  }
+
+  @singleton
+  UserUseCases userUseCases(
+    UserRepository repository,
+  ){
+    if (kDebugMode) print('🎯 Creando UserUseCases singleton');
+    return UserUseCases(
+      getUsers: GetUsersUseCase(repository),
+      searchUsers: SearchUsersUseCase(repository),
     );
   }
 }

@@ -10,6 +10,7 @@ import 'package:consumo_combustible/presentation/page/licencias/licencias_page.d
 import 'package:consumo_combustible/presentation/page/location/location_selection_page.dart';
 import 'package:consumo_combustible/presentation/page/ticket_abastecimiento/create_ticket_page.dart';
 import 'package:consumo_combustible/presentation/page/ticket_aprobacion/tickets_aprobacion_page.dart';
+import 'package:consumo_combustible/presentation/page/user/user_page.dart';
 import 'package:consumo_combustible/presentation/splash/splash_page.dart';
 import 'package:consumo_combustible/domain/utils/resource.dart';
 import 'package:flutter/foundation.dart';
@@ -107,6 +108,7 @@ class MyApp extends StatelessWidget {
             'tickets-aprobacion': (context) => const TicketsAprobacionPage(),
             'detalles-abastecimiento': (context) => const DetallesAbastecimientoPage(),
             'licencias': (context) => const LicenciasPage(),
+            'users': (context) => const UserPage(),
           },
         ),
       ),

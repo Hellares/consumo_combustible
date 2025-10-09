@@ -5,6 +5,8 @@ import 'package:consumo_combustible/domain/use_cases/location/location_use_cases
 import 'package:consumo_combustible/domain/use_cases/ticket/ticket_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/ticket_aprobacion/ticket_aprobacion_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/unidad/unidad_use_cases.dart';
+import 'package:consumo_combustible/domain/use_cases/user/user_use_cases.dart';
+import 'package:consumo_combustible/presentation/page/user/bloc/user_bloc.dart';
 import 'package:consumo_combustible/injection.dart';
 import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_bloc.dart';
 import 'package:consumo_combustible/presentation/page/detalle_abastecimiento/bloc/detalle_abastecimiento_bloc.dart';
@@ -28,5 +30,7 @@ List<BlocProvider> blocProviders = [
   BlocProvider<DetalleAbastecimientoBloc>(create: (context) => DetalleAbastecimientoBloc(locator<DetalleAbastecimientoUseCases>())),
 
   BlocProvider<LicenciaBloc>( create: (context) => LicenciaBloc(locator<LicenciaUseCases>())),
+
+  BlocProvider<UserBloc>(create: (context) => UserBloc(locator<UserUseCases>())),
 
 ];
