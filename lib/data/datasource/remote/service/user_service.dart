@@ -1,4 +1,7 @@
 
+import 'package:consumo_combustible/domain/models/auth_response.dart';
+import 'package:consumo_combustible/domain/models/register_user_request.dart';
+import 'package:consumo_combustible/domain/models/user.dart';
 import 'package:consumo_combustible/domain/models/user_response.dart';
 import 'package:consumo_combustible/domain/utils/resource.dart';
 import 'package:dio/dio.dart';
@@ -138,4 +141,185 @@ class UserService {
       return Error('Error inesperado: $e');
     }
   }
+
+  // Future<Resource<AuthResponse>> registerUser(
+  //   RegisterUserRequest request,
+  // ) async {
+  //   try {
+  //     if (kDebugMode) {
+  //       print('📤 Registrando usuario: ${request.toJson()}');
+  //     }
+
+  //     final response = await _dio.post(
+  //       '/api/auth',
+  //       data: request.toJson(),
+  //     );
+
+  //     if (kDebugMode) {
+  //       print('📥 Respuesta del servidor: ${response.statusCode}');
+  //       print('📥 Data: ${response.data}');
+  //     }
+
+  //     if (response.statusCode == 200 || response.statusCode == 201) {
+  //       final authResponse = AuthResponse.fromJson(response.data);
+        
+  //       if (kDebugMode) {
+  //         print('✅ Usuario registrado exitosamente: ${authResponse.data?.user.nombres}');
+  //       }
+        
+  //       return Success(authResponse);
+  //     } else {
+  //       final errorMessage = response.data['message'] ?? 'Error al registrar usuario';
+  //       if (kDebugMode) print('❌ Error del servidor: $errorMessage');
+  //       return Error(errorMessage);
+  //     }
+  //   } catch (e) {
+  //     if (kDebugMode) print('❌ Excepción en registerUser: $e');
+      
+  //     if (e is DioException) {
+  //       // Manejo específico de errores de Dio
+  //       if (e.response != null) {
+  //         final statusCode = e.response?.statusCode;
+  //         final responseData = e.response?.data;
+          
+  //         if (kDebugMode) {
+  //           print('🔴 DioException - Status: $statusCode');
+  //           print('🔴 Response data: $responseData');
+  //         }
+          
+  //         // Intentar extraer mensaje del servidor
+  //         if (responseData is Map<String, dynamic>) {
+  //           final message = responseData['message'] as String?;
+  //           if (message != null && message.isNotEmpty) {
+  //             return Error(message);
+  //           }
+  //         }
+          
+  //         // Mensajes específicos por código de error
+  //         switch (statusCode) {
+  //           case 400:
+  //             return Error('Datos inválidos. Verifica la información.');
+  //           case 409:
+  //             return Error('El usuario ya existe. DNI o email duplicado.');
+  //           case 422:
+  //             return Error('Error de validación. Revisa los campos.');
+  //           case 500:
+  //             return Error('Error del servidor. Intenta más tarde.');
+  //           default:
+  //             return Error('Error al registrar usuario (Código: $statusCode)');
+  //         }
+  //       } else if (e.type == DioExceptionType.connectionTimeout) {
+  //         return Error('Tiempo de conexión agotado. Verifica tu internet.');
+  //       } else if (e.type == DioExceptionType.receiveTimeout) {
+  //         return Error('El servidor tardó demasiado en responder.');
+  //       } else if (e.type == DioExceptionType.connectionError) {
+  //         return Error('No se pudo conectar al servidor. Verifica tu internet.');
+  //       }
+  //     }
+      
+  //     return Error('Error inesperado: ${e.toString()}');
+  //   }
+  // }
+
+  Future<Resource<AuthResponse>> registerUser(
+  RegisterUserRequest request,
+) async {
+  try {
+    if (kDebugMode) {
+      print('📤 Registrando usuario: ${request.toJson()}');
+    }
+
+    final response = await _dio.post(
+      '/api/auth',
+      data: request.toJson(),
+    );
+
+    if (kDebugMode) {
+      print('📥 Respuesta del servidor: ${response.statusCode}');
+      print('📥 Data: ${response.data}');
+    }
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final responseData = response.data;
+      
+      // ⭐ NUEVO: Parsing manual para el registro (estructura aplanada)
+      if (responseData['success'] == true && responseData['data'] != null) {
+        final dataJson = Map<String, dynamic>.from(responseData['data'] as Map<String, dynamic>);
+        
+        // Extraer el token del data aplanado
+        final token = dataJson.remove('token') as String?;
+        
+        // El resto de dataJson ahora es puro para el User (incluyendo roles)
+        final user = User.fromJson(dataJson);
+        
+        // Construir AuthResponse manualmente para que encaje en la estructura existente
+        final authResponse = AuthResponse(
+          success: true,
+          message: responseData['message'] ?? 'Usuario registrado exitosamente',
+          data: Data(
+            user: user,
+            token: token ?? '', // Si no hay token, cadena vacía (ajusta si es necesario)
+          ),
+        );
+        
+        if (kDebugMode) {
+          print('✅ Usuario registrado exitosamente: ${authResponse.data?.user.nombres}');
+        }
+        
+        return Success(authResponse);
+      } else {
+        return Error(responseData['message'] ?? 'Error al registrar usuario');
+      }
+    } else {
+      final errorMessage = response.data['message'] ?? 'Error al registrar usuario';
+      if (kDebugMode) print('❌ Error del servidor: $errorMessage');
+      return Error(errorMessage);
+    }
+  } catch (e) {
+    if (kDebugMode) print('❌ Excepción en registerUser: $e');
+    
+    if (e is DioException) {
+      // Manejo específico de errores de Dio (mantiene tu código existente)
+      if (e.response != null) {
+        final statusCode = e.response?.statusCode;
+        final responseData = e.response?.data;
+        
+        if (kDebugMode) {
+          print('🔴 DioException - Status: $statusCode');
+          print('🔴 Response data: $responseData');
+        }
+        
+        // Intentar extraer mensaje del servidor
+        if (responseData is Map<String, dynamic>) {
+          final message = responseData['message'] as String?;
+          if (message != null && message.isNotEmpty) {
+            return Error(message);
+          }
+        }
+        
+        // Mensajes específicos por código de error (tu código existente)
+        switch (statusCode) {
+          case 400:
+            return Error('Datos inválidos. Verifica la información.');
+          case 409:
+            return Error('El usuario ya existe. DNI o email duplicado.');
+          case 422:
+            return Error('Error de validación. Revisa los campos.');
+          case 500:
+            return Error('Error del servidor. Intenta más tarde.');
+          default:
+            return Error('Error al registrar usuario (Código: $statusCode)');
+        }
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        return Error('Tiempo de conexión agotado. Verifica tu internet.');
+      } else if (e.type == DioExceptionType.receiveTimeout) {
+        return Error('El servidor tardó demasiado en responder.');
+      } else if (e.type == DioExceptionType.connectionError) {
+        return Error('No se pudo conectar al servidor. Verifica tu internet.');
+      }
+    }
+    
+    return Error('Error inesperado: ${e.toString()}');
+  }
+}
 }

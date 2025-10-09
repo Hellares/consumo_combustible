@@ -1,3 +1,4 @@
+// lib/presentation/page/user/bloc/user_bloc.dart
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:consumo_combustible/domain/use_cases/user/user_use_cases.dart';
@@ -11,6 +12,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   UserBloc(this._userUseCases) : super(UserInitial()) {
     on<GetUsers>(_onGetUsers);
     on<FilterUsers>(_onFilterUsers);
+    on<RegisterUser>(_onRegisterUser);
   }
 
   Future<void> _onGetUsers(GetUsers event, Emitter<UserState> emit) async {
@@ -51,7 +53,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
           currentPage: event.page,
         ));
       }
-    } else {
+    } else if (resource is Error) { // ⭐ CORREGIDO
       emit(UserError(resource.message));
     }
   }
@@ -63,6 +65,36 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         searchQuery: event.query,
         searchType: event.searchType,
       ));
+    }
+  }
+
+  Future<void> _onRegisterUser(
+    RegisterUser event,
+    Emitter<UserState> emit,
+  ) async {
+    // Mantener el estado actual mientras registramos
+    if (state is UserLoaded) {
+      final currentState = state as UserLoaded;
+      emit(currentState.copyWith(isRegistering: true));
+    }
+
+    final resource = await _userUseCases.registerUser.run(event.request);
+
+    if (resource is Success) {
+      // Registro exitoso - emitir estado de éxito
+      final successResource = resource as Success;
+      emit(UserRegisterSuccess(successResource.data));
+      
+      // Recargar usuarios
+      add(const GetUsers(page: 1));
+    } else if (resource is Error) {
+      // Error en el registro
+      final errorResource = resource as Error;
+      if (state is UserLoaded) {
+        final currentState = state as UserLoaded;
+        emit(currentState.copyWith(isRegistering: false));
+      }
+      emit(UserRegisterError(errorResource.message));
     }
   }
 }

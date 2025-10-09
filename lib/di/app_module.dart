@@ -40,6 +40,7 @@ import 'package:consumo_combustible/data/datasource/remote/service/user_service.
 import 'package:consumo_combustible/data/repository/user_repository_impl.dart';
 import 'package:consumo_combustible/domain/repository/user_repository.dart';
 import 'package:consumo_combustible/domain/use_cases/user/get_users_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/user/register_users_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/user/search_users_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/user/user_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/location/clear_selected_location_usecase.dart';
@@ -282,6 +283,7 @@ abstract class AppModule {
     return UserUseCases(
       getUsers: GetUsersUseCase(repository),
       searchUsers: SearchUsersUseCase(repository),
+      registerUser: RegisterUserUseCase(repository)
     );
   }
 }

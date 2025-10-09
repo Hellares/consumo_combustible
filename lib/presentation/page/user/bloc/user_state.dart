@@ -1,4 +1,6 @@
+// lib/presentation/page/user/bloc/user_state.dart
 
+import 'package:consumo_combustible/domain/models/auth_response.dart';
 import 'package:consumo_combustible/domain/models/user.dart';
 import 'package:consumo_combustible/domain/models/user_response.dart';
 import 'package:equatable/equatable.dart';
@@ -25,6 +27,7 @@ class UserLoaded extends UserState {
   final List<User> users;
   final Meta meta;
   final bool isLoadingMore;
+  final bool isRegistering; // ⭐ AGREGADO
   final String searchQuery;
   final String searchType;
   final int currentPage;
@@ -33,6 +36,7 @@ class UserLoaded extends UserState {
     required this.users,
     required this.meta,
     this.isLoadingMore = false,
+    this.isRegistering = false, // ⭐ AGREGADO
     this.searchQuery = '',
     this.searchType = 'nombre',
     this.currentPage = 1,
@@ -56,12 +60,21 @@ class UserLoaded extends UserState {
   bool get isSearching => searchQuery.isNotEmpty;
   
   @override
-  List<Object?> get props => [users, meta, isLoadingMore, searchQuery, searchType, currentPage];
+  List<Object?> get props => [
+    users, 
+    meta, 
+    isLoadingMore, 
+    isRegistering, // ⭐ AGREGADO
+    searchQuery, 
+    searchType, 
+    currentPage
+  ];
   
   UserLoaded copyWith({
     List<User>? users,
     Meta? meta,
     bool? isLoadingMore,
+    bool? isRegistering, // ⭐ AGREGADO
     String? searchQuery,
     String? searchType,
     int? currentPage,
@@ -70,6 +83,7 @@ class UserLoaded extends UserState {
       users: users ?? this.users,
       meta: meta ?? this.meta,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      isRegistering: isRegistering ?? this.isRegistering, // ⭐ AGREGADO
       searchQuery: searchQuery ?? this.searchQuery,
       searchType: searchType ?? this.searchType,
       currentPage: currentPage ?? this.currentPage,
@@ -81,6 +95,24 @@ class UserError extends UserState {
   final String message;
 
   const UserError(this.message);
+  
+  @override
+  List<Object?> get props => [message];
+}
+
+class UserRegisterSuccess extends UserState {
+  final AuthResponse response;
+
+  const UserRegisterSuccess(this.response);
+  
+  @override
+  List<Object?> get props => [response];
+}
+
+class UserRegisterError extends UserState {
+  final String message;
+
+  const UserRegisterError(this.message);
   
   @override
   List<Object?> get props => [message];

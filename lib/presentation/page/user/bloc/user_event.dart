@@ -1,4 +1,5 @@
 
+import 'package:consumo_combustible/domain/models/register_user_request.dart';
 import 'package:equatable/equatable.dart';
 
 abstract class UserEvent extends Equatable {
@@ -31,4 +32,13 @@ class FilterUsers extends UserEvent {
   
   @override
   List<Object?> get props => [query, searchType];
+}
+
+class RegisterUser extends UserEvent {
+  final RegisterUserRequest request;
+
+  const RegisterUser(this.request);
+  
+  @override
+  List<Object?> get props => [request];
 }

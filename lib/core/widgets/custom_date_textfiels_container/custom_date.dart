@@ -272,7 +272,7 @@ class CustomDate extends StatefulWidget {
     this.hintStyle,
     this.filled = true,
     this.focusNode,
-    this.height = 40,
+    this.height = 35,
     // Propiedades de fecha
     this.dateType = DateFieldType.date,
     this.dateFormat = 'dd/MM/yyyy',
@@ -631,7 +631,7 @@ class _CustomDateState extends State<CustomDate>
             style:
                 widget.labelStyle ??
                 const TextStyle(
-                  fontSize: 13,
+                  fontSize: 10,
                   fontWeight: FontWeight.w500,
                   color: AppColors.blue,
                 ),
@@ -1098,7 +1098,7 @@ class _ModernDatePickerDialogState extends State<_ModernDatePickerDialog>
       child: SlideTransition(
         position: _slideAnimation,
         child: Container(
-          width: 340,
+          width: 320,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(24),
@@ -1115,7 +1115,7 @@ class _ModernDatePickerDialogState extends State<_ModernDatePickerDialog>
             children: [
               // Header con gradiente
               Container(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -1126,7 +1126,7 @@ class _ModernDatePickerDialogState extends State<_ModernDatePickerDialog>
                     ],
                   ),
                   borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(24),
+                    topLeft: Radius.circular(16),
                     topRight: Radius.circular(24),
                   ),
                 ),
@@ -1138,7 +1138,7 @@ class _ModernDatePickerDialogState extends State<_ModernDatePickerDialog>
                       icon: const Icon(
                         Icons.chevron_left,
                         color: Colors.white,
-                        size: 28,
+                        size: 20,
                       ),
                       style: IconButton.styleFrom(
                         backgroundColor: Colors.white.withValues(alpha: 0.2),
@@ -1149,7 +1149,7 @@ class _ModernDatePickerDialogState extends State<_ModernDatePickerDialog>
                       '${_monthNames[_displayedMonth.month - 1]} ${_displayedMonth.year}',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 20,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -1158,7 +1158,7 @@ class _ModernDatePickerDialogState extends State<_ModernDatePickerDialog>
                       icon: const Icon(
                         Icons.chevron_right,
                         color: Colors.white,
-                        size: 28,
+                        size: 20,
                       ),
                       style: IconButton.styleFrom(
                         backgroundColor: Colors.white.withValues(alpha: 0.2),
@@ -1171,7 +1171,7 @@ class _ModernDatePickerDialogState extends State<_ModernDatePickerDialog>
 
               // Calendario
               Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(15),
                 child: Column(
                   children: [
                     // Nombres de días
@@ -1181,7 +1181,7 @@ class _ModernDatePickerDialogState extends State<_ModernDatePickerDialog>
                             (day) => Expanded(
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 8,
+                                  vertical: 4,
                                 ),
                                 child: Text(
                                   day,
@@ -1189,7 +1189,7 @@ class _ModernDatePickerDialogState extends State<_ModernDatePickerDialog>
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
                                     color: widget.primaryColor,
-                                    fontSize: 14,
+                                    fontSize: 12,
                                   ),
                                 ),
                               ),
@@ -1294,7 +1294,7 @@ class _ModernDatePickerDialogState extends State<_ModernDatePickerDialog>
           child: GestureDetector(
             onTap: () => _selectDate(date),
             child: Container(
-              height: 44,
+              height: 35,
               margin: const EdgeInsets.all(2),
               decoration: BoxDecoration(
                 color: isSelected
@@ -1302,7 +1302,7 @@ class _ModernDatePickerDialogState extends State<_ModernDatePickerDialog>
                     : isToday
                     ? widget.primaryColor.withValues(alpha: 0.1)
                     : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(8),
                 border: isToday && !isSelected
                     ? Border.all(
                         color: widget.primaryColor.withValues(alpha: 0.5),
@@ -1322,7 +1322,7 @@ class _ModernDatePickerDialogState extends State<_ModernDatePickerDialog>
                     fontWeight: isSelected || isToday
                         ? FontWeight.w700
                         : FontWeight.w500,
-                    fontSize: 16,
+                    fontSize: 12,
                   ),
                 ),
               ),
@@ -1536,7 +1536,7 @@ class _ModernDateRangePickerDialogState
             children: [
               // Header con gradiente
               Container(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -1618,7 +1618,7 @@ class _ModernDateRangePickerDialogState
                                 : '¡Rango seleccionado!',
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 14,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -1660,7 +1660,7 @@ class _ModernDateRangePickerDialogState
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
                                     color: widget.primaryColor,
-                                    fontSize: 14,
+                                    fontSize: 12,
                                   ),
                                 ),
                               ),
@@ -1816,7 +1816,7 @@ class _ModernDateRangePickerDialogState
           child: GestureDetector(
             onTap: () => _selectDate(date),
             child: Container(
-              height: 44,
+              height: 40,
               margin: const EdgeInsets.all(2),
               decoration: BoxDecoration(
                 color: backgroundColor,
@@ -1836,7 +1836,7 @@ class _ModernDateRangePickerDialogState
                     fontWeight: isStartDate || isEndDate || isToday
                         ? FontWeight.w700
                         : FontWeight.w500,
-                    fontSize: 16,
+                    fontSize: 12,
                   ),
                 ),
               ),
