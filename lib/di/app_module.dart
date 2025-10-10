@@ -1,5 +1,6 @@
 import 'package:consumo_combustible/core/fast_storage_service.dart';
 import 'package:consumo_combustible/data/api/dio_config.dart';
+import 'package:consumo_combustible/data/datasource/remote/service/archivo_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/auth_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/licencia_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/location_service.dart';
@@ -7,6 +8,7 @@ import 'package:consumo_combustible/data/datasource/remote/service/detalle_abast
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_aprobacion_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/unidad_service.dart';
+import 'package:consumo_combustible/data/repository/archivo_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/auth_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/detalle_abastecimiento_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/licencia_repository_impl.dart';
@@ -14,6 +16,7 @@ import 'package:consumo_combustible/data/repository/location_repository_impl.dar
 import 'package:consumo_combustible/data/repository/ticket_aprobacion_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/ticket_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/unidad_repository_impl.dart';
+import 'package:consumo_combustible/domain/repository/archivo_repository.dart';
 import 'package:consumo_combustible/domain/repository/auth_repository.dart';
 import 'package:consumo_combustible/domain/repository/detalle_abastecimiento_repository.dart';
 import 'package:consumo_combustible/domain/repository/licencia_repository.dart';
@@ -21,6 +24,11 @@ import 'package:consumo_combustible/domain/repository/location_repository.dart';
 import 'package:consumo_combustible/domain/repository/ticket_aprobacion_repository.dart';
 import 'package:consumo_combustible/domain/repository/ticket_repository.dart';
 import 'package:consumo_combustible/domain/repository/unidad_repository.dart';
+import 'package:consumo_combustible/domain/use_cases/archivo/archivo_use_cases.dart';
+import 'package:consumo_combustible/domain/use_cases/archivo/delete_archivo_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/archivo/get_archivos_byticket_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/archivo/get_tipos_archivos_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/archivo/upload_archivos_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/get_selected_role_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/get_user_session_usecase.dart';
@@ -183,6 +191,20 @@ abstract class AppModule {
   @singleton
   UserRepository userRepository(UserService service) =>
       UserRepositoryImpl(service);
+
+  // NUEVO: ARCHIVO SERVICE
+  @injectable
+  ArchivoService archivoService(Dio dio) {
+    if (kDebugMode) print('📎 Creando ArchivoService');
+    return ArchivoService(dio);
+  }
+
+  // NUEVO: ARCHIVO REPOSITORY
+  @singleton
+  ArchivoRepository archivoRepository(ArchivoService service) {
+    if (kDebugMode) print('📦 Creando ArchivoRepository singleton');
+    return ArchivoRepositoryImpl(service);
+  }
   
   //---------------------------------------------------------------------------------//
   // ✅ USE CASES CONTAINERS - Singleton optimizado
@@ -284,6 +306,17 @@ abstract class AppModule {
       getUsers: GetUsersUseCase(repository),
       searchUsers: SearchUsersUseCase(repository),
       registerUser: RegisterUserUseCase(repository)
+    );
+  }
+
+  @singleton
+  ArchivoUseCases archivoUseCases(ArchivoRepository repository) {
+    if (kDebugMode) print('🎯 Creando ArchivoUseCases singleton');
+    return ArchivoUseCases(
+      getTiposArchivo: GetTiposArchivoUseCase(repository),
+      uploadArchivos: UploadArchivosUseCase(repository),
+      getArchivosByTicket: GetArchivosByTicketUseCase(repository),
+      deleteArchivo: DeleteArchivoUseCase(repository),
     );
   }
 }

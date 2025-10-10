@@ -1,3 +1,4 @@
+import 'package:consumo_combustible/domain/use_cases/archivo/archivo_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/detalle_abastecimiento/detalle_abastecimiento_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/licencia/licencia_use_cases.dart';
@@ -6,6 +7,7 @@ import 'package:consumo_combustible/domain/use_cases/ticket/ticket_use_cases.dar
 import 'package:consumo_combustible/domain/use_cases/ticket_aprobacion/ticket_aprobacion_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/unidad/unidad_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/user/user_use_cases.dart';
+import 'package:consumo_combustible/presentation/page/archivo/bloc/archivo_bloc.dart';
 import 'package:consumo_combustible/presentation/page/user/bloc/user_bloc.dart';
 import 'package:consumo_combustible/injection.dart';
 import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_bloc.dart';
@@ -32,5 +34,7 @@ List<BlocProvider> blocProviders = [
   BlocProvider<LicenciaBloc>( create: (context) => LicenciaBloc(locator<LicenciaUseCases>())),
 
   BlocProvider<UserBloc>(create: (context) => UserBloc(locator<UserUseCases>())),
+
+  BlocProvider<ArchivoBloc>(create: (context) => ArchivoBloc(locator<ArchivoUseCases>()),),
 
 ];

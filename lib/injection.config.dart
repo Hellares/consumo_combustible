@@ -10,6 +10,8 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:consumo_combustible/core/fast_storage_service.dart' as _i782;
+import 'package:consumo_combustible/data/datasource/remote/service/archivo_service.dart'
+    as _i261;
 import 'package:consumo_combustible/data/datasource/remote/service/auth_service.dart'
     as _i14;
 import 'package:consumo_combustible/data/datasource/remote/service/detalle_abastecimiento_service.dart'
@@ -27,6 +29,8 @@ import 'package:consumo_combustible/data/datasource/remote/service/unidad_servic
 import 'package:consumo_combustible/data/datasource/remote/service/user_service.dart'
     as _i148;
 import 'package:consumo_combustible/di/app_module.dart' as _i564;
+import 'package:consumo_combustible/domain/repository/archivo_repository.dart'
+    as _i45;
 import 'package:consumo_combustible/domain/repository/auth_repository.dart'
     as _i120;
 import 'package:consumo_combustible/domain/repository/detalle_abastecimiento_repository.dart'
@@ -43,6 +47,8 @@ import 'package:consumo_combustible/domain/repository/unidad_repository.dart'
     as _i41;
 import 'package:consumo_combustible/domain/repository/user_repository.dart'
     as _i607;
+import 'package:consumo_combustible/domain/use_cases/archivo/archivo_use_cases.dart'
+    as _i441;
 import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart'
     as _i960;
 import 'package:consumo_combustible/domain/use_cases/detalle_abastecimiento/detalle_abastecimiento_use_cases.dart'
@@ -95,6 +101,9 @@ extension GetItInjectableX on _i174.GetIt {
       () => appModule.licenciaService(gh<_i361.Dio>()),
     );
     gh.factory<_i148.UserService>(() => appModule.userService(gh<_i361.Dio>()));
+    gh.factory<_i261.ArchivoService>(
+      () => appModule.archivoService(gh<_i361.Dio>()),
+    );
     gh.singleton<_i343.DetalleAbastecimientoRepository>(
       () => appModule.detalleAbastecimientoRepository(
         gh<_i14.DetalleAbastecimientoService>(),
@@ -113,6 +122,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.singleton<_i607.UserRepository>(
       () => appModule.userRepository(gh<_i148.UserService>()),
+    );
+    gh.singleton<_i45.ArchivoRepository>(
+      () => appModule.archivoRepository(gh<_i261.ArchivoService>()),
     );
     gh.singleton<_i58.DetalleAbastecimientoUseCases>(
       () => appModule.detalleAbastecimientoUseCases(
@@ -150,6 +162,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.singleton<_i1047.LicenciaRepository>(
       () => appModule.licenciaRepository(gh<_i858.LicenciaService>()),
+    );
+    gh.singleton<_i441.ArchivoUseCases>(
+      () => appModule.archivoUseCases(gh<_i45.ArchivoRepository>()),
     );
     gh.singleton<_i960.AuthUseCases>(
       () => appModule.authUseCases(gh<_i120.AuthRepository>()),
