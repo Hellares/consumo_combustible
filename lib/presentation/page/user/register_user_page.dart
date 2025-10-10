@@ -1,24 +1,26 @@
+import 'package:consumo_combustible/core/fonts/app_fonts.dart';
+import 'package:consumo_combustible/core/fonts/app_text_widgets.dart';
 import 'package:consumo_combustible/core/theme/app_colors.dart';
+import 'package:consumo_combustible/core/widgets/appbar/smart_appbar.dart';
 import 'package:consumo_combustible/core/widgets/custom_date_textfiels_container/custom_date.dart';
 import 'package:consumo_combustible/core/widgets/custom_date_textfiels_container/custom_textfield.dart';
 import 'package:consumo_combustible/core/widgets/cutom_button/custom_button.dart';
+import 'package:consumo_combustible/core/widgets/snack.dart';
 import 'package:consumo_combustible/domain/models/register_user_request.dart';
+import 'package:consumo_combustible/presentation/page/user/bloc/user_bloc.dart';
+import 'package:consumo_combustible/presentation/page/user/bloc/user_event.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
-class RegisterUserDialog extends StatefulWidget {
-  final Function(RegisterUserRequest) onRegister;
-
-  const RegisterUserDialog({
-    super.key,
-    required this.onRegister,
-  });
+class RegisterUserPage extends StatefulWidget {
+  const RegisterUserPage({super.key});
 
   @override
-  State<RegisterUserDialog> createState() => _RegisterUserDialogState();
+  State<RegisterUserPage> createState() => _RegisterUserPageState();
 }
 
-class _RegisterUserDialogState extends State<RegisterUserDialog> {
+class _RegisterUserPageState extends State<RegisterUserPage> {
   final _formKey = GlobalKey<FormState>();
   final _nombresController = TextEditingController();
   final _apellidosController = TextEditingController();
@@ -26,19 +28,18 @@ class _RegisterUserDialogState extends State<RegisterUserDialog> {
   final _telefonoController = TextEditingController();
   final _dniController = TextEditingController();
   final _fechaIngresoController = TextEditingController();
-  final FocusNode _nombresFocus = FocusNode();
+  // final FocusNode _nombresFocus = FocusNode();
 
   @override
   void initState() {
     super.initState();
-    // No enfoques aquí, para evitar rebote
   }
 
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _nombresFocus.dispose();
+    // _nombresFocus.dispose();
     _nombresController.dispose();
     _apellidosController.dispose();
     _emailController.dispose();
@@ -85,34 +86,37 @@ class _RegisterUserDialogState extends State<RegisterUserDialog> {
         fechaIngreso: fechaIngreso,
       );
 
-      widget.onRegister(request);
+      // Mostrar mensaje de cargando
+      SnackBarHelper.showSuccess(
+        context,
+        'Registrando usuario...',
+      );
+
+      // Llamar al evento de registro
+      context.read<UserBloc>().add(RegisterUser(request));
+
+      // Navegar de vuelta
+      Navigator.pop(context);
     }
   }
 
-  @override
-  void didChangeDependencies() { // ⭐ NUEVO: Enfoca después del primer build
-    super.didChangeDependencies();
-    if (_nombresFocus.hasFocus == false) {
-      _nombresFocus.requestFocus();
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
+    return Scaffold(
+      backgroundColor: AppColors.white,
+      appBar: SmartAppBar(
+        title: 'Registrar Usuario',
+        showUserInfo: false,
+        logoPath: "assets/img/6.svg",
       ),
-      child: RepaintBoundary(
+      body: RepaintBoundary(
         child: Container(
-          constraints: const BoxConstraints(maxWidth: 600, maxHeight: 700),
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           child: Form(
             key: _formKey,
             child: SingleChildScrollView(
-              child: FocusScope(
-                // canRequestFocus: false,
-                child: Column(
+              child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -138,44 +142,26 @@ class _RegisterUserDialogState extends State<RegisterUserDialog> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Registrar Usuario',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.blue,
-                                ),
-                              ),
-                              Text(
-                                'Complete los datos del nuevo usuario',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
+                              AppSubtitle('Registrar Usuario'),
+                              AppSubtitle('Complete los datos del nuevo usuario',fontSize: 8, color: AppColors.blueGrey,)
                             ],
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.close, size: 18),
-                          onPressed: _isLoading ? null : () => Navigator.pop(context),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        ),
                       ],
                     ),
-                
+
                     const SizedBox(height: 20),
-                
+
                     // Formulario
                     CustomTextField(
-                      focusNode: _nombresFocus,
+                      // focusNode: _nombresFocus,
                       label: 'Nombres',
-                      labelStyle: TextStyle( color: AppColors.blue3, fontSize: 9),
+                      labelStyle: const TextStyle( color: AppColors.blue3, fontSize: 9),
                       controller: _nombresController,
                       hintText: 'Ingrese los nombres',
                       borderColor: AppColors.blue3,
-                      prefixIcon: Icon(Icons.person),
+                      prefixIcon: const Icon(Icons.person),
+                      enableRealTimeValidation: false,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Los nombres son requeridos';
@@ -186,17 +172,18 @@ class _RegisterUserDialogState extends State<RegisterUserDialog> {
                         return null;
                       },
                     ),
-                
+
                     const SizedBox(height: 12),
-                
+
                     CustomTextField(
                       label: 'Apellidos',
-                      labelStyle: TextStyle( color: AppColors.blue3, fontSize: 9),
-                      
+                      labelStyle: const TextStyle( color: AppColors.blue3, fontSize: 9),
+
                       controller: _apellidosController,
                       hintText: 'Ingrese los apellidos',
-                      prefixIcon: Icon(Icons.person),
+                      prefixIcon: const Icon(Icons.person),
                       borderColor: AppColors.blue3,
+                      enableRealTimeValidation: false,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Los apellidos son requeridos';
@@ -207,22 +194,22 @@ class _RegisterUserDialogState extends State<RegisterUserDialog> {
                         return null;
                       },
                     ),
-                
+
                     const SizedBox(height: 12),
-                
+
                     CustomTextField(
                       label: 'Email',
-                      labelStyle: TextStyle( color: AppColors.blue3, fontSize: 9),
+                      labelStyle: const TextStyle( color: AppColors.blue3, fontSize: 9),
                       borderColor: AppColors.blue3,
                       controller: _emailController,
                       hintText: 'ejemplo@empresa.com',
                       fieldType: FieldType.email,
-                      // enableRealTimeValidation: false,
-                
+                      enableRealTimeValidation: false,
+
                     ),
-                
+
                     const SizedBox(height: 12),
-                
+
                     CustomTextField(
                       label: 'Teléfono',
                       labelStyle: TextStyle( color: AppColors.blue3, fontSize: 9),
@@ -232,9 +219,9 @@ class _RegisterUserDialogState extends State<RegisterUserDialog> {
                       fieldType: FieldType.phone,
                       enableRealTimeValidation: false,
                     ),
-                
+
                     const SizedBox(height: 12),
-                
+
                     CustomTextField(
                       label: 'DNI',
                       labelStyle: TextStyle( color: AppColors.blue3, fontSize: 9),
@@ -243,14 +230,14 @@ class _RegisterUserDialogState extends State<RegisterUserDialog> {
                       hintText: '12345678',
                       fieldType: FieldType.dni,
                       enableRealTimeValidation: false,
-                
+
                     ),
-                
+
                     const SizedBox(height: 12),
-                
+
                     CustomDate(
                       label: 'Fecha de Ingreso',
-                      labelStyle: TextStyle( color: AppColors.blue3, fontSize: 9),
+                      labelStyle: const TextStyle( color: AppColors.blue3, fontSize: 9),
                       borderColor: AppColors.blue3,
                       controller: _fechaIngresoController,
                       hintText: 'Seleccione la fecha de ingreso',
@@ -258,9 +245,9 @@ class _RegisterUserDialogState extends State<RegisterUserDialog> {
                       lastDate: DateTime.now(),
                       initialDate: DateTime.now(),
                     ),
-                
+
                     const SizedBox(height: 16),
-                
+
                     // Nota informativa
                     Container(
                       padding: const EdgeInsets.all(10),
@@ -282,25 +269,26 @@ class _RegisterUserDialogState extends State<RegisterUserDialog> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'El usuario será creado con rol USER por defecto',
-                              style: TextStyle(
-                                fontSize: 9,
-                                color: Colors.blue[900],
-                              ),
-                            ),
+                                    'El usuario será creado con rol USER por defecto',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      color: Colors.blue[900],
+                                    ),
+                                  ),
                           ),
                         ],
                       ),
                     ),
-                
+
                     const SizedBox(height: 20),
-                
+
                     // Botones
                     Row(
                       children: [
                         Expanded(
                           child: CustomButton(
                             text: 'Cancelar',
+                            textStyle: AppFont.pirulentBold.style(fontSize: 9),
                             onPressed: _isLoading
                                 ? null
                                 : () => Navigator.pop(context),
@@ -314,6 +302,7 @@ class _RegisterUserDialogState extends State<RegisterUserDialog> {
                         Expanded(
                           child: CustomButton(
                             text: 'Registrar',
+                            textStyle: AppFont.pirulentBold.style(fontSize: 9),
                             onPressed: _handleRegister,
                             buttonState: _isLoading ? ButtonState.loading : ButtonState.idle,
                             loadingText: 'Registrando...',
@@ -328,7 +317,6 @@ class _RegisterUserDialogState extends State<RegisterUserDialog> {
                     ),
                   ],
                 ),
-              ),
             ),
           ),
         ),
