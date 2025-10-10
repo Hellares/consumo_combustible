@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:consumo_combustible/core/fonts/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -630,10 +631,10 @@ class _CustomDateState extends State<CustomDate>
             widget.label!,
             style:
                 widget.labelStyle ??
-                const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.blue,
+                TextStyle(
+                  fontSize: 9,
+                  fontFamily: AppFonts.getFontFamily(AppFont.oxygenRegular),
+                  color: AppColors.blue3,
                 ),
           ),
           const SizedBox(height: 2),
@@ -701,11 +702,10 @@ class _CustomDateState extends State<CustomDate>
                         widget.textStyle ??
                         TextStyle(
                           color: widget.enabled
-                              ? Colors.black87
+                              ? AppColors.blue2
                               : Colors.grey[600],
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          height: 1.2,
+                          fontSize: 10,
+                          fontFamily: AppFonts.getFontFamily(AppFont.oxygenBold)
                         ),
                         
                     decoration: InputDecoration(
@@ -726,8 +726,8 @@ class _CustomDateState extends State<CustomDate>
                           widget.hintStyle ??
                           TextStyle(
                             color: Colors.grey[500],
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
+                            fontSize: 10,
+                            fontFamily: AppFonts.getFontFamily(AppFont.oxygenRegular),
                             height: 1.2,
                           ),
                     ),
@@ -831,7 +831,7 @@ class _CustomDateState extends State<CustomDate>
       child: IconTheme(
         data: IconThemeData(
           color: _isFocused ? const Color(0xFF666666) : Colors.grey[600],
-          size: 20,
+          size: 17,
         ),
         child: Icon(icon),
       ),
@@ -848,7 +848,7 @@ class _CustomDateState extends State<CustomDate>
         icon: const Icon(Icons.access_time_outlined),
         onPressed: widget.enabled ? _showTimeOnlyPicker : null,
         color: _isFocused ? const Color(0xFF666666) : Colors.grey[600],
-        iconSize: 20,
+        iconSize: 18,
         splashRadius: 16,
         padding: const EdgeInsets.all(6),
         constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
@@ -865,7 +865,7 @@ class _CustomDateState extends State<CustomDate>
         ),
         onPressed: widget.enabled ? _showDatePickerDialog : null,
         color: _isFocused ? const Color(0xFF666666) : Colors.grey[600],
-        iconSize: 20,
+        iconSize: 18,
         splashRadius: 16,
         padding: const EdgeInsets.all(6),
         constraints: const BoxConstraints(minWidth: 28, minHeight: 28),

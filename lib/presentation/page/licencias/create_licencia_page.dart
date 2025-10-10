@@ -1,8 +1,14 @@
-// lib/presentation/page/licencias/create_licencia_page.dart
-
+import 'package:consumo_combustible/core/fonts/app_fonts.dart';
+import 'package:consumo_combustible/core/fonts/app_text_widgets.dart';
 import 'package:consumo_combustible/core/theme/app_colors.dart';
+import 'package:consumo_combustible/core/widgets/appbar/smart_appbar.dart';
+import 'package:consumo_combustible/core/widgets/custom_date_textfiels_container/custom_date.dart';
+import 'package:consumo_combustible/core/widgets/custom_date_textfiels_container/custom_dropdown.dart';
+import 'package:consumo_combustible/core/widgets/custom_date_textfiels_container/custom_textfield.dart';
 import 'package:consumo_combustible/core/widgets/snack.dart';
+import 'package:consumo_combustible/core/widgets/user_selector_field.dart'; // ✅ NUEVO IMPORT
 import 'package:consumo_combustible/domain/models/create_licencia_request.dart';
+import 'package:consumo_combustible/domain/models/user_selection.dart'; // ✅ NUEVO IMPORT
 import 'package:consumo_combustible/domain/utils/resource.dart';
 import 'package:consumo_combustible/presentation/page/licencias/bloc/licencia_bloc.dart';
 import 'package:consumo_combustible/presentation/page/licencias/bloc/licencia_event.dart';
@@ -22,8 +28,13 @@ class _CreateLicenciaPageState extends State<CreateLicenciaPage> {
   final _formKey = GlobalKey<FormState>();
   final _numeroLicenciaController = TextEditingController();
   final _categoriaController = TextEditingController();
+  
+  // ✅ MODIFICADO - Ya no necesitamos estos controllers, pero los dejamos por compatibilidad
   final _usuarioIdController = TextEditingController();
   final _usuarioNombreController = TextEditingController();
+  
+  // ✅ NUEVO - Variable para almacenar el usuario seleccionado
+  UserSelection? _selectedUser;
   
   DateTime? _fechaEmision;
   DateTime? _fechaExpiracion;
@@ -50,42 +61,11 @@ class _CreateLicenciaPageState extends State<CreateLicenciaPage> {
     super.dispose();
   }
 
-  Future<void> _selectDate(BuildContext context, bool isEmision) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: isEmision 
-          ? (_fechaEmision ?? DateTime.now())
-          : (_fechaExpiracion ?? DateTime.now().add(const Duration(days: 365 * 5))),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2050),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColors.blue3,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null) {
-      setState(() {
-        if (isEmision) {
-          _fechaEmision = picked;
-        } else {
-          _fechaExpiracion = picked;
-        }
-      });
-    }
-  }
 
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
-      if (_usuarioIdController.text.isEmpty) {
+      // ✅ MODIFICADO - Validar usuario seleccionado
+      if (_selectedUser == null) {
         SnackBarHelper.showError(context, 'Debe seleccionar un usuario');
         return;
       }
@@ -100,8 +80,9 @@ class _CreateLicenciaPageState extends State<CreateLicenciaPage> {
         return;
       }
 
+      // ✅ MODIFICADO - Usar el ID del usuario seleccionado
       final request = CreateLicenciaRequest(
-        usuarioId: int.parse(_usuarioIdController.text),
+        usuarioId: _selectedUser!.id,
         numeroLicencia: _numeroLicenciaController.text.trim(),
         categoria: _categoriaController.text.trim(),
         fechaEmision: DateFormat('yyyy-MM-dd').format(_fechaEmision!),
@@ -115,11 +96,7 @@ class _CreateLicenciaPageState extends State<CreateLicenciaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Nueva Licencia de Conducir'),
-        backgroundColor: AppColors.blue3,
-        foregroundColor: Colors.white,
-      ),
+      appBar: SmartAppBar(title: 'Nueva Licencia de Conducir', showLogo: true, logoPath: 'assets/img/6.svg',),
       body: BlocConsumer<LicenciaBloc, LicenciaState>(
         listener: (context, state) {
           if (state.response is Success) {
@@ -138,22 +115,31 @@ class _CreateLicenciaPageState extends State<CreateLicenciaPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Usuario
-                  _buildUsuarioField(),
+                  UserSelectorField(
+                    height: 35,
+                    label: 'Conductor',
+                    hintText: 'Seleccionar conductor',
+                    roleFilter: null, //!'ADMIN', // Solo muestra usuarios con rol CONDUCTOR
+                    isRequired: true,
+                    borderColor: AppColors.blue3,
+                    onUserSelected: (user) {
+                      setState(() {
+                        _selectedUser = user;
+                        // Actualizar controllers por compatibilidad (opcional)
+                        _usuarioIdController.text = user.id.toString();
+                        _usuarioNombreController.text = user.nombreCompleto;
+                      });
+                    },
+                  ),
                   const SizedBox(height: 16),
 
-                  // Número de Licencia
-                  TextFormField(
+                  
+                  CustomTextField(
                     controller: _numeroLicenciaController,
-                    decoration: InputDecoration(
-                      labelText: 'Número de Licencia',
-                      hintText: 'Ej: Q12300679',
-                      prefixIcon: const Icon(Icons.badge),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    textCapitalization: TextCapitalization.characters,
+                    label: 'Número de Licencia',
+                    hintText: 'Ej: Q12300679 ',
+                    prefixIcon: const Icon(Icons.badge),
+                    borderColor: AppColors.blue3,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'El número de licencia es requerido';
@@ -166,30 +152,25 @@ class _CreateLicenciaPageState extends State<CreateLicenciaPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Categoría
-                  DropdownButtonFormField<String>(
-                    initialValue: _categoriaController.text.isEmpty ? null : _categoriaController.text,
-                    decoration: InputDecoration(
-                      labelText: 'Categoría',
-                      prefixIcon: const Icon(Icons.category),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    items: _categorias.map((categoria) {
-                      return DropdownMenuItem(
+                  CustomDropdown(
+                    label: 'Categoría',
+                    hintText: 'Seleccionar categoría',
+                    items: _categorias.map((categoria){
+                      return DropdownItem(
                         value: categoria,
-                        child: Text(categoria),
+                        label: categoria, // Usar el valor de la categoría, no texto fijo
                       );
                     }).toList(),
-                    onChanged: (value) {
+                    value: _categoriaController.text.isEmpty ? null : _categoriaController.text,
+                    borderColor: AppColors.blue3,
+                    onChanged: (value){
                       setState(() {
                         _categoriaController.text = value ?? '';
                       });
                     },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'La categoría es requerida';
+                    validator: (value){
+                      if (value == null || value.isEmpty){
+                        return 'La categoria es requerida';
                       }
                       return null;
                     },
@@ -197,48 +178,49 @@ class _CreateLicenciaPageState extends State<CreateLicenciaPage> {
                   const SizedBox(height: 16),
 
                   // Fecha de Emisión
-                  InkWell(
-                    onTap: () => _selectDate(context, true),
-                    child: InputDecorator(
-                      decoration: InputDecoration(
-                        labelText: 'Fecha de Emisión',
-                        prefixIcon: const Icon(Icons.calendar_today),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        _fechaEmision == null
-                            ? 'Seleccionar fecha'
-                            : DateFormat('dd/MM/yyyy').format(_fechaEmision!),
-                        style: TextStyle(
-                          color: _fechaEmision == null ? Colors.grey : Colors.black,
-                        ),
-                      ),
-                    ),
+                  CustomDate(
+                    label: 'Fecha de Emisión',
+                    hintText: 'Seleccionar fecha de emisión',
+                    borderColor: AppColors.blue3,
+                    initialDate: _fechaEmision,
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime.now(),
+                    onDateSelected: (date) {
+                      setState(() {
+                        _fechaEmision = date;
+                      });
+                    },
+                    validator: (value) {
+                      if (_fechaEmision == null) {
+                        return 'La fecha de emisión es requerida';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 16),
 
                   // Fecha de Expiración
-                  InkWell(
-                    onTap: () => _selectDate(context, false),
-                    child: InputDecorator(
-                      decoration: InputDecoration(
-                        labelText: 'Fecha de Expiración',
-                        prefixIcon: const Icon(Icons.event),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        _fechaExpiracion == null
-                            ? 'Seleccionar fecha'
-                            : DateFormat('dd/MM/yyyy').format(_fechaExpiracion!),
-                        style: TextStyle(
-                          color: _fechaExpiracion == null ? Colors.grey : Colors.black,
-                        ),
-                      ),
-                    ),
+                  CustomDate(
+                    label: 'Fecha de Expiración',
+                    hintText: 'Seleccionar fecha de expiración',
+                    borderColor: AppColors.blue3,
+                    initialDate: _fechaExpiracion,
+                    firstDate: _fechaEmision ?? DateTime.now(),
+                    lastDate: DateTime(2050),
+                    onDateSelected: (date) {
+                      setState(() {
+                        _fechaExpiracion = date;
+                      });
+                    },
+                    validator: (value) {
+                      if (_fechaExpiracion == null) {
+                        return 'La fecha de expiración es requerida';
+                      }
+                      if (_fechaEmision != null && _fechaExpiracion!.isBefore(_fechaEmision!)) {
+                        return 'Debe ser posterior a la fecha de emisión';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 24),
 
@@ -247,7 +229,7 @@ class _CreateLicenciaPageState extends State<CreateLicenciaPage> {
                     onPressed: state.isLoading ? null : _submitForm,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.blue3,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -261,14 +243,15 @@ class _CreateLicenciaPageState extends State<CreateLicenciaPage> {
                               valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
-                        : const Text(
-                            'Crear Licencia',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
+                          : AppTitle('Crear Licencia',color: AppColors.white, font: AppFont.pirulentBold, fontSize: 10,)
+                        // : const Text(
+                        //     'Crear Licencia',
+                        //     style: TextStyle(
+                        //       fontSize: 12,
+                        //       fontWeight: FontWeight.bold,
+                        //       color: Colors.white,
+                        //     ),
+                        //   ),
                   ),
                 ],
               ),
@@ -279,105 +262,6 @@ class _CreateLicenciaPageState extends State<CreateLicenciaPage> {
     );
   }
 
-  Widget _buildUsuarioField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextFormField(
-          controller: _usuarioNombreController,
-          decoration: InputDecoration(
-            labelText: 'Usuario',
-            hintText: 'Buscar usuario por DNI o nombre',
-            prefixIcon: const Icon(Icons.person_search),
-            suffixIcon: _usuarioIdController.text.isNotEmpty
-                ? IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      setState(() {
-                        _usuarioIdController.clear();
-                        _usuarioNombreController.clear();
-                      });
-                    },
-                  )
-                : null,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          readOnly: true,
-          onTap: () => _showUserSearchDialog(),
-          validator: (value) {
-            if (_usuarioIdController.text.isEmpty) {
-              return 'Debe seleccionar un usuario';
-            }
-            return null;
-          },
-        ),
-        if (_usuarioIdController.text.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 8, left: 12),
-            child: Text(
-              'ID: ${_usuarioIdController.text}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  void _showUserSearchDialog() {
-    final searchController = TextEditingController();
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Buscar Usuario'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: searchController,
-              decoration: InputDecoration(
-                hintText: 'Ingrese ID del usuario',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Por ahora, ingrese el ID del usuario directamente. La búsqueda avanzada estará disponible próximamente.',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (searchController.text.isNotEmpty) {
-                setState(() {
-                  _usuarioIdController.text = searchController.text;
-                  _usuarioNombreController.text = 'Usuario ID: ${searchController.text}';
-                });
-                Navigator.pop(context);
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.blue3,
-            ),
-            child: const Text('Seleccionar', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
+  // ✅ ELIMINADO - Ya no necesitamos _buildUsuarioField() ni _showUserSearchDialog()
+  // El widget UserSelectorField maneja todo esto automáticamente
 }

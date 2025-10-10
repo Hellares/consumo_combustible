@@ -1,3 +1,4 @@
+import 'package:consumo_combustible/core/fonts/app_fonts.dart';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -223,7 +224,8 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>>
         child: CompositedTransformFollower(
           link: _layerLink,
           showWhenUnlinked: false,
-          offset: Offset(0.0, size.height + 5.0),
+          offset: Offset(0.0, 40), // ✅ Reducido de 5.0 a 2.0
+          // offset: Offset(0.0, 40),
           child: Material(
             elevation: 8,
             borderRadius: BorderRadius.circular(widget.borderRadius),
@@ -249,6 +251,7 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>>
                         controller: _searchController,
                         decoration: InputDecoration(
                           hintText: 'Buscar...',
+                          hintStyle: TextStyle(fontSize: 9, fontFamily: AppFonts.getFontFamily(AppFont.oxygenRegular)),
                           prefixIcon: const Icon(Icons.search, size: 20),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(6),
@@ -261,7 +264,7 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>>
                             vertical: 8,
                           ),
                         ),
-                        style: const TextStyle(fontSize: 12),
+                        style: TextStyle(fontSize: 10, fontFamily: AppFonts.getFontFamily(AppFont.oxygenRegular)),
                       ),
                     ),
                     const Divider(height: 1),
@@ -289,7 +292,7 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>>
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? (widget.borderColor ?? AppColors.blue)
-                                      .withOpacity(0.1)
+                                      .withValues(alpha: 0.1)
                                   : null,
                             ),
                             child: Row(
@@ -399,10 +402,11 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>>
           Text(
             widget.label!,
             style: widget.labelStyle ??
-                const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.blue,
+                TextStyle(
+                  fontSize: 9,
+                  // fontWeight: FontWeight.w500,
+                  color: AppColors.blue3,
+                  fontFamily: AppFonts.getFontFamily(AppFont.oxygenRegular)
                 ),
           ),
           const SizedBox(height: 2),
@@ -445,16 +449,20 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>>
                           Expanded(
                             child: Text(
                               _getDisplayText(),
-                              style: widget.textStyle ??
-                                  TextStyle(
-                                    color: widget.enabled
-                                        ? (_selectedValue != null || _selectedMultiValues.isNotEmpty
-                                            ? Colors.black87
-                                            : Colors.grey[500])
-                                        : Colors.grey[600],
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w400,
-                                  ),
+                              style: (_selectedValue == null && _selectedMultiValues.isEmpty)
+                                  ? (widget.hintStyle ?? // ✅ Usar hintStyle para el hint
+                                      TextStyle(
+                                        color: Colors.grey[500],
+                                        fontSize: 10,
+                                        // fontWeight: FontWeight.w400,
+                                        fontFamily: AppFonts.getFontFamily(AppFont.oxygenRegular)
+                                      ))
+                                  : (widget.textStyle ?? // Usar textStyle para valor seleccionado
+                                      TextStyle(
+                                        color: AppColors.blue2,
+                                        fontSize: 10,
+                                        fontFamily: AppFonts.getFontFamily(AppFont.oxygenBold)
+                                      )),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -573,7 +581,6 @@ class CustomDropdownHelpers {
       value: value,
       onChanged: onChanged,
       borderColor: borderColor,
-      hintText: hintText,
     );
   }
 

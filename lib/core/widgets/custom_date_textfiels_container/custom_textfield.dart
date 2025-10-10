@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:consumo_combustible/core/fonts/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -1108,8 +1109,8 @@ class _CustomTextFieldState extends State<CustomTextField>
     return _cachedTextStyle ??=
         widget.textStyle ??
         TextStyle(
-          color: widget.enabled ? AppColors.blue2 : AppColors.blue,
-          fontSize: 12,
+          color: widget.enabled ? AppColors.blue2 : AppColors.blue3,
+          fontSize: 10,
           fontWeight: FontWeight.w600,
           fontFamily: 'Oxygen-Regular'
         );
@@ -1122,17 +1123,18 @@ class _CustomTextFieldState extends State<CustomTextField>
           color: Colors.grey[500],
           fontSize: 10,
           fontWeight: FontWeight.w400,
-          height: 1.2,
+          // height: 1.2,
         );
   }
 
   TextStyle _getCachedLabelStyle() {
     return _cachedLabelStyle ??=
         widget.labelStyle ??
-        const TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w500,
-          color: AppColors.blue,
+        TextStyle(
+          fontSize: 9,
+          // fontWeight: FontWeight.w500,
+          fontFamily: AppFonts.getFontFamily(AppFont.oxygenRegular),
+          color: AppColors.blue3,
         );
   }
 
