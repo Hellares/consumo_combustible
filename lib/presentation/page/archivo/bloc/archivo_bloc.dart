@@ -239,7 +239,7 @@ class ArchivoBloc extends Bloc<ArchivoEvent, ArchivoState> {
     Emitter<ArchivoState> emit,
   ) async {
     if (kDebugMode) {
-      print('🗑️ [ArchivoBloc] Eliminando archivo ${event.archivoId}...');
+      print('🗑️ [ArchivoBloc] Eliminando archivo ${event.archivoId} del ticket ${event.ticketId}...');
     }
 
     emit(state.copyWith(
@@ -249,14 +249,14 @@ class ArchivoBloc extends Bloc<ArchivoEvent, ArchivoState> {
       errorMessage: null,
     ));
 
-    final result = await _archivoUseCases.deleteArchivo.run(event.archivoId);
+    final result = await _archivoUseCases.deleteArchivo.run(event.archivoId, event.ticketId);
 
     if (result is Success) {
       if (kDebugMode) {
         print('✅ [ArchivoBloc] Archivo ${event.archivoId} eliminado exitosamente');
       }
 
-      // Remover archivo de la lista
+      // Remover archivo de la lista localmente
       final updatedArchivos = state.archivos
           .where((archivo) => archivo.id != event.archivoId)
           .toList();
@@ -273,8 +273,7 @@ class ArchivoBloc extends Bloc<ArchivoEvent, ArchivoState> {
         errorMessage: null,
       ));
 
-      // Recargar archivos del ticket para asegurar sincronización
-      add(LoadArchivosByTicket(event.ticketId));
+      // No necesitamos recargar desde el servidor porque ya actualizamos la lista localmente
     } else if (result is Error) {
       if (kDebugMode) {
         print('❌ [ArchivoBloc] Error al eliminar: ${result.message}');

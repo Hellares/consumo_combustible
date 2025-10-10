@@ -101,9 +101,6 @@ extension GetItInjectableX on _i174.GetIt {
       () => appModule.licenciaService(gh<_i361.Dio>()),
     );
     gh.factory<_i148.UserService>(() => appModule.userService(gh<_i361.Dio>()));
-    gh.factory<_i261.ArchivoService>(
-      () => appModule.archivoService(gh<_i361.Dio>()),
-    );
     gh.singleton<_i343.DetalleAbastecimientoRepository>(
       () => appModule.detalleAbastecimientoRepository(
         gh<_i14.DetalleAbastecimientoService>(),
@@ -123,9 +120,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i607.UserRepository>(
       () => appModule.userRepository(gh<_i148.UserService>()),
     );
-    gh.singleton<_i45.ArchivoRepository>(
-      () => appModule.archivoRepository(gh<_i261.ArchivoService>()),
-    );
     gh.singleton<_i58.DetalleAbastecimientoUseCases>(
       () => appModule.detalleAbastecimientoUseCases(
         gh<_i343.DetalleAbastecimientoRepository>(),
@@ -137,6 +131,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i148.TicketAprobacionUseCases>(
       () => appModule.ticketAprobacionUseCases(
         gh<_i407.TicketAprobacionRepository>(),
+      ),
+    );
+    gh.factory<_i261.ArchivoService>(
+      () => appModule.archivoService(
+        gh<_i361.Dio>(),
+        gh<_i782.FastStorageService>(),
       ),
     );
     gh.singleton<_i41.UnidadRepository>(
@@ -163,17 +163,20 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i1047.LicenciaRepository>(
       () => appModule.licenciaRepository(gh<_i858.LicenciaService>()),
     );
-    gh.singleton<_i441.ArchivoUseCases>(
-      () => appModule.archivoUseCases(gh<_i45.ArchivoRepository>()),
-    );
     gh.singleton<_i960.AuthUseCases>(
       () => appModule.authUseCases(gh<_i120.AuthRepository>()),
+    );
+    gh.singleton<_i45.ArchivoRepository>(
+      () => appModule.archivoRepository(gh<_i261.ArchivoService>()),
     );
     gh.singleton<_i767.LicenciaUseCases>(
       () => appModule.licenciaUseCases(gh<_i1047.LicenciaRepository>()),
     );
     gh.singleton<_i453.TicketUseCases>(
       () => appModule.ticketUseCases(gh<_i107.TicketRepository>()),
+    );
+    gh.singleton<_i441.ArchivoUseCases>(
+      () => appModule.archivoUseCases(gh<_i45.ArchivoRepository>()),
     );
     return this;
   }

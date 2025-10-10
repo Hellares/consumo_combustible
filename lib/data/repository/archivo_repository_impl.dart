@@ -107,13 +107,13 @@ class ArchivoRepositoryImpl implements ArchivoRepository {
   }
 
   @override
-  Future<Resource<void>> deleteArchivo(int archivoId) async {
+  Future<Resource<void>> deleteArchivo(int archivoId, int ticketId) async {
     try {
       if (kDebugMode) {
-        print('📦 [ArchivoRepository] Eliminando archivo $archivoId...');
+        print('📦 [ArchivoRepository] Eliminando archivo $archivoId del ticket $ticketId...');
       }
       
-      final result = await _service.deleteArchivo(archivoId);
+      final result = await _service.deleteArchivo(archivoId, ticketId);
       
       if (kDebugMode) {
         if (result is Success) {

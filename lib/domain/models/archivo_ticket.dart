@@ -156,6 +156,39 @@ class TipoArchivoInfo {
       'orden': orden,
     };
   }
+
+  // Getters de conveniencia para categorías
+  bool get esImagen => categoria == 'IMAGEN';
+  bool get esComprobante => categoria == 'COMPROBANTE';
+  bool get esDocumento => categoria == 'DOCUMENTO';
+
+  // Iconos según categoría
+  String get iconoCategoria {
+    switch (categoria) {
+      case 'IMAGEN':
+        return '📷';
+      case 'COMPROBANTE':
+        return '🧾';
+      case 'DOCUMENTO':
+        return '📄';
+      default:
+        return '📎';
+    }
+  }
+
+  // Color según categoría (para UI)
+  int get colorCategoria {
+    switch (categoria) {
+      case 'IMAGEN':
+        return 0xFF2196F3; // Azul
+      case 'COMPROBANTE':
+        return 0xFF4CAF50; // Verde
+      case 'DOCUMENTO':
+        return 0xFFFF9800; // Naranja
+      default:
+        return 0xFF9E9E9E; // Gris
+    }
+  }
 }
 
 // Clase para información de quien subió el archivo

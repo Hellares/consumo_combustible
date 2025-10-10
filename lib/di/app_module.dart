@@ -194,9 +194,9 @@ abstract class AppModule {
 
   // NUEVO: ARCHIVO SERVICE
   @injectable
-  ArchivoService archivoService(Dio dio) {
-    if (kDebugMode) print('📎 Creando ArchivoService');
-    return ArchivoService(dio);
+  ArchivoService archivoService(Dio dio, FastStorageService storage) {
+    if (kDebugMode) print('📎 Creando ArchivoService con caché');
+    return ArchivoService(dio, storage);
   }
 
   // NUEVO: ARCHIVO REPOSITORY

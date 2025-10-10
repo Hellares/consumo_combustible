@@ -21,5 +21,5 @@ abstract class ArchivoRepository {
   Future<Resource<List<ArchivoTicket>>> getArchivosByTicket(int ticketId);
   
   /// Elimina un archivo por su ID
-  Future<Resource<void>> deleteArchivo(int archivoId);
+  Future<Resource<void>> deleteArchivo(int archivoId, int ticketId);
 }

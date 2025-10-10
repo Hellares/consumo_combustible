@@ -6,10 +6,13 @@ class DeleteArchivoUseCase {
 
   DeleteArchivoUseCase(this._repository);
 
-  Future<Resource<void>> run(int archivoId) {
+  Future<Resource<void>> run(int archivoId, int ticketId) {
     if (archivoId <= 0) {
       return Future.value(Error('ID de archivo inválido'));
     }
-    return _repository.deleteArchivo(archivoId);
+    if (ticketId <= 0) {
+      return Future.value(Error('ID de ticket inválido'));
+    }
+    return _repository.deleteArchivo(archivoId, ticketId);
   }
 }

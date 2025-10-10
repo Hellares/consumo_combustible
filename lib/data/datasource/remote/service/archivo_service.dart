@@ -1,6 +1,8 @@
 // lib/data/datasource/remote/service/archivo_service.dart
 
 import 'dart:io';
+import 'dart:convert';
+import 'package:consumo_combustible/core/fast_storage_service.dart';
 import 'package:consumo_combustible/domain/models/archivo_ticket.dart';
 import 'package:consumo_combustible/domain/models/tipo_archivo.dart';
 import 'package:consumo_combustible/domain/utils/resource.dart';
@@ -10,14 +12,41 @@ import 'package:http_parser/http_parser.dart';
 
 class ArchivoService {
   final Dio _dio;
+  final FastStorageService _storage;
+  static const String _tiposArchivoCacheKey = 'tipos_archivo_cache';
 
-  ArchivoService(this._dio);
+  ArchivoService(this._dio, this._storage);
 
-  // Obtener tipos de archivo disponibles
-  Future<Resource<List<TipoArchivo>>> getTiposArchivo() async {
+  // Obtener tipos de archivo disponibles (con caché)
+  Future<Resource<List<TipoArchivo>>> getTiposArchivo({bool forceRefresh = false}) async {
     try {
+      // 1. Intentar obtener desde caché (si no es refresh forzado)
+      if (!forceRefresh) {
+        final cachedData = await _storage.read(_tiposArchivoCacheKey);
+        if (cachedData != null) {
+          try {
+            final List<dynamic> tiposJson = jsonDecode(cachedData) as List;
+            final tipos = tiposJson
+                .map((json) => TipoArchivo.fromJson(json))
+                .where((tipo) => tipo.activo)
+                .toList();
+
+            if (kDebugMode) {
+              print('⚡ [ArchivoService] ${tipos.length} tipos cargados desde CACHÉ');
+            }
+
+            return Success(tipos);
+          } catch (e) {
+            if (kDebugMode) {
+              print('⚠️ Error al decodificar caché, obteniendo de servidor...');
+            }
+          }
+        }
+      }
+
+      // 2. Obtener desde servidor
       if (kDebugMode) {
-        print('📋 [ArchivoService] Obteniendo tipos de archivo...');
+        print('📋 [ArchivoService] Obteniendo tipos de archivo desde servidor...');
       }
 
       final response = await _dio.get('/api/archivos/tipos');
@@ -32,8 +61,11 @@ class ArchivoService {
               .where((tipo) => tipo.activo)
               .toList();
 
+          // 3. Guardar en caché para futuras consultas
+          await _storage.writeAsync(_tiposArchivoCacheKey, jsonEncode(tiposJson));
+
           if (kDebugMode) {
-            print('✅ ${tipos.length} tipos de archivo cargados');
+            print('✅ ${tipos.length} tipos de archivo cargados y cacheados');
           }
 
           return Success(tipos);
@@ -129,8 +161,13 @@ class ArchivoService {
               .map((json) => ArchivoTicket.fromJson(json))
               .toList();
 
+          // ✅ Invalidar caché del ticket después de subir
+          final cacheKey = 'archivos_ticket_$ticketId';
+          await _storage.delete(cacheKey);
+
           if (kDebugMode) {
             print('✅ ${archivos.length} archivo(s) subido(s) exitosamente');
+            print('🗑️ Caché invalidado para ticket $ticketId');
           }
 
           return Success(archivos);
@@ -154,11 +191,37 @@ class ArchivoService {
     }
   }
 
-  // Obtener archivos de un ticket
-  Future<Resource<List<ArchivoTicket>>> getArchivosByTicket(int ticketId) async {
+  // Obtener archivos de un ticket (con caché)
+  Future<Resource<List<ArchivoTicket>>> getArchivosByTicket(int ticketId, {bool forceRefresh = false}) async {
     try {
+      final cacheKey = 'archivos_ticket_$ticketId';
+
+      // 1. Intentar obtener desde caché (si no es refresh forzado)
+      if (!forceRefresh) {
+        final cachedData = await _storage.read(cacheKey);
+        if (cachedData != null) {
+          try {
+            final List<dynamic> archivosJson = jsonDecode(cachedData) as List;
+            final archivos = archivosJson
+                .map((json) => ArchivoTicket.fromJson(json))
+                .toList();
+
+            if (kDebugMode) {
+              print('⚡ [ArchivoService] ${archivos.length} archivo(s) cargados desde CACHÉ (ticket $ticketId)');
+            }
+
+            return Success(archivos);
+          } catch (e) {
+            if (kDebugMode) {
+              print('⚠️ Error al decodificar caché, obteniendo de servidor...');
+            }
+          }
+        }
+      }
+
+      // 2. Obtener desde servidor
       if (kDebugMode) {
-        print('📂 [ArchivoService] Obteniendo archivos del ticket $ticketId...');
+        print('📂 [ArchivoService] Obteniendo archivos del ticket $ticketId desde servidor...');
       }
 
       final response = await _dio.get('/api/archivos/ticket/$ticketId');
@@ -172,8 +235,11 @@ class ArchivoService {
               .map((json) => ArchivoTicket.fromJson(json))
               .toList();
 
+          // 3. Guardar en caché para futuras consultas
+          await _storage.writeAsync(cacheKey, jsonEncode(archivosJson));
+
           if (kDebugMode) {
-            print('✅ ${archivos.length} archivo(s) encontrado(s)');
+            print('✅ ${archivos.length} archivo(s) encontrado(s) y cacheados');
           }
 
           return Success(archivos);
@@ -197,7 +263,7 @@ class ArchivoService {
   }
 
   // Eliminar archivo
-  Future<Resource<void>> deleteArchivo(int archivoId) async {
+  Future<Resource<void>> deleteArchivo(int archivoId, int ticketId) async {
     try {
       if (kDebugMode) {
         print('🗑️ [ArchivoService] Eliminando archivo $archivoId...');
@@ -206,8 +272,13 @@ class ArchivoService {
       final response = await _dio.delete('/api/archivos/$archivoId');
 
       if (response.statusCode == 200) {
+        // ✅ Invalidar caché del ticket después de eliminar
+        final cacheKey = 'archivos_ticket_$ticketId';
+        await _storage.delete(cacheKey);
+
         if (kDebugMode) {
           print('✅ Archivo eliminado exitosamente');
+          print('🗑️ Caché invalidado para ticket $ticketId');
         }
         return Success(null);
       }

@@ -1,6 +1,8 @@
 // lib/presentation/page/detalle_abastecimiento/widgets/archivos_upload_widget.dart
 
 import 'dart:io';
+import 'package:consumo_combustible/core/fonts/app_text_widgets.dart';
+import 'package:consumo_combustible/core/theme/app_colors.dart';
 import 'package:consumo_combustible/domain/utils/resource.dart';
 import 'package:consumo_combustible/presentation/page/archivo/bloc/archivo_bloc.dart';
 import 'package:consumo_combustible/presentation/page/archivo/bloc/archivo_event.dart';
@@ -9,13 +11,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
-
+import 'package:path_provider/path_provider.dart';
+import 'package:dio/dio.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:url_launcher/url_launcher.dart';
+/*
+  ***************************************************************************************
+  Metodo: //!widget para subir imagenes
+  Fecha: 10-10-2025
+  Descripcion: se debe mejorar para separar responsabilidades
+  Autor: James Torres
+  ***************************************************************************************
+*/
 class ArchivosUploadWidget extends StatefulWidget {
   final int ticketId;
+  final bool isConcluido;
 
   const ArchivosUploadWidget({
     super.key,
     required this.ticketId,
+    this.isConcluido = false,
   });
 
   @override
@@ -24,7 +39,7 @@ class ArchivosUploadWidget extends StatefulWidget {
 
 class _ArchivosUploadWidgetState extends State<ArchivosUploadWidget> {
   final ImagePicker _imagePicker = ImagePicker();
-  int? _selectedTipoArchivoId;
+  String? _lastSelectedCategory; // Para rastrear la última categoría seleccionada
 
   @override
   void initState() {
@@ -37,12 +52,13 @@ class _ArchivosUploadWidgetState extends State<ArchivosUploadWidget> {
   Future<void> _pickImages() async {
     try {
       final List<XFile> images = await _imagePicker.pickMultiImage(
-        imageQuality: 85,
+        imageQuality: 100, // ✅ Calidad máxima
       );
 
       if (images.isNotEmpty) {
         final files = images.map((xFile) => File(xFile.path)).toList();
         if (mounted) {
+          setState(() => _lastSelectedCategory = 'IMAGEN'); // ✅ Registrar categoría
           context.read<ArchivoBloc>().add(SelectArchivos(files));
         }
       }
@@ -57,11 +73,12 @@ class _ArchivosUploadWidgetState extends State<ArchivosUploadWidget> {
     try {
       final XFile? photo = await _imagePicker.pickImage(
         source: ImageSource.camera,
-        imageQuality: 85,
+        imageQuality: 100, // ✅ Calidad máxima
       );
 
       if (photo != null) {
         if (mounted) {
+          setState(() => _lastSelectedCategory = 'IMAGEN'); // ✅ Registrar categoría
           context.read<ArchivoBloc>().add(SelectArchivos([File(photo.path)]));
         }
       }
@@ -83,6 +100,7 @@ class _ArchivosUploadWidgetState extends State<ArchivosUploadWidget> {
       if (result != null && result.files.isNotEmpty) {
         final files = result.files.map((file) => File(file.path!)).toList();
         if (mounted) {
+          setState(() => _lastSelectedCategory = 'PDF'); // ✅ Categoría especial para PDFs
           context.read<ArchivoBloc>().add(SelectArchivos(files));
         }
       }
@@ -101,9 +119,7 @@ class _ArchivosUploadWidgetState extends State<ArchivosUploadWidget> {
           value: context.read<ArchivoBloc>(),
           child: _UploadDialog(
             ticketId: widget.ticketId,
-            onTipoSelected: (tipoId) {
-              setState(() => _selectedTipoArchivoId = tipoId);
-            },
+            selectedCategory: _lastSelectedCategory, // ✅ Pasar categoría
           ),
         );
       },
@@ -113,28 +129,45 @@ class _ArchivosUploadWidgetState extends State<ArchivosUploadWidget> {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<ArchivoBloc, ArchivoState>(
+      listenWhen: (previous, current) {
+        // Solo escuchar cambios en uploadResponse o deleteResponse
+        return previous.uploadResponse != current.uploadResponse ||
+               previous.deleteResponse != current.deleteResponse ||
+               previous.errorMessage != current.errorMessage;
+      },
       listener: (context, state) {
         // Mostrar errores
         if (state.errorMessage != null) {
           // showErrorSnackbar(context, state.errorMessage!);
         }
 
-        // Éxito al subir
+        // Éxito al subir - solo se ejecuta una vez debido a listenWhen
         if (state.uploadResponse is Success && !state.isUploading) {
           // showSuccessSnackbar(context, '¡Archivos subidos exitosamente!');
+          // Recargar archivos
           context.read<ArchivoBloc>().add(LoadArchivosByTicket(widget.ticketId));
         }
 
-        // Éxito al eliminar
+        // Éxito al eliminar - no necesita recargar porque el bloc ya actualiza la lista
         if (state.deleteResponse is Success && !state.isDeleting) {
           // showSuccessSnackbar(context, 'Archivo eliminado');
         }
       },
+      buildWhen: (previous, current) {
+        // Reconstruir cuando cambian datos relevantes para la UI
+        return previous.archivos != current.archivos ||
+               previous.selectedFiles != current.selectedFiles ||
+               previous.isUploading != current.isUploading ||
+               previous.isDeleting != current.isDeleting ||
+               previous.archivosResponse != current.archivosResponse;
+      },
       builder: (context, state) {
         return Card(
+          color: AppColors.white,
+          elevation: 2,
           margin: const EdgeInsets.all(16),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 12,vertical: 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -145,25 +178,26 @@ class _ArchivosUploadWidgetState extends State<ArchivosUploadWidget> {
                     const Text(
                       'Archivos Adjuntos',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     if (state.archivos.isNotEmpty)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
+                          horizontal: 10,
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
                           color: Colors.blue.shade100,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           '${state.archivos.length}',
                           style: TextStyle(
                             color: Colors.blue.shade700,
                             fontWeight: FontWeight.bold,
+                            fontSize: 10
                           ),
                         ),
                       ),
@@ -172,69 +206,114 @@ class _ArchivosUploadWidgetState extends State<ArchivosUploadWidget> {
                 const SizedBox(height: 16),
 
                 // Botones de acción
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: _pickImages,
-                      icon: const Icon(Icons.photo_library, size: 18),
-                      label: const Text('Galería'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                      ),
+                if (widget.isConcluido) ...[
+                  // ✅ Mensaje cuando está concluido
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.orange.shade200),
                     ),
-                    ElevatedButton.icon(
-                      onPressed: _pickCamera,
-                      icon: const Icon(Icons.camera_alt, size: 18),
-                      label: const Text('Cámara'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                      ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.lock, size: 20, color: Colors.orange.shade700),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'El detalle está concluido. No se pueden agregar más archivos.',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.orange.shade900,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    ElevatedButton.icon(
-                      onPressed: _pickPDF,
-                      icon: const Icon(Icons.picture_as_pdf, size: 18),
-                      label: const Text('PDF'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                      ),
+                  ),
+                ] else ...[
+                  // ✅ Botones habilitados cuando no está concluido
+                  Center(
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        SizedBox(
+                          height: 30,
+                          child: ElevatedButton.icon(
+                            onPressed: _pickImages,
+                            icon: const Icon(Icons.photo_library, size: 14),
+                            label: const Text('Galería'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              textStyle: TextStyle(fontSize: 10)
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          height: 30,
+                          child: ElevatedButton.icon(
+                            onPressed: _pickCamera,
+                            icon: const Icon(Icons.camera_alt, size: 14),
+                            label: const Text('Cámara'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                              textStyle: TextStyle(fontSize: 10)
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          height: 30,
+                          child: ElevatedButton.icon(
+                            onPressed: _pickPDF,
+                            icon: const Icon(Icons.picture_as_pdf, size: 14),
+                            label: const Text('PDF'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                              textStyle: TextStyle(fontSize: 10)
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
 
                 // Archivos seleccionados
                 if (state.hasSelectedFiles) ...[
                   const SizedBox(height: 16),
                   const Divider(),
                   _buildSelectedFiles(state),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   SizedBox(
+                    height: 35,
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: state.isUploading ? null : _showUploadDialog,
                       icon: state.isUploading
                           ? const SizedBox(
-                              width: 16,
-                              height: 16,
+                              width: 12,
+                              height: 12,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 color: Colors.white,
                               ),
                             )
-                          : const Icon(Icons.cloud_upload),
+                          : const Icon(Icons.cloud_upload, size: 14,),
                       label: Text(
                         state.isUploading
                             ? 'Subiendo...'
                             : 'Subir Archivos',
+                        style: TextStyle(fontSize: 10),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.orange,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
                     ),
                   ),
@@ -267,7 +346,7 @@ class _ArchivosUploadWidgetState extends State<ArchivosUploadWidget> {
       children: [
         Text(
           'Archivos seleccionados (${state.selectedFilesCount}):',
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
         ),
         const SizedBox(height: 8),
         ...state.selectedFiles.map((file) {
@@ -277,7 +356,7 @@ class _ArchivosUploadWidgetState extends State<ArchivosUploadWidget> {
 
           return Container(
             margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.only(left: 8),
             decoration: BoxDecoration(
               color: Colors.grey.shade100,
               borderRadius: BorderRadius.circular(8),
@@ -296,14 +375,14 @@ class _ArchivosUploadWidgetState extends State<ArchivosUploadWidget> {
                     children: [
                       Text(
                         fileName,
-                        style: const TextStyle(fontWeight: FontWeight.w500),
+                        style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         fileSizeStr,
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 10,
                           color: Colors.grey.shade600,
                         ),
                       ),
@@ -330,7 +409,7 @@ class _ArchivosUploadWidgetState extends State<ArchivosUploadWidget> {
       children: [
         const Text(
           'Archivos subidos:',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
         ),
         const SizedBox(height: 8),
         GridView.builder(
@@ -368,10 +447,22 @@ class _ArchivosUploadWidgetState extends State<ArchivosUploadWidget> {
               borderRadius: BorderRadius.circular(8),
               child: archivo.esImagen
                   ? Image.network(
-                      archivo.urlThumbnail ?? archivo.url,
+                      archivo.url, // ✅ Usar URL completa, no thumbnail
                       fit: BoxFit.cover,
                       width: double.infinity,
                       height: double.infinity,
+                      filterQuality: FilterQuality.high, // ✅ Alta calidad de renderizado
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                          ),
+                        );
+                      },
                       errorBuilder: (context, error, stackTrace) {
                         return _buildFileIcon(archivo);
                       },
@@ -379,36 +470,40 @@ class _ArchivosUploadWidgetState extends State<ArchivosUploadWidget> {
                   : _buildFileIcon(archivo),
             ),
           ),
-          // Botón eliminar
-          Positioned(
-            top: 4,
-            right: 4,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.9),
-                shape: BoxShape.circle,
-              ),
-              child: isDeleting
-                  ? const Padding(
-                      padding: EdgeInsets.all(8),
-                      child: SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+          // Botón eliminar (solo si NO está concluido)
+          if (!widget.isConcluido)
+            Positioned(
+              top: 4,
+              right: 4,
+              height: 25,
+              width: 25,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.9),
+                  shape: BoxShape.circle,
+                ),
+                child: isDeleting
+                    ? const Padding(
+                        padding: EdgeInsets.all(4),
+                        child: SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         ),
+                      )
+                    : IconButton(
+                        icon: const Icon(Icons.delete, size: 14),
+                        color: Colors.white,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => _confirmDelete(archivo),
+                        iconSize: 30,
                       ),
-                    )
-                  : IconButton(
-                      icon: const Icon(Icons.delete, size: 16),
-                      color: Colors.white,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () => _confirmDelete(archivo),
-                    ),
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -444,53 +539,98 @@ class _ArchivosUploadWidgetState extends State<ArchivosUploadWidget> {
     showDialog(
       context: context,
       builder: (context) => Dialog(
+        backgroundColor: AppColors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12), // Bordes redondeados
+        ),
+        clipBehavior: Clip.antiAlias, // Recortar contenido a los bordes
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.only(left: 18, ),
               color: Color(archivo.tipoArchivo.colorCategoria),
               child: Row(
                 children: [
                   Text(
-                    archivo.tipoArchivo.iconoCategoria,
-                    style: const TextStyle(fontSize: 24),
+                    archivo.tipoArchivo.iconoCategoria, //icono de la categoria, viene del modelo
+                    style: const TextStyle(fontSize: 14),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      archivo.tipoArchivo.nombre,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          archivo.tipoArchivo.nombre,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (archivo.esImagen)
+                          const Text(
+                            '🔍 Pellizca para hacer zoom',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 8,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
+                    icon: const Icon(Icons.close, color: Colors.white, size: 20,),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
             ),
+            // SizedBox(height: 5,),
             // Imagen o ícono
             if (archivo.esImagen)
-              Image.network(
-                archivo.url,
+              Container(
                 height: 300,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 300,
-                    color: Colors.grey.shade200,
-                    child: const Center(
-                      child: Icon(Icons.error_outline, size: 48),
+                color: Colors.black,
+                child: InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 4.0,
+                  child: Center(
+                    child: Image.network(
+                      archivo.url,
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.high,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          height: 300,
+                          color: Colors.grey.shade200,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 300,
+                          color: Colors.grey.shade200,
+                          child: const Center(
+                            child: Icon(Icons.error_outline, size: 48),
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
+                  ),
+                ),
               )
             else
               Container(
@@ -533,10 +673,142 @@ class _ArchivosUploadWidgetState extends State<ArchivosUploadWidget> {
                 ],
               ),
             ),
+            // Botones de acción
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Row(
+                children: [
+                  if (archivo.esPdf)
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _openInBrowser(archivo.url),
+                        icon: const Icon(Icons.open_in_browser, size: 18),
+                        label: const Text('Abrir'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                  if (archivo.esPdf) const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _downloadFile(archivo),
+                      icon: const Icon(Icons.download, size: 18),
+                      label: const Text('Descargar'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  // Abrir archivo en el navegador
+  Future<void> _openInBrowser(String url) async {
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No se puede abrir el archivo')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al abrir: $e')),
+        );
+      }
+    }
+  }
+
+  // Descargar archivo
+  Future<void> _downloadFile(dynamic archivo) async {
+    try {
+      // Mostrar diálogo de descarga
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Descargando...'),
+            ],
+          ),
+        ),
+      );
+
+      // Solicitar permisos en Android
+      if (Platform.isAndroid) {
+        final status = await Permission.storage.request();
+        if (!status.isGranted) {
+          if (mounted) {
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Permiso de almacenamiento denegado')),
+            );
+          }
+          return;
+        }
+      }
+
+      // Obtener directorio de descargas
+      Directory? directory;
+      if (Platform.isAndroid) {
+        directory = Directory('/storage/emulated/0/Download');
+        if (!await directory.exists()) {
+          directory = await getExternalStorageDirectory();
+        }
+      } else {
+        directory = await getApplicationDocumentsDirectory();
+      }
+
+      if (directory == null) {
+        throw Exception('No se pudo acceder al directorio de descargas');
+      }
+
+      // Construir ruta del archivo
+      final fileName = archivo.nombreOriginal;
+      final filePath = '${directory.path}/$fileName';
+
+      // Descargar archivo
+      final dio = Dio();
+      await dio.download(archivo.url, filePath);
+
+      if (mounted) {
+        Navigator.pop(context); // Cerrar diálogo de progreso
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Descargado: $fileName'),
+            action: SnackBarAction(
+              label: 'Abrir',
+              onPressed: () => _openInBrowser(filePath),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Cerrar diálogo de progreso
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al descargar: $e')),
+        );
+      }
+    }
   }
 
   Widget _buildDetailRow(String label, String value) {
@@ -546,14 +818,15 @@ class _ArchivosUploadWidgetState extends State<ArchivosUploadWidget> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 100,
+            width: 75,
             child: Text(
               label,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
             ),
           ),
           Expanded(
-            child: Text(value),
+            //child: Text(value),
+            child: AppSubtitle(value),
           ),
         ],
       ),
@@ -618,11 +891,11 @@ class _ArchivosUploadWidgetState extends State<ArchivosUploadWidget> {
 // ============================================
 class _UploadDialog extends StatefulWidget {
   final int ticketId;
-  final Function(int) onTipoSelected;
+  final String? selectedCategory;
 
   const _UploadDialog({
     required this.ticketId,
-    required this.onTipoSelected,
+    this.selectedCategory,
   });
 
   @override
@@ -643,8 +916,25 @@ class _UploadDialogState extends State<_UploadDialog> {
   Widget build(BuildContext context) {
     return BlocBuilder<ArchivoBloc, ArchivoState>(
       builder: (context, state) {
+        // ✅ Filtrar tipos según la categoría seleccionada
+        final tiposFiltrados = widget.selectedCategory != null
+            ? widget.selectedCategory == 'PDF'
+                // Para PDFs: incluir DOCUMENTO y COMPROBANTE
+                ? state.tiposArchivo.where((tipo) =>
+                    tipo.categoria == 'DOCUMENTO' || tipo.categoria == 'COMPROBANTE'
+                  ).toList()
+                // Para otros: filtrar por categoría exacta
+                : state.tiposArchivo.where((tipo) => tipo.categoria == widget.selectedCategory).toList()
+            : state.tiposArchivo;
+
         return AlertDialog(
-          title: const Text('Subir Archivos'),
+          title: Text(
+            widget.selectedCategory == 'IMAGEN'
+                ? 'Subir Imágenes'
+                : widget.selectedCategory == 'PDF'
+                    ? 'Subir Documentos PDF'
+                    : 'Subir Archivos',
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -657,7 +947,13 @@ class _UploadDialogState extends State<_UploadDialog> {
                 const SizedBox(height: 16),
                 
                 // Selector de tipo de archivo
-                const Text('Tipo de archivo:'),
+                Text(
+                  widget.selectedCategory == 'IMAGEN'
+                      ? 'Tipo de imagen:'
+                      : widget.selectedCategory == 'PDF'
+                          ? 'Tipo de documento/comprobante:'
+                          : 'Tipo de archivo:',
+                ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<int>(
                   initialValue: _selectedTipoId,
@@ -665,10 +961,10 @@ class _UploadDialogState extends State<_UploadDialog> {
                     border: OutlineInputBorder(),
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 12,
-                      vertical: 8,
+                      vertical: 10,
                     ),
                   ),
-                  items: state.tiposArchivo.map((tipo) {
+                  items: tiposFiltrados.map((tipo) {
                     return DropdownMenuItem(
                       value: tipo.id,
                       child: Row(
@@ -679,7 +975,7 @@ class _UploadDialogState extends State<_UploadDialog> {
                           Flexible( // ✅ FIX: Cambiar Expanded a Flexible
                             child: Text(
                               tipo.nombre,
-                              style: const TextStyle(fontSize: 14),
+                              style: const TextStyle(fontSize: 12),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -710,9 +1006,6 @@ class _UploadDialogState extends State<_UploadDialog> {
                   }).toList(),
                   onChanged: (value) {
                     setState(() => _selectedTipoId = value);
-                    if (value != null) {
-                      widget.onTipoSelected(value);
-                    }
                   },
                   validator: (value) {
                     if (value == null) return 'Seleccione un tipo';
