@@ -31,6 +31,7 @@
 
 import 'package:consumo_combustible/core/fast_storage_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/unidad_service.dart';
+import 'package:consumo_combustible/domain/models/create_unidad_request.dart';
 import 'package:consumo_combustible/domain/models/unidad.dart';
 import 'package:consumo_combustible/domain/repository/unidad_repository.dart';
 import 'package:consumo_combustible/domain/utils/resource.dart';
@@ -43,6 +44,40 @@ class UnidadRepositoryImpl implements UnidadRepository {
   UnidadRepositoryImpl(this.unidadService, this.storage);
 
   static const String _cachePrefix = 'unidades_zona_';
+
+  @override
+  Future<Resource<Unidad>> createUnidad(CreateUnidadRequest request) async {
+    try {
+      if (kDebugMode) {
+        print('📦 [UnidadRepository] Creando nueva unidad: ${request.placa}');
+      }
+
+      final response = await unidadService.createUnidad(request);
+
+      // 🔥 Si la creación fue exitosa, limpiar el caché de esa zona
+      if (response is Success<Unidad>) {
+        if (kDebugMode) {
+          print('✅ [UnidadRepository] Unidad creada: ${response.data.placa} (ID: ${response.data.id})');
+          print('🗑️ [UnidadRepository] Limpiando caché de zona: ${request.zonaOperacionId}');
+        }
+        
+        // Limpiar caché de la zona para que se recargue con la nueva unidad
+        await clearUnidadesCache(zonaId: request.zonaOperacionId);
+      } else if (response is Error<Unidad>) {
+        if (kDebugMode) {
+          print('❌ [UnidadRepository] Error al crear: ${response.message}');
+        }
+      }
+
+      return response;
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ [UnidadRepository] Excepción en createUnidad: $e');
+      }
+      return Error('Error inesperado al crear unidad: $e');
+    }
+  }
+
 
   @override
   Future<Resource<List<Unidad>>> getUnidadesByZona(int zonaId) async {
@@ -143,15 +178,61 @@ class UnidadRepositoryImpl implements UnidadRepository {
   }
 
   @override
-  Future<Resource<List<Unidad>>> getAllUnidades({
+  Future<Resource<UnidadesResponse>> getAllUnidades({
     int page = 1,
-    int pageSize = 100,
-  }) {
-    return unidadService.getAllUnidades(page: page, pageSize: pageSize);
+    int pageSize = 10,
+  }) async {
+    try {
+      if (kDebugMode) {
+        print('📦 [UnidadRepository] Obteniendo todas las unidades (página: $page)');
+      }
+
+      final response = await unidadService.getAllUnidades(
+        page: page,
+        pageSize: pageSize,
+      );
+
+      if (kDebugMode) {
+        if (response is Success<UnidadesResponse>) {
+          print('✅ [UnidadRepository] ${response.data.data.length} unidades obtenidas');
+          print('   Total: ${response.data.meta.total}');
+        } else if (response is Error<UnidadesResponse>) {
+          print('❌ [UnidadRepository] Error: ${response.message}');
+        }
+      }
+
+      return response;
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ [UnidadRepository] Excepción en getAllUnidades: $e');
+      }
+      return Error('Error inesperado al obtener unidades: $e');
+    }
   }
 
   @override
-  Future<Resource<Unidad>> getUnidadById(int unidadId) {
-    return unidadService.getUnidadById(unidadId);
+  Future<Resource<Unidad>> getUnidadById(int unidadId) async {
+    try {
+      if (kDebugMode) {
+        print('📦 [UnidadRepository] Obteniendo unidad ID: $unidadId');
+      }
+
+      final response = await unidadService.getUnidadById(unidadId);
+
+      if (kDebugMode) {
+        if (response is Success<Unidad>) {
+          print('✅ [UnidadRepository] Unidad obtenida: ${response.data.placa}');
+        } else if (response is Error<Unidad>) {
+          print('❌ [UnidadRepository] Error: ${response.message}');
+        }
+      }
+
+      return response;
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ [UnidadRepository] Excepción en getUnidadById: $e');
+      }
+      return Error('Error inesperado al obtener unidad: $e');
+    }
   }
 }

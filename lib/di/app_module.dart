@@ -6,6 +6,7 @@ import 'package:consumo_combustible/data/datasource/remote/service/grifo_service
 import 'package:consumo_combustible/data/datasource/remote/service/licencia_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/location_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/detalle_abastecimiento_service.dart';
+import 'package:consumo_combustible/data/datasource/remote/service/rol_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/sede_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_aprobacion_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_service.dart';
@@ -17,6 +18,7 @@ import 'package:consumo_combustible/data/repository/detalle_abastecimiento_repos
 import 'package:consumo_combustible/data/repository/grifo_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/licencia_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/location_repository_impl.dart';
+import 'package:consumo_combustible/data/repository/rol_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/sede_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/ticket_aprobacion_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/ticket_repository_impl.dart';
@@ -28,6 +30,7 @@ import 'package:consumo_combustible/domain/repository/detalle_abastecimiento_rep
 import 'package:consumo_combustible/domain/repository/grifo_repository.dart';
 import 'package:consumo_combustible/domain/repository/licencia_repository.dart';
 import 'package:consumo_combustible/domain/repository/location_repository.dart';
+import 'package:consumo_combustible/domain/repository/rol_repository.dart';
 import 'package:consumo_combustible/domain/repository/sede_repository.dart';
 import 'package:consumo_combustible/domain/repository/ticket_aprobacion_repository.dart';
 import 'package:consumo_combustible/domain/repository/ticket_repository.dart';
@@ -44,7 +47,6 @@ import 'package:consumo_combustible/domain/use_cases/auth/get_user_session_useca
 import 'package:consumo_combustible/domain/use_cases/auth/login_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/logout_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/save_selected_role_usecase.dart';
-// import 'package:consumo_combustible/domain/use_cases/auth/logout_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/save_user_session_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/grifo/create_grifo_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/grifo/get_grifo_by_id_usecase.dart';
@@ -62,10 +64,18 @@ import 'package:consumo_combustible/domain/use_cases/licencia/licencia_use_cases
 import 'package:consumo_combustible/data/datasource/remote/service/user_service.dart';
 import 'package:consumo_combustible/data/repository/user_repository_impl.dart';
 import 'package:consumo_combustible/domain/repository/user_repository.dart';
+import 'package:consumo_combustible/domain/use_cases/rol/activar_rol_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/rol/create_rol_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/rol/delete_rol_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/rol/get_rol_by_id_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/rol/get_roles_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/rol/rol_use_cases.dart';
+import 'package:consumo_combustible/domain/use_cases/rol/update_rol_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/sedes/create_sede_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/sedes/get_sedes_sedes_by_zona_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/sedes/get_sedes_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/sedes/sede_use_cases.dart';
+import 'package:consumo_combustible/domain/use_cases/unidad/create_unidad_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/user/get_users_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/user/register_users_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/user/search_users_use_case.dart';
@@ -264,6 +274,19 @@ abstract class AppModule {
     return GrifoRepositoryImpl(service);
   }
 
+   @factory
+  RolService rolService(Dio dio, FastStorageService storage) {
+    if (kDebugMode) print('🔧 Creando RolService');
+    return RolService(dio, storage);
+  }
+
+  /// RolRepository - Implementación del repositorio
+  @singleton
+  RolRepository rolRepository(RolService service) {
+    if (kDebugMode) print('🔧 Creando RolRepository singleton');
+    return RolRepositoryImpl(service);
+  }
+
   
   //---------------------------------------------------------------------------------//
   // ✅ USE CASES CONTAINERS - Singleton optimizado
@@ -311,6 +334,7 @@ abstract class AppModule {
       getAllUnidades: GetAllUnidades(repository),
       getUnidadById: GetUnidadById(repository),
       clearUnidadesCache: ClearUnidadesCache(repository),
+      createUnidad: CreateUnidadUseCase(repository),
     );
   }
 
@@ -407,6 +431,19 @@ abstract class AppModule {
       getGrifosBySede: GetGrifosGrifosBySedeUseCase(repository),
       getGrifoById: GetGrifoByIdUseCase(repository),
       updateGrifo: UpdateGrifoUseCase(repository),
+    );
+  }
+
+  @singleton
+  RolUseCases rolUseCases(RolRepository repository) {
+    if (kDebugMode) print('🎯 Creando RolUseCases singleton');
+    return RolUseCases(
+      getRoles: GetRolesUseCase(repository),
+      getRolById: GetRolByIdUseCase(repository),
+      createRol: CreateRolUseCase(repository),
+      updateRol: UpdateRolUseCase(repository),
+      deleteRol: DeleteRolUseCase(repository),
+      activarRol: ActivarRolUseCase(repository),
     );
   }
 }

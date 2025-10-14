@@ -560,7 +560,7 @@ class _UserPageState extends State<UserPage> {
                 '${user.nombres} ${user.apellidos}',
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
-                  fontSize: 11,
+                  fontSize: 10,
                 ),
               ),
               subtitle: Column(
@@ -574,7 +574,7 @@ class _UserPageState extends State<UserPage> {
                       Expanded(
                         child: Text(
                           user.telefono,
-                          style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                          style: TextStyle(fontSize: 9, color: Colors.grey[700]),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -587,7 +587,7 @@ class _UserPageState extends State<UserPage> {
                       const SizedBox(width: 6),
                       Text(
                         'DNI: ${user.dni}',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                        style: TextStyle(fontSize: 9, color: Colors.grey[700]),
                       ),
                     ],
                   ),
@@ -609,7 +609,7 @@ class _UserPageState extends State<UserPage> {
                             borderRadius: BorderRadius.circular(4),
                             border: Border.all(
                               color: Colors.blue[200]!,
-                              width: 1,
+                              width: 0.5,
                             ),
                           ),
                           child: Text(

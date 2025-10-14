@@ -7,7 +7,14 @@ class GetAllUnidades {
 
   GetAllUnidades(this.unidadRepository);
 
-  Future<Resource<List<Unidad>>> run({int page = 1, int pageSize = 100}) {
-    return unidadRepository.getAllUnidades(page: page, pageSize: pageSize);
+  Future<Resource<UnidadesResponse>> run({
+    int page = 1,
+    int pageSize = 10,
+  }) {
+    return unidadRepository.getAllUnidades(
+      page: page,
+      pageSize: pageSize,
+    );
   }
+
 }

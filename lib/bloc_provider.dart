@@ -4,6 +4,7 @@ import 'package:consumo_combustible/domain/use_cases/detalle_abastecimiento/deta
 import 'package:consumo_combustible/domain/use_cases/grifo/grifo_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/licencia/licencia_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/location/location_use_cases.dart';
+import 'package:consumo_combustible/domain/use_cases/rol/rol_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/sedes/sede_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/ticket/ticket_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/ticket_aprobacion/ticket_aprobacion_use_cases.dart';
@@ -12,7 +13,9 @@ import 'package:consumo_combustible/domain/use_cases/user/user_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/zona/zona_use_cases.dart';
 import 'package:consumo_combustible/presentation/page/archivo/bloc/archivo_bloc.dart';
 import 'package:consumo_combustible/presentation/page/grifos/bloc/grifo_bloc.dart';
+import 'package:consumo_combustible/presentation/page/rol/bloc/rol_bloc.dart';
 import 'package:consumo_combustible/presentation/page/sedes/bloc/sede_bloc.dart';
+import 'package:consumo_combustible/presentation/page/unidad/bloc/unidad_bloc.dart';
 import 'package:consumo_combustible/presentation/page/user/bloc/user_bloc.dart';
 import 'package:consumo_combustible/injection.dart';
 import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_bloc.dart';
@@ -48,5 +51,9 @@ List<BlocProvider> blocProviders = [
   BlocProvider<SedeBloc>(create: (context) => SedeBloc(locator<SedeUseCases>(),locator<ZonaUseCases>(),)), // Necesario para cargar zonas en el dropdown
 
   BlocProvider<GrifoBloc>(create: (context) => GrifoBloc(locator<GrifoUseCases>(),locator<SedeUseCases>())), // Necesario para cargar sedes en el dropdown
+
+  BlocProvider<UnidadBloc>(create: (context) => UnidadBloc(locator<UnidadUseCases>())),
+
+  BlocProvider<RolBloc>(create: (context) => RolBloc(locator<RolUseCases>()),),
     
 ];

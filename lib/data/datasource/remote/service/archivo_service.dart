@@ -128,7 +128,7 @@ class ArchivoService {
         );
 
         if (kDebugMode) {
-          print('   📎 Archivo: $fileName (${mimeType})');
+          print('   📎 Archivo: $fileName ($mimeType)');
         }
       }
 

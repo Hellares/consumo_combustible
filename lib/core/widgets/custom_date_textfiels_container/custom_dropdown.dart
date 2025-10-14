@@ -217,33 +217,59 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>>
   OverlayEntry _createOverlayEntry() {
     RenderBox renderBox = context.findRenderObject() as RenderBox;
     var size = renderBox.size;
+    var position = renderBox.localToGlobal(Offset.zero);
+    
+    // Calcular si hay espacio abajo o arriba
+    final screenHeight = MediaQuery.of(context).size.height;
+    final spaceBelow = screenHeight - position.dy - size.height;
+    final spaceAbove = position.dy;
+    final dropdownHeight = widget.maxHeight?.toDouble() ?? 300;
+    
+    // Decidir si mostrar arriba o abajo
+    final showAbove = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
+    
+    // Calcular altura real del dropdown basado en items
+    final itemHeight = 42.0; // Altura aproximada de cada item (padding + texto)
+    final searchBoxHeight = (widget.showSearchBox || widget.dropdownStyle == DropdownStyle.searchable) ? 56.0 : 0.0;
+    final actualHeight = (itemHeight * _filteredItems.length) + searchBoxHeight;
+    final finalHeight = actualHeight > dropdownHeight ? dropdownHeight : actualHeight;
+    
+    final offset = showAbove
+        ? Offset(0.0, -(finalHeight + 4)) // Usar altura real del dropdown
+        // : Offset(0.0, size.height + 2); // Mostrar justo debajo del campo
+        : Offset(0.0, itemHeight-4);
+
 
     return OverlayEntry(
-      builder: (context) => Positioned(
-        width: size.width,
-        child: CompositedTransformFollower(
-          link: _layerLink,
-          showWhenUnlinked: false,
-          offset: Offset(0.0, 40), // ✅ Reducido de 5.0 a 2.0
-          // offset: Offset(0.0, 40),
-          child: Material(
-            elevation: 8,
-            borderRadius: BorderRadius.circular(widget.borderRadius),
-            child: Container(
-              constraints: BoxConstraints(
-                maxHeight: widget.maxHeight?.toDouble() ?? 300,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(widget.borderRadius),
-                border: Border.all(
-                  color: widget.borderColor ?? const Color(0xFFE0E0E0),
-                  width: widget.borderWidth ?? 0.5,
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+      builder: (context) => GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: _toggleDropdown,
+        child: Stack(
+          children: [
+            Positioned(
+              width: size.width,
+              child: CompositedTransformFollower(
+                link: _layerLink,
+                showWhenUnlinked: false,
+                offset: offset,
+                child: Material(
+                  elevation: 8,
+                  borderRadius: BorderRadius.circular(widget.borderRadius),
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxHeight: dropdownHeight,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(widget.borderRadius),
+                      border: Border.all(
+                        color: widget.borderColor ?? const Color(0xFFE0E0E0),
+                        width: widget.borderWidth ?? 0.5,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                   if (widget.showSearchBox || widget.dropdownStyle == DropdownStyle.searchable) ...[
                     Padding(
                       padding: const EdgeInsets.all(8.0),
@@ -273,6 +299,7 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>>
                     child: ListView.builder(
                       padding: EdgeInsets.zero,
                       shrinkWrap: true,
+                      physics: const AlwaysScrollableScrollPhysics(), // Permitir scroll siempre
                       itemCount: _filteredItems.length,
                       itemBuilder: (context, index) {
                         final item = _filteredItems[index];
@@ -342,12 +369,15 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>>
                           ),
                         );
                       },
+                      ),
+                    ),
+                  ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -504,13 +534,13 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>>
     if (_isFocused || _isExpanded) {
       return [
         BoxShadow(
-          color: currentBorderColor.withOpacity(0.3 + (intensity * 0.2)),
+          color: currentBorderColor.withValues(alpha: 0.3 + (intensity * 0.2)),
           offset: const Offset(0, 3),
           blurRadius: 4 + (intensity * 2),
           spreadRadius: 0,
         ),
         BoxShadow(
-          color: Colors.white.withOpacity(0.6),
+          color: Colors.white.withValues(alpha: 0.6),
           offset: const Offset(-1, -1),
           blurRadius: 2,
           spreadRadius: -1,
@@ -519,19 +549,19 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>>
     } else {
       return [
         BoxShadow(
-          color: shadowColor.withOpacity(0.18),
+          color: shadowColor.withValues(alpha: 0.18),
           offset: const Offset(4, 4),
           blurRadius: 8,
           spreadRadius: 0,
         ),
         BoxShadow(
-          color: currentBorderColor.withOpacity(0.15),
+          color: currentBorderColor.withValues(alpha: 0.15),
           offset: const Offset(1, 1),
           blurRadius: 4,
           spreadRadius: -1,
         ),
         BoxShadow(
-          color: Colors.white.withOpacity(0.8),
+          color: Colors.white.withValues(alpha: 0.8),
           offset: const Offset(-2, -2),
           blurRadius: 4,
           spreadRadius: -1,

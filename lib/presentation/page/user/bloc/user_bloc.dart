@@ -1,5 +1,6 @@
 // lib/presentation/page/user/bloc/user_bloc.dart
 
+import 'package:consumo_combustible/domain/models/user_response.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:consumo_combustible/domain/use_cases/user/user_use_cases.dart';
 import 'package:consumo_combustible/domain/utils/resource.dart';
@@ -30,7 +31,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       pageSize: event.pageSize,
     );
 
-    if (resource is Success) {
+    if (resource is Success<UserResponse>) {
       final newUsers = resource.data.data.data;
       final meta = resource.data.data.meta;
 
@@ -53,7 +54,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
           currentPage: event.page,
         ));
       }
-    } else if (resource is Error) { // ⭐ CORREGIDO
+    } else if (resource is Error<UserResponse>) {
       emit(UserError(resource.message));
     }
   }

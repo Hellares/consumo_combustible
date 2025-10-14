@@ -22,6 +22,8 @@ import 'package:consumo_combustible/data/datasource/remote/service/licencia_serv
     as _i858;
 import 'package:consumo_combustible/data/datasource/remote/service/location_service.dart'
     as _i200;
+import 'package:consumo_combustible/data/datasource/remote/service/rol_service.dart'
+    as _i530;
 import 'package:consumo_combustible/data/datasource/remote/service/sede_service.dart'
     as _i779;
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_aprobacion_service.dart'
@@ -47,6 +49,8 @@ import 'package:consumo_combustible/domain/repository/licencia_repository.dart'
     as _i1047;
 import 'package:consumo_combustible/domain/repository/location_repository.dart'
     as _i611;
+import 'package:consumo_combustible/domain/repository/rol_repository.dart'
+    as _i859;
 import 'package:consumo_combustible/domain/repository/sede_repository.dart'
     as _i1045;
 import 'package:consumo_combustible/domain/repository/ticket_aprobacion_repository.dart'
@@ -71,6 +75,8 @@ import 'package:consumo_combustible/domain/use_cases/licencia/licencia_use_cases
     as _i767;
 import 'package:consumo_combustible/domain/use_cases/location/location_use_cases.dart'
     as _i636;
+import 'package:consumo_combustible/domain/use_cases/rol/rol_use_cases.dart'
+    as _i10;
 import 'package:consumo_combustible/domain/use_cases/sedes/sede_use_cases.dart'
     as _i120;
 import 'package:consumo_combustible/domain/use_cases/ticket/ticket_use_cases.dart'
@@ -177,6 +183,10 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i782.FastStorageService>(),
       ),
     );
+    gh.factory<_i530.RolService>(
+      () =>
+          appModule.rolService(gh<_i361.Dio>(), gh<_i782.FastStorageService>()),
+    );
     gh.singleton<_i41.UnidadRepository>(
       () => appModule.unidadRepository(
         gh<_i599.UnidadService>(),
@@ -213,8 +223,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i767.LicenciaUseCases>(
       () => appModule.licenciaUseCases(gh<_i1047.LicenciaRepository>()),
     );
+    gh.singleton<_i859.RolRepository>(
+      () => appModule.rolRepository(gh<_i530.RolService>()),
+    );
     gh.singleton<_i453.TicketUseCases>(
       () => appModule.ticketUseCases(gh<_i107.TicketRepository>()),
+    );
+    gh.singleton<_i10.RolUseCases>(
+      () => appModule.rolUseCases(gh<_i859.RolRepository>()),
     );
     gh.singleton<_i441.ArchivoUseCases>(
       () => appModule.archivoUseCases(gh<_i45.ArchivoRepository>()),

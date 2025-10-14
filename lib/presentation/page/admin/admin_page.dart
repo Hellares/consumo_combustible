@@ -105,10 +105,13 @@ class _AdminPageState extends State<AdminPage> {
             icon: Icons.local_shipping,
             title: 'Unidades',
             subtitle: 'Registrar y gestionar vehículos',
-            onTap: () => _navigateToPage(
-              const UnidadesManagementPage(),
-              'Gestión de Unidades',
-            ),
+            onTap: () {
+              Navigator.pop(context); // Cierra el drawer
+              Navigator.pushNamed(
+                context,
+                'unidades',
+              ); // ✅ Navega a la ruta real
+            },
           ),
           _buildDrawerItem(
             icon: Icons.badge,
@@ -129,6 +132,15 @@ class _AdminPageState extends State<AdminPage> {
             onTap: () {
               Navigator.pop(context); // Cierra el drawer
               Navigator.pushNamed(context, 'users');
+            },
+          ),
+          _buildDrawerItem(
+            icon: Icons.admin_panel_settings,
+            title: 'Roles y Permisos',
+            subtitle: 'Gestionar roles del sistema',
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, 'roles');
             },
           ),
           _buildDrawerItem(
@@ -314,18 +326,18 @@ class AdminDashboard extends StatelessWidget {
 // ============================================
 // PÁGINAS PLACEHOLDER (Para implementar después)
 // ============================================
-class UnidadesManagementPage extends StatelessWidget {
-  const UnidadesManagementPage({super.key});
+// class UnidadesManagementPage extends StatelessWidget {
+//   const UnidadesManagementPage({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return _buildPlaceholder(
-      icon: Icons.local_shipping,
-      title: 'Gestión de Unidades',
-      description: 'Aquí podrás registrar y gestionar las unidades vehiculares',
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return _buildPlaceholder(
+//       icon: Icons.local_shipping,
+//       title: 'Gestión de Unidades',
+//       description: 'Aquí podrás registrar y gestionar las unidades vehiculares',
+//     );
+//   }
+// }
 
 class ConductoresManagementPage extends StatelessWidget {
   const ConductoresManagementPage({super.key});
@@ -340,31 +352,31 @@ class ConductoresManagementPage extends StatelessWidget {
   }
 }
 
-class GrifosManagementPage extends StatelessWidget {
-  const GrifosManagementPage({super.key});
+// class GrifosManagementPage extends StatelessWidget {
+//   const GrifosManagementPage({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return _buildPlaceholder(
-      icon: Icons.local_gas_station,
-      title: 'Gestión de Grifos',
-      description: 'Aquí podrás registrar y gestionar los grifos',
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return _buildPlaceholder(
+//       icon: Icons.local_gas_station,
+//       title: 'Gestión de Grifos',
+//       description: 'Aquí podrás registrar y gestionar los grifos',
+//     );
+//   }
+// }
 
-class SedesManagementPage extends StatelessWidget {
-  const SedesManagementPage({super.key});
+// class SedesManagementPage extends StatelessWidget {
+//   const SedesManagementPage({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return _buildPlaceholder(
-      icon: Icons.business,
-      title: 'Gestión de Sedes',
-      description: 'Aquí podrás registrar y gestionar las sedes por zona',
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return _buildPlaceholder(
+//       icon: Icons.business,
+//       title: 'Gestión de Sedes',
+//       description: 'Aquí podrás registrar y gestionar las sedes por zona',
+//     );
+//   }
+// }
 
 class ConfiguracionPage extends StatelessWidget {
   const ConfiguracionPage({super.key});

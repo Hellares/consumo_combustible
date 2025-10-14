@@ -329,7 +329,7 @@ class _DetalleDetailPageState extends State<DetalleDetailPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: widget.detalle.estadoColor.withOpacity(0.1),
+                color: widget.detalle.estadoColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: widget.detalle.estadoColor),
               ),
@@ -466,7 +466,7 @@ class _DetalleDetailPageState extends State<DetalleDetailPage> {
             ),
             const Divider(),
             DropdownButtonFormField<String>(
-              value: _unidadMedida,
+              initialValue: _unidadMedida,
               decoration: const InputDecoration(labelText: 'Unidad de Medida'),
               items: const [
                 DropdownMenuItem(value: 'GALONES', child: Text('GALONES')),

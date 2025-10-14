@@ -11,10 +11,14 @@ import 'package:consumo_combustible/presentation/page/grifos/grifos_list_page.da
 import 'package:consumo_combustible/presentation/page/home_page.dart';
 import 'package:consumo_combustible/presentation/page/licencias/licencias_page.dart';
 import 'package:consumo_combustible/presentation/page/location/location_selection_page.dart';
+import 'package:consumo_combustible/presentation/page/rol/create_rol_page.dart';
+import 'package:consumo_combustible/presentation/page/rol/roles_page.dart';
 import 'package:consumo_combustible/presentation/page/sedes/create_sede_page.dart';
 import 'package:consumo_combustible/presentation/page/sedes/sedes_list_page.dart';
 import 'package:consumo_combustible/presentation/page/ticket_abastecimiento/create_ticket_page.dart';
 import 'package:consumo_combustible/presentation/page/ticket_aprobacion/tickets_aprobacion_page.dart';
+import 'package:consumo_combustible/presentation/page/unidad/crear_unidad_page.dart';
+import 'package:consumo_combustible/presentation/page/unidad/unidades_list_page.dart';
 import 'package:consumo_combustible/presentation/page/user/user_page.dart';
 import 'package:consumo_combustible/presentation/page/zona/create_zona_page.dart';
 import 'package:consumo_combustible/presentation/page/zona/zonas_list_page.dart';
@@ -112,8 +116,7 @@ class MyApp extends StatelessWidget {
             'location-selection': (context) => const LocationSelectionPage(),
             'create-ticket': (context) => const CreateTicketPage(),
             'tickets-aprobacion': (context) => const TicketsAprobacionPage(),
-            'detalles-abastecimiento': (context) =>
-                const DetallesAbastecimientoPage(),
+            'detalles-abastecimiento': (context) => const DetallesAbastecimientoPage(),
             'licencias': (context) => const LicenciasPage(),
             'users': (context) => const UserPage(),
             'zonas': (context) => const ZonasListPage(),
@@ -125,6 +128,14 @@ class MyApp extends StatelessWidget {
             'edit-grifo': (context) {
               final grifoId = ModalRoute.of(context)?.settings.arguments as int;
               return EditGrifoPage(grifoId: grifoId);
+            },
+            'unidades': (context) => const UnidadesListPage(),
+            'crear-unidad': (context) => const CrearUnidadPage(),
+            'roles': (context) => const RolesPage(),
+            'create-rol': (context) => const CreateRolPage(),
+            'edit-rol': (context) {
+              final rol = ModalRoute.of(context)?.settings.arguments;
+              return CreateRolPage(rolToEdit: rol as dynamic);
             },
           },
         ),

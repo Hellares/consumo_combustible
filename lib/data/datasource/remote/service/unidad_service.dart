@@ -1,5 +1,4 @@
-// lib/data/datasource/remote/service/unidad_service.dart
-
+import 'package:consumo_combustible/domain/models/create_unidad_request.dart';
 import 'package:consumo_combustible/domain/models/unidad.dart';
 import 'package:consumo_combustible/domain/utils/resource.dart';
 import 'package:dio/dio.dart';
@@ -21,7 +20,7 @@ class UnidadService {
 
       if (kDebugMode) {
         print('✅ Response unidades: ${response.statusCode}');
-        print('📦 Data: ${response.data}');
+        // print('📦 Data: ${response.data}');
       }
 
       if (response.statusCode == 200) {
@@ -71,20 +70,131 @@ class UnidadService {
   }
 
   /// Obtiene todas las unidades (con paginación opcional)
-  Future<Resource<List<Unidad>>> getAllUnidades({
+  // Future<Resource<List<Unidad>>> getAllUnidades({
+  //   int page = 1,
+  //   int pageSize = 100,
+  // }) async {
+  //   try {
+  //     if (kDebugMode) {
+  //       print('🚗 Obteniendo todas las unidades (página: $page)');
+  //     }
+
+  //     final response = await _dio.get(
+  //       '/api/unidades',
+  //       queryParameters: {
+  //         'page': page,
+  //         'pageSize': pageSize,
+  //       },
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       final responseData = response.data;
+
+  //       if (responseData['success'] == true && responseData['data'] != null) {
+  //         final unidadesResponse = UnidadesResponse.fromJson(
+  //           responseData['data'],
+  //         );
+
+  //         return Success(unidadesResponse.data);
+  //       }
+
+  //       return Error('Formato de respuesta inválido');
+  //     }
+
+  //     return Error('Error ${response.statusCode} obteniendo unidades');
+
+  //   } on DioException catch (e) {
+  //     if (kDebugMode) {
+  //       print('❌ DioException en getAllUnidades: ${e.message}');
+  //     }
+  //     return Error('Error de conexión: ${e.message}');
+
+  //   } catch (e) {
+  //     if (kDebugMode) {
+  //       print('❌ Error general en getAllUnidades: $e');
+  //     }
+  //     return Error('Error inesperado: $e');
+  //   }
+  // }
+
+  Future<Resource<Unidad>> createUnidad(CreateUnidadRequest request) async {
+    try {
+      if (kDebugMode) {
+        print('🚗 Creando nueva unidad: ${request.placa}');
+        print('📦 Request: ${request.toJson()}');
+      }
+
+      final response = await _dio.post(
+        '/api/unidades',
+        data: request.toJson(),
+      );
+
+      if (kDebugMode) {
+        print('✅ Response status: ${response.statusCode}');
+        print('📦 Response data: Data recibida de creacion de Unidad');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = response.data;
+
+        if (responseData['success'] == true && responseData['data'] != null) {
+          final unidad = Unidad.fromJson(responseData['data']);
+
+          if (kDebugMode) {
+            print('✅ Unidad creada exitosamente: ${unidad.placa} (ID: ${unidad.id})');
+          }
+
+          return Success(unidad);
+        }
+
+        return Error('Formato de respuesta inválido');
+      }
+
+      return Error('Error ${response.data['message']} al crear unidad');
+
+    } on DioException catch (e) {
+      if (kDebugMode) {
+        print('❌ DioException en createUnidad: ${e.message}');
+        print('❌ Response: ${e.response?.data}');
+      }
+
+      // Manejo de errores específicos del backend
+      if (e.response?.statusCode == 400) {
+        final errorMessage = e.response?.data['message'] ?? 'Datos inválidos';
+        return Error('Error de validación: $errorMessage');
+      } else if (e.response?.statusCode == 409) {
+        return Error('La placa ya está registrada');
+      } else if (e.response?.statusCode == 404) {
+        return Error('Conductor u operador no encontrado');
+      } else if (e.response?.statusCode == 500) {
+        return Error('Error en el servidor');
+      }
+
+      return Error('Error de conexión: ${e.message}');
+
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        print('❌ Error general en createUnidad: $e');
+        print('❌ StackTrace: $stackTrace');
+      }
+      return Error('Error inesperado: $e');
+    }
+  }
+
+  Future<Resource<UnidadesResponse>> getAllUnidades({
     int page = 1,
-    int pageSize = 100,
+    int pageSize  = 10,
   }) async {
     try {
       if (kDebugMode) {
-        print('🚗 Obteniendo todas las unidades (página: $page)');
+        print('🚗 Obteniendo todas las unidades (página: $page, tamaño: $pageSize)');
       }
 
       final response = await _dio.get(
         '/api/unidades',
         queryParameters: {
           'page': page,
-          'pageSize': pageSize,
+          'limit': pageSize,
         },
       );
 
@@ -92,11 +202,18 @@ class UnidadService {
         final responseData = response.data;
 
         if (responseData['success'] == true && responseData['data'] != null) {
+          // Retornar el objeto completo UnidadesResponse con data y meta
           final unidadesResponse = UnidadesResponse.fromJson(
             responseData['data'],
           );
 
-          return Success(unidadesResponse.data);
+          if (kDebugMode) {
+            print('✅ Unidades obtenidas: ${unidadesResponse.data.length}');
+            print('📊 Total: ${unidadesResponse.meta.total}');
+            print('📄 Página: ${unidadesResponse.meta.page}/${unidadesResponse.meta.totalPages}');
+          }
+
+          return Success(unidadesResponse);
         }
 
         return Error('Formato de respuesta inválido');

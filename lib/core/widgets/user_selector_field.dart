@@ -51,9 +51,12 @@ class UserSelectorField extends StatefulWidget {
   State<UserSelectorField> createState() => _UserSelectorFieldState();
 }
 
-class _UserSelectorFieldState extends State<UserSelectorField> {
+class _UserSelectorFieldState extends State<UserSelectorField> with AutomaticKeepAliveClientMixin {
   UserSelection? _selectedUser;
   late TextEditingController _controller;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -104,6 +107,7 @@ class _UserSelectorFieldState extends State<UserSelectorField> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // Necesario para AutomaticKeepAliveClientMixin
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -162,49 +166,35 @@ class _UserSelectorFieldState extends State<UserSelectorField> {
         if (_selectedUser != null)
           Padding(
             padding: const EdgeInsets.only(top: 6,left: 0),
-            child: Container(
-              // padding: const EdgeInsets.symmetric(
-              //   horizontal: 8,
-              //   vertical: 4,
-              // ),
-              // decoration: BoxDecoration(
-              //   color: AppColors.blue3.withValues(alpha: 0.1),
-              //   borderRadius: BorderRadius.circular(4),
-              //   border: Border.all(
-              //     color: AppColors.blue3.withValues(alpha: 0.3),
-              //     width: 1,
-              //   ),
-              // ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.check,
-                    size: 12,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.check,
+                  size: 12,
+                  color: AppColors.blue3,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'ID: ${_selectedUser!.id}',
+                  style: TextStyle(
+                    fontSize: 9,
                     color: AppColors.blue3,
+                    fontWeight: FontWeight.w600,
                   ),
-                  const SizedBox(width: 4),
+                ),
+                if (_selectedUser!.dni != null) ...[
+                  const SizedBox(width: 6),
                   Text(
-                    'ID: ${_selectedUser!.id}',
+                    '• DNI: ${_selectedUser!.dni}',
                     style: TextStyle(
                       fontSize: 9,
                       color: AppColors.blue3,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  if (_selectedUser!.dni != null) ...[
-                    const SizedBox(width: 6),
-                    Text(
-                      '• DNI: ${_selectedUser!.dni}',
-                      style: TextStyle(
-                        fontSize: 9,
-                        color: AppColors.blue3,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
                 ],
-              ),
+              ],
             ),
           ),
       ],

@@ -32,7 +32,7 @@ class _SedesListPageState extends State<SedesListPage> {
         title: 'Gestión de Sedes',
         showUserInfo: true,
         logoPath: 'assets/img/6.svg',
-        onLeftTap: () => Navigator.pop(context),
+        // onLeftTap: () => Navigator.pop(context),
       ),
       body: BlocBuilder<SedeBloc, SedeState>(
         builder: (context, state) {
