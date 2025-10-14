@@ -9,6 +9,9 @@ import '../../../core/theme/app_colors.dart';
 // Enums para tipos de campo
 enum FieldType { text, email, phone, currency, url, dni, ruc, password }
 
+//Emuns para mayusculas o minusculas
+enum TextCase { normal, upper, lower }
+
 // 🚀 MEJORA: Usar sealed classes para type safety
 sealed class ValidationState {
   const ValidationState();
@@ -596,6 +599,7 @@ class CustomTextField extends StatefulWidget {
   final FocusNode? focusNode;
   final double? height;
   final double? borderWidth;
+  final TextCase textCase;
 
   // Propiedades de validación y formateo
   final FieldType fieldType;
@@ -644,6 +648,7 @@ class CustomTextField extends StatefulWidget {
     this.country = CountryCode.peru,
     this.currencySymbol = 'S/',
     this.enableRealTimeValidation = true,
+    this.textCase = TextCase.normal,
   }) : obscureText = fieldType == FieldType.password ? true : (obscureText ?? false);
 
   @override
@@ -860,7 +865,25 @@ class _CustomTextFieldState extends State<CustomTextField>
   }
 
   List<TextInputFormatter> _getInputFormatters() {
-    List<TextInputFormatter> formatters = widget.inputFormatters ?? [];
+    // List<TextInputFormatter> formatters = widget.inputFormatters ?? [];
+    List<TextInputFormatter> formatters = [...(widget.inputFormatters ?? [])];
+
+    if (widget.textCase == TextCase.upper) {
+    formatters.insert(
+      0,
+      TextInputFormatter.withFunction((oldValue, newValue) {
+        return newValue.copyWith(text: newValue.text.toUpperCase());
+      }),
+    );
+  } else if (widget.textCase == TextCase.lower) {
+    formatters.insert(
+      0,
+      TextInputFormatter.withFunction((oldValue, newValue) {
+        return newValue.copyWith(text: newValue.text.toLowerCase());
+      }),
+    );
+  }
+
 
     switch (widget.fieldType) {
       case FieldType.phone:

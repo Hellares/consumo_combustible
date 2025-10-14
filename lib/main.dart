@@ -5,12 +5,19 @@ import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_stat
 import 'package:consumo_combustible/presentation/page/auth/login/main_login_page.dart';
 import 'package:consumo_combustible/presentation/page/auth/rol_selection/role_selection_page.dart';
 import 'package:consumo_combustible/presentation/page/detalle_abastecimiento/detalles_abastecimiento_page.dart';
+import 'package:consumo_combustible/presentation/page/grifos/create_grifo_page.dart';
+import 'package:consumo_combustible/presentation/page/grifos/edit_grifo_page.dart';
+import 'package:consumo_combustible/presentation/page/grifos/grifos_list_page.dart';
 import 'package:consumo_combustible/presentation/page/home_page.dart';
 import 'package:consumo_combustible/presentation/page/licencias/licencias_page.dart';
 import 'package:consumo_combustible/presentation/page/location/location_selection_page.dart';
+import 'package:consumo_combustible/presentation/page/sedes/create_sede_page.dart';
+import 'package:consumo_combustible/presentation/page/sedes/sedes_list_page.dart';
 import 'package:consumo_combustible/presentation/page/ticket_abastecimiento/create_ticket_page.dart';
 import 'package:consumo_combustible/presentation/page/ticket_aprobacion/tickets_aprobacion_page.dart';
 import 'package:consumo_combustible/presentation/page/user/user_page.dart';
+import 'package:consumo_combustible/presentation/page/zona/create_zona_page.dart';
+import 'package:consumo_combustible/presentation/page/zona/zonas_list_page.dart';
 import 'package:consumo_combustible/presentation/splash/splash_page.dart';
 import 'package:consumo_combustible/domain/utils/resource.dart';
 import 'package:flutter/foundation.dart';
@@ -23,21 +30,25 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 /// ✅ Configuración única de dependencias
 Future<void> setupAppDependencies() async {
   if (kDebugMode) debugPrint("⚡ Configurando dependencias...");
-  
+
   final stopwatch = Stopwatch()..start();
-  
+
   try {
     // ✅ Injectable configura (incluyendo FastStorageService)
     await configureDependencies();
-    
+
     stopwatch.stop();
     if (kDebugMode) {
-      debugPrint("✅ Dependencias configuradas en ${stopwatch.elapsedMilliseconds}ms");
+      debugPrint(
+        "✅ Dependencias configuradas en ${stopwatch.elapsedMilliseconds}ms",
+      );
     }
   } catch (e) {
     stopwatch.stop();
     if (kDebugMode) {
-      debugPrint("❌ Error configurando dependencias (${stopwatch.elapsedMilliseconds}ms): $e");
+      debugPrint(
+        "❌ Error configurando dependencias (${stopwatch.elapsedMilliseconds}ms): $e",
+      );
     }
     rethrow;
   }
@@ -45,16 +56,12 @@ Future<void> setupAppDependencies() async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   if (kDebugMode) debugPrint("🚀 Iniciando app...");
-  
+
   await setupAppDependencies();
-  
-  runApp(
-    Phoenix(
-      child: const MyApp(),
-    ),
-  );
+
+  runApp(Phoenix(child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -71,9 +78,8 @@ class MyApp extends StatelessWidget {
             final response = state.response as Success;
             if (response.data is String &&
                 (response.data as String).contains('Sesión cerrada')) {
-              
               if (kDebugMode) print('🔄 Logout exitoso - Reiniciando app...');
-              
+
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 // ✅ Usar el context del widget Phoenix directamente
                 Phoenix.rebirth(context);
@@ -106,9 +112,20 @@ class MyApp extends StatelessWidget {
             'location-selection': (context) => const LocationSelectionPage(),
             'create-ticket': (context) => const CreateTicketPage(),
             'tickets-aprobacion': (context) => const TicketsAprobacionPage(),
-            'detalles-abastecimiento': (context) => const DetallesAbastecimientoPage(),
+            'detalles-abastecimiento': (context) =>
+                const DetallesAbastecimientoPage(),
             'licencias': (context) => const LicenciasPage(),
             'users': (context) => const UserPage(),
+            'zonas': (context) => const ZonasListPage(),
+            'create-zona': (context) => const CreateZonaPage(),
+            'sedes': (context) => const SedesListPage(),
+            'create-sede': (context) => const CreateSedePage(),
+            'grifos': (context) => const GrifosListPage(),
+            'create-grifo': (context) => const CreateGrifoPage(),
+            'edit-grifo': (context) {
+              final grifoId = ModalRoute.of(context)?.settings.arguments as int;
+              return EditGrifoPage(grifoId: grifoId);
+            },
           },
         ),
       ),

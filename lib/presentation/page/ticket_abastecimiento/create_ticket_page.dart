@@ -275,7 +275,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
             ),
             const Divider(),
             _buildInfoRow('Grifo:', _location!.grifo.nombre),
-            _buildInfoRow('Dirección:', _location!.grifo.direccion),
+            _buildInfoRow('Dirección:', _location!.grifo.direccion!),
             _buildInfoRow('Sede:', _location!.sede.nombre),
             _buildInfoRow('Zona:', _location!.zona.nombre),
           ],

@@ -87,7 +87,7 @@ class _AdminPageState extends State<AdminPage> {
                     fontSize: 10,
                   ),
                 ),
-                SizedBox(height: 10,)
+                const SizedBox(height: 10),
               ],
             ),
           ),
@@ -111,19 +111,17 @@ class _AdminPageState extends State<AdminPage> {
             ),
           ),
           _buildDrawerItem(
-          icon: Icons.badge, // Icono de licencia
-          title: 'Licencias de Conducir',
-          subtitle: 'Gestionar licencias de conductores',
-          onTap: () {
-            Navigator.pop(context); // Cierra el drawer
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const LicenciasPage(),
-              ),
-            );
-          },
-        ),
+            icon: Icons.badge,
+            title: 'Licencias de Conducir',
+            subtitle: 'Gestionar licencias de conductores',
+            onTap: () {
+              Navigator.pop(context); // Cierra el drawer
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const LicenciasPage()),
+              );
+            },
+          ),
           _buildDrawerItem(
             icon: Icons.people,
             title: 'Usuarios',
@@ -146,30 +144,41 @@ class _AdminPageState extends State<AdminPage> {
             icon: Icons.local_gas_station,
             title: 'Grifos',
             subtitle: 'Registrar y gestionar grifos',
-            onTap: () => _navigateToPage(
-              const GrifosManagementPage(),
-              'Gestión de Grifos',
-            ),
+            // onTap: () => _navigateToPage(
+            //   const GrifosManagementPage(),
+            //   'Gestión de Grifos',
+            // ),
+            onTap: () {
+              Navigator.pop(context); // Cierra el drawer
+              Navigator.pushNamed(context, 'grifos'); // Navega a la ruta real
+            },
           ),
           const Divider(),
           _buildDrawerSection('Configuración'),
           _buildDrawerItem(
-            icon: Icons.location_city,
-            title: 'Zonas y Sedes',
-            subtitle: 'Gestionar ubicaciones',
-            onTap: () => _navigateToPage(
-              const ZonasSedesManagementPage(),
-              'Zonas y Sedes',
-            ),
+            icon: Icons.map,
+            title: 'Zonas',
+            subtitle: 'Gestionar zonas geográficas',
+            onTap: () {
+              Navigator.pop(context); // Cierra el drawer
+              Navigator.pushNamed(context, 'zonas');
+            },
+          ),
+          _buildDrawerItem(
+            icon: Icons.business,
+            title: 'Sedes',
+            subtitle: 'Gestionar sedes por zona',
+            onTap: () {
+              Navigator.pop(context); // Cierra el drawer
+              Navigator.pushNamed(context, 'sedes'); // Navega a la ruta real
+            },
           ),
           _buildDrawerItem(
             icon: Icons.settings,
             title: 'Configuración',
             subtitle: 'Ajustes del sistema',
-            onTap: () => _navigateToPage(
-              const ConfiguracionPage(),
-              'Configuración',
-            ),
+            onTap: () =>
+                _navigateToPage(const ConfiguracionPage(), 'Configuración'),
           ),
         ],
       ),
@@ -197,13 +206,10 @@ class _AdminPageState extends State<AdminPage> {
     required VoidCallback onTap,
   }) {
     return ListTile(
-      leading: Icon(icon, color: Colors.blue.shade700, size: 20,),
+      leading: Icon(icon, color: Colors.blue.shade700, size: 20),
       title: Text(
         title,
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w500,
-        ),
+        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
       ),
       subtitle: subtitle != null
           ? Text(
@@ -296,10 +302,7 @@ class AdminDashboard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
+              style: const TextStyle(fontSize: 14, color: Colors.grey),
             ),
           ],
         ),
@@ -350,15 +353,15 @@ class GrifosManagementPage extends StatelessWidget {
   }
 }
 
-class ZonasSedesManagementPage extends StatelessWidget {
-  const ZonasSedesManagementPage({super.key});
+class SedesManagementPage extends StatelessWidget {
+  const SedesManagementPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return _buildPlaceholder(
-      icon: Icons.location_city,
-      title: 'Gestión de Zonas y Sedes',
-      description: 'Aquí podrás gestionar las zonas y sedes',
+      icon: Icons.business,
+      title: 'Gestión de Sedes',
+      description: 'Aquí podrás registrar y gestionar las sedes por zona',
     );
   }
 }
@@ -391,19 +394,13 @@ Widget _buildPlaceholder({
           const SizedBox(height: 24),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
           Text(
             description,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),

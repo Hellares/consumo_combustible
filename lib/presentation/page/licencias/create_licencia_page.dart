@@ -229,29 +229,21 @@ class _CreateLicenciaPageState extends State<CreateLicenciaPage> {
                     onPressed: state.isLoading ? null : _submitForm,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.blue3,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      // padding: const EdgeInsets.symmetric(vertical: 8),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     child: state.isLoading
                         ? const SizedBox(
-                            height: 20,
-                            width: 20,
+                            height:  18,
+                            width: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
-                          : AppTitle('Crear Licencia',color: AppColors.white, font: AppFont.pirulentBold, fontSize: 10,)
-                        // : const Text(
-                        //     'Crear Licencia',
-                        //     style: TextStyle(
-                        //       fontSize: 12,
-                        //       fontWeight: FontWeight.bold,
-                        //       color: Colors.white,
-                        //     ),
-                        //   ),
+                          : AppTitle('Crear Licencia',color: AppColors.white, font: AppFont.pirulentBold, fontSize: 9,)
                   ),
                 ],
               ),

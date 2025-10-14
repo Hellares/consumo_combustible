@@ -529,7 +529,7 @@ class _LocationSelectionPageState extends State<LocationSelectionPage> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            grifo.estaAbierto ? 'Abierto ahora' : 'Cerrado', style: TextStyle(fontSize: 10,color: grifo.estaAbierto ? AppColors.green : AppColors.red),) ,
+                            grifo.estaAbierto! ? 'Abierto ahora' : 'Cerrado', style: TextStyle(fontSize: 10,color: grifo.estaAbierto! ? AppColors.green : AppColors.red),) ,
                      
                         ],
                       ),

@@ -16,10 +16,14 @@ import 'package:consumo_combustible/data/datasource/remote/service/auth_service.
     as _i14;
 import 'package:consumo_combustible/data/datasource/remote/service/detalle_abastecimiento_service.dart'
     as _i14;
+import 'package:consumo_combustible/data/datasource/remote/service/grifo_service.dart'
+    as _i440;
 import 'package:consumo_combustible/data/datasource/remote/service/licencia_service.dart'
     as _i858;
 import 'package:consumo_combustible/data/datasource/remote/service/location_service.dart'
     as _i200;
+import 'package:consumo_combustible/data/datasource/remote/service/sede_service.dart'
+    as _i779;
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_aprobacion_service.dart'
     as _i425;
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_service.dart'
@@ -28,6 +32,8 @@ import 'package:consumo_combustible/data/datasource/remote/service/unidad_servic
     as _i599;
 import 'package:consumo_combustible/data/datasource/remote/service/user_service.dart'
     as _i148;
+import 'package:consumo_combustible/data/datasource/remote/service/zona_service.dart'
+    as _i641;
 import 'package:consumo_combustible/di/app_module.dart' as _i564;
 import 'package:consumo_combustible/domain/repository/archivo_repository.dart'
     as _i45;
@@ -35,10 +41,14 @@ import 'package:consumo_combustible/domain/repository/auth_repository.dart'
     as _i120;
 import 'package:consumo_combustible/domain/repository/detalle_abastecimiento_repository.dart'
     as _i343;
+import 'package:consumo_combustible/domain/repository/grifo_repository.dart'
+    as _i658;
 import 'package:consumo_combustible/domain/repository/licencia_repository.dart'
     as _i1047;
 import 'package:consumo_combustible/domain/repository/location_repository.dart'
     as _i611;
+import 'package:consumo_combustible/domain/repository/sede_repository.dart'
+    as _i1045;
 import 'package:consumo_combustible/domain/repository/ticket_aprobacion_repository.dart'
     as _i407;
 import 'package:consumo_combustible/domain/repository/ticket_repository.dart'
@@ -47,16 +57,22 @@ import 'package:consumo_combustible/domain/repository/unidad_repository.dart'
     as _i41;
 import 'package:consumo_combustible/domain/repository/user_repository.dart'
     as _i607;
+import 'package:consumo_combustible/domain/repository/zona_repository.dart'
+    as _i1021;
 import 'package:consumo_combustible/domain/use_cases/archivo/archivo_use_cases.dart'
     as _i441;
 import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart'
     as _i960;
 import 'package:consumo_combustible/domain/use_cases/detalle_abastecimiento/detalle_abastecimiento_use_cases.dart'
     as _i58;
+import 'package:consumo_combustible/domain/use_cases/grifo/grifo_use_cases.dart'
+    as _i732;
 import 'package:consumo_combustible/domain/use_cases/licencia/licencia_use_cases.dart'
     as _i767;
 import 'package:consumo_combustible/domain/use_cases/location/location_use_cases.dart'
     as _i636;
+import 'package:consumo_combustible/domain/use_cases/sedes/sede_use_cases.dart'
+    as _i120;
 import 'package:consumo_combustible/domain/use_cases/ticket/ticket_use_cases.dart'
     as _i453;
 import 'package:consumo_combustible/domain/use_cases/ticket_aprobacion/ticket_aprobacion_use_cases.dart'
@@ -65,6 +81,8 @@ import 'package:consumo_combustible/domain/use_cases/unidad/unidad_use_cases.dar
     as _i911;
 import 'package:consumo_combustible/domain/use_cases/user/user_use_cases.dart'
     as _i974;
+import 'package:consumo_combustible/domain/use_cases/zona/zona_use_cases.dart'
+    as _i319;
 import 'package:dio/dio.dart' as _i361;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
@@ -101,6 +119,11 @@ extension GetItInjectableX on _i174.GetIt {
       () => appModule.licenciaService(gh<_i361.Dio>()),
     );
     gh.factory<_i148.UserService>(() => appModule.userService(gh<_i361.Dio>()));
+    gh.factory<_i641.ZonaService>(() => appModule.zonaService(gh<_i361.Dio>()));
+    gh.factory<_i779.SedeService>(() => appModule.sedeService(gh<_i361.Dio>()));
+    gh.factory<_i440.GrifoService>(
+      () => appModule.grifoService(gh<_i361.Dio>()),
+    );
     gh.singleton<_i343.DetalleAbastecimientoRepository>(
       () => appModule.detalleAbastecimientoRepository(
         gh<_i14.DetalleAbastecimientoService>(),
@@ -120,10 +143,19 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i607.UserRepository>(
       () => appModule.userRepository(gh<_i148.UserService>()),
     );
+    gh.singleton<_i658.GrifoRepository>(
+      () => appModule.grifoRepository(gh<_i440.GrifoService>()),
+    );
     gh.singleton<_i58.DetalleAbastecimientoUseCases>(
       () => appModule.detalleAbastecimientoUseCases(
         gh<_i343.DetalleAbastecimientoRepository>(),
       ),
+    );
+    gh.singleton<_i1045.SedeRepository>(
+      () => appModule.sedeRepository(gh<_i779.SedeService>()),
+    );
+    gh.singleton<_i1021.ZonaRepository>(
+      () => appModule.zonaRepository(gh<_i641.ZonaService>()),
     );
     gh.singleton<_i974.UserUseCases>(
       () => appModule.userUseCases(gh<_i607.UserRepository>()),
@@ -132,6 +164,12 @@ extension GetItInjectableX on _i174.GetIt {
       () => appModule.ticketAprobacionUseCases(
         gh<_i407.TicketAprobacionRepository>(),
       ),
+    );
+    gh.singleton<_i319.ZonaUseCases>(
+      () => appModule.zonaUseCases(gh<_i1021.ZonaRepository>()),
+    );
+    gh.singleton<_i732.GrifoUseCases>(
+      () => appModule.grifoUseCases(gh<_i658.GrifoRepository>()),
     );
     gh.factory<_i261.ArchivoService>(
       () => appModule.archivoService(
@@ -162,6 +200,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.singleton<_i1047.LicenciaRepository>(
       () => appModule.licenciaRepository(gh<_i858.LicenciaService>()),
+    );
+    gh.singleton<_i120.SedeUseCases>(
+      () => appModule.sedeUseCases(gh<_i1045.SedeRepository>()),
     );
     gh.singleton<_i960.AuthUseCases>(
       () => appModule.authUseCases(gh<_i120.AuthRepository>()),

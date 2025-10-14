@@ -22,7 +22,7 @@ class ApiConfig {
 
   // ✅ TIMEOUTS AJUSTADOS PARA MICROSERVICIOS
   static Duration get connectTimeout => isProduction 
-    ? const Duration(seconds: 10)  // Más tiempo para conexión externa
+    ? const Duration(seconds: 15)  // Más tiempo para conexión externa
     : const Duration(seconds: 8);  // Más tiempo para desarrollo local
 
   static Duration get receiveTimeout => isProduction 
@@ -30,7 +30,7 @@ class ApiConfig {
     : const Duration(seconds: 12); // Suficiente para desarrollo local
 
   static Duration get sendTimeout => isProduction 
-    ? const Duration(seconds: 10) 
+    ? const Duration(seconds: 15) 
     : const Duration(seconds: 8);
 
   // ✅ TIMEOUTS ESPECÍFICOS PARA LOGIN (más tiempo)

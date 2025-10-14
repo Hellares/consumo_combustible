@@ -86,7 +86,7 @@ class LocationHeaderWidget extends StatelessWidget {
             _buildInfoRow(
               icon: Icons.location_city,
               label: 'Dirección',
-              value: location.grifo.direccion,
+              value: location.grifo.direccion!,
               isSmall: true,
             ),
             const SizedBox(height: 8),

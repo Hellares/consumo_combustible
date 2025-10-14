@@ -48,11 +48,11 @@ class _TimeScrollPickerState extends State<TimeScrollPicker> {
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
-        width: 320,
-        height: 350,
+        width: 280,
+        height: 330,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.25),
@@ -65,7 +65,7 @@ class _TimeScrollPickerState extends State<TimeScrollPicker> {
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -76,20 +76,20 @@ class _TimeScrollPickerState extends State<TimeScrollPicker> {
                   ],
                 ),
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
                 ),
               ),
               child: Row(
                 children: const [
-                  Icon(Icons.access_time, color: Colors.white, size: 24),
+                  Icon(Icons.access_time, color: Colors.white, size: 18),
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'Seleccionar hora',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 14,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -206,7 +206,7 @@ class _TimeScrollPickerState extends State<TimeScrollPicker> {
             ),
             // Botones
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Row(
                 children: [
                   Expanded(
@@ -214,13 +214,13 @@ class _TimeScrollPickerState extends State<TimeScrollPicker> {
                       onPressed: () => Navigator.of(context).pop(),
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.grey.shade600,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        // padding: const EdgeInsets.symmetric(vertical: 8),
                       ),
                       child: const Text(
                         'Cancelar',
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          fontSize: 16,
+                          fontSize: 12,
                         ),
                       ),
                     ),
@@ -236,7 +236,7 @@ class _TimeScrollPickerState extends State<TimeScrollPicker> {
                         backgroundColor: widget.primaryColor,
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        // padding: const EdgeInsets.symmetric(vertical: 8),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -245,7 +245,7 @@ class _TimeScrollPickerState extends State<TimeScrollPicker> {
                         'Aceptar',
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          fontSize: 16,
+                          fontSize: 12,
                         ),
                       ),
                     ),

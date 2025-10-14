@@ -2,28 +2,37 @@ import 'package:consumo_combustible/core/fast_storage_service.dart';
 import 'package:consumo_combustible/data/api/dio_config.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/archivo_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/auth_service.dart';
+import 'package:consumo_combustible/data/datasource/remote/service/grifo_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/licencia_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/location_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/detalle_abastecimiento_service.dart';
+import 'package:consumo_combustible/data/datasource/remote/service/sede_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_aprobacion_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/unidad_service.dart';
+import 'package:consumo_combustible/data/datasource/remote/service/zona_service.dart';
 import 'package:consumo_combustible/data/repository/archivo_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/auth_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/detalle_abastecimiento_repository_impl.dart';
+import 'package:consumo_combustible/data/repository/grifo_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/licencia_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/location_repository_impl.dart';
+import 'package:consumo_combustible/data/repository/sede_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/ticket_aprobacion_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/ticket_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/unidad_repository_impl.dart';
+import 'package:consumo_combustible/data/repository/zona_repository_impl.dart';
 import 'package:consumo_combustible/domain/repository/archivo_repository.dart';
 import 'package:consumo_combustible/domain/repository/auth_repository.dart';
 import 'package:consumo_combustible/domain/repository/detalle_abastecimiento_repository.dart';
+import 'package:consumo_combustible/domain/repository/grifo_repository.dart';
 import 'package:consumo_combustible/domain/repository/licencia_repository.dart';
 import 'package:consumo_combustible/domain/repository/location_repository.dart';
+import 'package:consumo_combustible/domain/repository/sede_repository.dart';
 import 'package:consumo_combustible/domain/repository/ticket_aprobacion_repository.dart';
 import 'package:consumo_combustible/domain/repository/ticket_repository.dart';
 import 'package:consumo_combustible/domain/repository/unidad_repository.dart';
+import 'package:consumo_combustible/domain/repository/zona_repository.dart';
 import 'package:consumo_combustible/domain/use_cases/archivo/archivo_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/archivo/delete_archivo_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/archivo/get_archivos_byticket_usecase.dart';
@@ -37,6 +46,12 @@ import 'package:consumo_combustible/domain/use_cases/auth/logout_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/save_selected_role_usecase.dart';
 // import 'package:consumo_combustible/domain/use_cases/auth/logout_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/save_user_session_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/grifo/create_grifo_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/grifo/get_grifo_by_id_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/grifo/get_grifos_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/grifo/get_grifosgrifos_by_sede_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/grifo/grifo_use_cases.dart';
+import 'package:consumo_combustible/domain/use_cases/grifo/update_grifo_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/licencia/create_licencia_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/licencia/get_licencia_by_id_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/licencia/get_licencias_by_usuario_use_case.dart';
@@ -47,6 +62,10 @@ import 'package:consumo_combustible/domain/use_cases/licencia/licencia_use_cases
 import 'package:consumo_combustible/data/datasource/remote/service/user_service.dart';
 import 'package:consumo_combustible/data/repository/user_repository_impl.dart';
 import 'package:consumo_combustible/domain/repository/user_repository.dart';
+import 'package:consumo_combustible/domain/use_cases/sedes/create_sede_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/sedes/get_sedes_sedes_by_zona_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/sedes/get_sedes_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/sedes/sede_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/user/get_users_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/user/register_users_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/user/search_users_use_case.dart';
@@ -74,6 +93,9 @@ import 'package:consumo_combustible/domain/use_cases/unidad/get_all_unidades.dar
 import 'package:consumo_combustible/domain/use_cases/unidad/get_unidad_by_id.dart';
 import 'package:consumo_combustible/domain/use_cases/unidad/get_unidades_by_zona.dart';
 import 'package:consumo_combustible/domain/use_cases/unidad/unidad_use_cases.dart';
+import 'package:consumo_combustible/domain/use_cases/zona/create_zona_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/zona/get_zonas_zonas_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/zona/zona_use_cases.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
@@ -205,6 +227,43 @@ abstract class AppModule {
     if (kDebugMode) print('📦 Creando ArchivoRepository singleton');
     return ArchivoRepositoryImpl(service);
   }
+
+   @injectable
+  ZonaService zonaService(Dio dio) {
+    if (kDebugMode) print('🗺️ Creando ZonaService');
+    return ZonaService(dio);
+  }
+
+  @singleton
+  ZonaRepository zonaRepository(ZonaService service) {
+    if (kDebugMode) print('📚 Creando ZonaRepository singleton');
+    return ZonaRepositoryImpl(service);
+  }
+
+  @injectable
+  SedeService sedeService(Dio dio) {
+    if (kDebugMode) print('🏢 Creando SedeService');
+    return SedeService(dio);
+  }
+
+  @singleton
+  SedeRepository sedeRepository(SedeService service) {
+    if (kDebugMode) print('📚 Creando SedeRepository singleton');
+    return SedeRepositoryImpl(service);
+  }
+
+  @injectable
+  GrifoService grifoService(Dio dio) {
+    if (kDebugMode) print('⛽ Creando GrifoService');
+    return GrifoService(dio);
+  }
+
+  @singleton
+  GrifoRepository grifoRepository(GrifoService service) {
+    if (kDebugMode) print('📚 Creando GrifoRepository singleton');
+    return GrifoRepositoryImpl(service);
+  }
+
   
   //---------------------------------------------------------------------------------//
   // ✅ USE CASES CONTAINERS - Singleton optimizado
@@ -317,6 +376,37 @@ abstract class AppModule {
       uploadArchivos: UploadArchivosUseCase(repository),
       getArchivosByTicket: GetArchivosByTicketUseCase(repository),
       deleteArchivo: DeleteArchivoUseCase(repository),
+    );
+  }
+
+  @singleton
+  ZonaUseCases zonaUseCases(ZonaRepository repository) {
+    if (kDebugMode) print('🎯 Creando ZonaUseCases singleton');
+    return ZonaUseCases(
+      createZona: CreateZonaUseCase(repository),
+      getZonas: GetZonasZonasUseCase(repository),
+    );
+  }
+
+  @singleton
+  SedeUseCases sedeUseCases(SedeRepository repository) {
+    if (kDebugMode) print('🎯 Creando SedeUseCases singleton');
+    return SedeUseCases(
+      createSede: CreateSedeUseCase(repository),
+      getSedes: GetSedesUseCase(repository),
+      getSedesSedesByZona: GetSedesSedesByZonaUseCase(repository),
+    );
+  }
+
+  @singleton
+  GrifoUseCases grifoUseCases(GrifoRepository repository) {
+    if (kDebugMode) print('🎯 Creando GrifoUseCases singleton');
+    return GrifoUseCases(
+      createGrifo: CreateGrifoUseCase(repository),
+      getGrifos: GetGrifosUseCase(repository),
+      getGrifosBySede: GetGrifosGrifosBySedeUseCase(repository),
+      getGrifoById: GetGrifoByIdUseCase(repository),
+      updateGrifo: UpdateGrifoUseCase(repository),
     );
   }
 }
