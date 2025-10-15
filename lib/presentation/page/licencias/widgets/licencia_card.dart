@@ -46,7 +46,7 @@ class LicenciaCard extends StatelessWidget {
                           color: AppColors.blue3,
                         ),
                         const SizedBox(height: 4),
-                        AppCaption(
+                        AppSubtitle(
                           'DNI: ${licencia.usuario.dni} • ${licencia.usuario.codigoEmpleado}',
                           fontSize: 10,
                           color: Colors.grey[600],

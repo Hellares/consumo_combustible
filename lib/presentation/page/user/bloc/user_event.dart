@@ -42,3 +42,27 @@ class RegisterUser extends UserEvent {
   @override
   List<Object?> get props => [request];
 }
+
+
+/*
+  ***************************************************************************************
+  Metodo: Asignar rol 
+  Fecha: 14-10-2025
+  Descripcion: 
+  Autor: James Torres
+  ***************************************************************************************
+*/
+class AssignRolToUser extends UserEvent {
+  final int userId;
+  final int rolId;
+  final int asignadoPorId;
+
+  const AssignRolToUser({
+    required this.userId,
+    required this.rolId,
+    required this.asignadoPorId,
+  });
+  
+  @override
+  List<Object?> get props => [userId, rolId, asignadoPorId];
+}

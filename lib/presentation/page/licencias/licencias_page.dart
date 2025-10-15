@@ -205,7 +205,7 @@ class _LicenciasPageState extends State<LicenciasPage> {
         children: [
           Icon(icon, color: color, size: 18),
           const SizedBox(height: 4),
-          AppCaption(label, fontSize: 10, color: Colors.grey[600]),
+          AppSubtitle(label, fontSize: 10, color: Colors.grey[600]),
           const SizedBox(height: 2),
           AppSubtitle(value, fontSize: 14, color: color),
         ],
@@ -231,7 +231,7 @@ class _LicenciasPageState extends State<LicenciasPage> {
               color: Colors.grey[600],
             ),
             const SizedBox(height: 8),
-            AppCaption(
+            AppSubtitle(
               'Presiona el botón + para agregar una',
               color: Colors.grey[500],
             ),

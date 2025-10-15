@@ -2,6 +2,7 @@
 import 'package:consumo_combustible/data/datasource/remote/service/user_service.dart';
 import 'package:consumo_combustible/domain/models/auth_response.dart';
 import 'package:consumo_combustible/domain/models/register_user_request.dart';
+import 'package:consumo_combustible/domain/models/rol_asignado.dart';
 import 'package:consumo_combustible/domain/models/user_response.dart';
 import 'package:consumo_combustible/domain/repository/user_repository.dart';
 import 'package:consumo_combustible/domain/utils/resource.dart';
@@ -24,5 +25,18 @@ class UserRepositoryImpl implements UserRepository {
   @override
   Future<Resource<AuthResponse>> registerUser(RegisterUserRequest request) {
     return _userService.registerUser(request);
+  }
+
+  @override
+  Future<Resource<RolAsignado>> assignRolToUser({
+    required int userId,
+    required int rolId,
+    required int asignadoPorId,
+  }) {
+    return _userService.assignRolToUser(
+      userId: userId,
+      rolId: rolId,
+      asignadoPorId: asignadoPorId,
+    );
   }
 }

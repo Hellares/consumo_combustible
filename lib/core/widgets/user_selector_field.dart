@@ -98,13 +98,6 @@ class _UserSelectorFieldState extends State<UserSelectorField> with AutomaticKee
     }
   }
 
-  // void _clearSelection() {
-  //   setState(() {
-  //     _selectedUser = null;
-  //     _controller.clear();
-  //   });
-  // }
-
   @override
   Widget build(BuildContext context) {
     super.build(context); // Necesario para AutomaticKeepAliveClientMixin
@@ -125,30 +118,7 @@ class _UserSelectorFieldState extends State<UserSelectorField> with AutomaticKee
               backgroundColor: _selectedUser != null 
                   ? AppColors.blue3.withValues(alpha: 0.05)
                   : Colors.white,
-              // prefixIcon: Icon(
-              //   Icons.person_outline_rounded,
-              //   color: _selectedUser != null 
-              //       ? AppColors.blue3 
-              //       : Colors.grey.shade400,
-              //   size: 20,
-              // ),
               prefixIcon: Icon(Icons.person_outline_rounded),
-              // suffixIcon: _selectedUser != null && widget.allowClear
-              //     ? IconButton(
-              //         icon: Icon(
-              //           Icons.clear_rounded,
-              //           color: Colors.grey.shade600,
-              //           size: 18,
-              //         ),
-              //         onPressed: _clearSelection,
-              //         padding: EdgeInsets.zero,
-              //         constraints: const BoxConstraints(),
-              //       )
-              //     : Icon(
-              //         Icons.arrow_drop_down_rounded,
-              //         color: Colors.grey.shade600,
-              //         size: 22,
-              //       ),
               suffixIcon: Icon(Icons.arrow_drop_down,size: 20,),
               validator: widget.isRequired
                   ? (value) {

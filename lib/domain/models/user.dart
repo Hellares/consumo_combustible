@@ -77,4 +77,13 @@ class User {
     List<SimpleRole> get simpleRoles => roles is List<SimpleRole> ? roles as List<SimpleRole> : [];
     
     bool get hasRoles => (roles is List && (roles as List).isNotEmpty);
+
+    List<dynamic> get rolesAsList {
+      if (roles is List<Role>) {
+        return (roles as List<Role>).map((r) => r.rol).toList();
+      } else if (roles is List<SimpleRole>) {
+        return roles as List<SimpleRole>;
+      }
+      return [];
+    }
 }

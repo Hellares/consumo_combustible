@@ -52,7 +52,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     _loadData();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadData() async { //! cargar unidades de la zona
     final locationUseCases = locator<LocationUseCases>();
     final location = await locationUseCases.getSelectedLocation.run();
 
@@ -75,42 +75,42 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
 
   // ✅ NUEVO: Método para recargar cuando cambia la ubicación
   Future<void> _checkAndReloadLocation() async {
-  // Capturar messenger ANTES de cualquier await
-  final messenger = ScaffoldMessenger.of(context);
-  
-  final locationUseCases = locator<LocationUseCases>();
-  final newLocation = await locationUseCases.getSelectedLocation.run();
+    // Capturar messenger ANTES de cualquier await
+    final messenger = ScaffoldMessenger.of(context);
 
-  if (newLocation == null) return;
+    final locationUseCases = locator<LocationUseCases>();
+    final newLocation = await locationUseCases.getSelectedLocation.run();
 
-  // Detectar si cambió la zona
-  if (_currentZonaId != null && _currentZonaId != newLocation.zona.id) {
-    final unidadUseCases = locator<UnidadUseCases>();
-    await unidadUseCases.clearUnidadesCache.run(zonaId: _currentZonaId);
+    if (newLocation == null) return;
 
-    if (!mounted) return;
+    // Detectar si cambió la zona
+    if (_currentZonaId != null && _currentZonaId != newLocation.zona.id) {
+      final unidadUseCases = locator<UnidadUseCases>();
+      await unidadUseCases.clearUnidadesCache.run(zonaId: _currentZonaId);
 
-    setState(() {
-      _location = newLocation;
-      _currentZonaId = newLocation.zona.id;
-      _selectedUnidadId = null;
-    });
+      if (!mounted) return;
 
-    _bloc.add(LoadUnidadesByZona(newLocation.zona.id));
-    SnackBarHelper.showInfoWithMessenger(
-      messenger,
-      'Ubicación actualizada: ${newLocation.zona.nombre}',
-    );
-  } else if (_location?.grifo.id != newLocation.grifo.id) {
-    if (!mounted) return;
+      setState(() {
+        _location = newLocation;
+        _currentZonaId = newLocation.zona.id;
+        _selectedUnidadId = null;
+      });
 
-    setState(() => _location = newLocation);
-    SnackBarHelper.showInfoWithMessenger(
-      messenger,
-      'Grifo actualizado: ${newLocation.grifo.nombre}',
-    );
+      _bloc.add(LoadUnidadesByZona(newLocation.zona.id));
+      SnackBarHelper.showInfoWithMessenger(
+        messenger,
+        'Ubicación actualizada: ${newLocation.zona.nombre}',
+      );
+    } else if (_location?.grifo.id != newLocation.grifo.id) {
+      if (!mounted) return;
+
+      setState(() => _location = newLocation);
+      SnackBarHelper.showInfoWithMessenger(
+        messenger,
+        'Grifo actualizado: ${newLocation.grifo.nombre}',
+      );
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -130,22 +130,26 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
         body: Column(
           children: [
             Container(
-            height: 25,
-            padding: const EdgeInsets.only(left: 16, right: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                AppTitle('CREAR TICKET DE ABASTECIMIENTO', fontSize: 10,),
-                IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  icon: const Icon(Icons.refresh, size: 20, color: Colors.blue),
-                  onPressed: _refreshUnidades,
-                ),
-              ],
+              height: 25,
+              padding: const EdgeInsets.only(left: 16, right: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  AppTitle('CREAR TICKET DE ABASTECIMIENTO', fontSize: 10),
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    icon: const Icon(
+                      Icons.refresh,
+                      size: 20,
+                      color: Colors.blue,
+                    ),
+                    onPressed: _refreshUnidades,
+                  ),
+                ],
+              ),
             ),
-          ),
             Expanded(
               child: BlocConsumer<TicketBloc, TicketState>(
                 bloc: _bloc,
@@ -155,7 +159,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                     final error = state.unidadesResponse as Error;
                     SnackBarHelper.showError(context, error.message);
                   }
-              
+
                   // Listener para creación de ticket
                   if (state.createResponse is Success) {
                     final ticket =
@@ -169,7 +173,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                 },
                 builder: (context, state) {
                   final isLoadingTicket = state.createResponse is Loading;
-              
+
                   return Form(
                     key: _formKey,
                     child: SingleChildScrollView(
@@ -179,13 +183,13 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                         children: [
                           _buildLocationCard(),
                           const SizedBox(height: 24),
-              
+
                           // ✅ DROPDOWN DINÁMICO
                           _buildUnidadSelector(state),
-              
+
                           const SizedBox(height: 16),
                           _buildKilometrajeField(),
-              
+
                           const SizedBox(height: 16),
                           _buildPrecintoField(),
                           const SizedBox(height: 16),
@@ -231,9 +235,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
               children: [
                 Icon(Icons.location_on, color: AppColors.red),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: AppSubtitle('UBICACION ACTUAL', fontSize: 9,),
-                ),
+                Expanded(child: AppSubtitle('UBICACION ACTUAL', fontSize: 9)),
                 // ✅ BOTÓN PARA CAMBIAR UBICACIÓN
                 InkWell(
                   onTap: () async {
@@ -266,7 +268,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                           color: AppColors.red,
                         ),
                         const SizedBox(width: 4),
-                        AppLabelText('Cambiar',fontSize: 8,)
+                        AppLabelText('Cambiar', fontSize: 8),
                       ],
                     ),
                   ),
@@ -296,7 +298,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     );
   }
 
-  // ✅ NUEVO: Dropdown dinámico con unidades de la API
+  //NUEVO: Dropdown dinámico con unidades de la API
   Widget _buildUnidadSelector(TicketState state) {
     final isLoading = state.unidadesResponse is Loading;
     final hasError = state.unidadesResponse is Error;
@@ -408,6 +410,8 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     );
   }
 
+
+
   Widget _buildKilometrajeField() {
     return CustomTextField(
       controller: _kilometrajeController,
@@ -433,6 +437,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
 
   Widget _buildPrecintoField() {
     return CustomTextField(
+      textCase: TextCase.upper,
       controller: _precintoController,
       hintText: 'Precinto Nuevo *',
       borderColor: AppColors.blue3,
@@ -446,68 +451,67 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
   }
 
   Widget _buildCantidadField() {
-  // Obtener unidad seleccionada si existe
-  final unidadSeleccionada = _selectedUnidadId != null
-      ? _bloc.state.unidades.firstWhereOrNull((u) => u.id == _selectedUnidadId)
-      : null;
+    // Obtener unidad seleccionada si existe
+    final unidadSeleccionada = _selectedUnidadId != null
+        ? _bloc.state.unidades.firstWhereOrNull(
+            (u) => u.id == _selectedUnidadId,
+          )
+        : null;
 
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      CustomTextField(
-        controller: _cantidadController,
-        hintText: 'Cantidad de Combustible *',
-        borderColor: AppColors.blue3,
-        prefixIcon: const Icon(Icons.local_gas_station),
-        suffixText: 'gal',
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        inputFormatters: [
-          FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-        ],
-        validator: (value) {
-          if (value == null || value.isEmpty) return 'Ingresa la cantidad';
-          final cantidad = double.tryParse(value);
-          if (cantidad == null) return 'Número inválido';
-          if (cantidad <= 0) return 'Debe ser mayor a 0';
-          if (cantidad > 1000) return 'Cantidad muy alta';
-          
-          if (_selectedUnidadId != null) {
-            final unidad = _bloc.state.unidades.firstWhere(
-              (u) => u.id == _selectedUnidadId,
-            );
-            
-            if (cantidad > unidad.capacidadTanque) {
-              return 'Excede capacidad del tanque (${unidad.capacidadTanque} gal)';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CustomTextField(
+          controller: _cantidadController,
+          hintText: 'Cantidad de Combustible *',
+          borderColor: AppColors.blue3,
+          prefixIcon: const Icon(Icons.local_gas_station),
+          suffixText: 'gal',
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+          ],
+          validator: (value) {
+            if (value == null || value.isEmpty) return 'Ingresa la cantidad';
+            final cantidad = double.tryParse(value);
+            if (cantidad == null) return 'Número inválido';
+            if (cantidad <= 0) return 'Debe ser mayor a 0';
+            if (cantidad > 1000) return 'Cantidad muy alta';
+
+            if (_selectedUnidadId != null) {
+              final unidad = _bloc.state.unidades.firstWhere(
+                (u) => u.id == _selectedUnidadId,
+              );
+
+              if (cantidad > unidad.capacidadTanque) {
+                return 'Excede capacidad del tanque (${unidad.capacidadTanque} gal)';
+              }
             }
-          }
-          
-          return null;
-        },
-      ),
-      
-      // ✅ Helper text con capacidad del tanque
-      if (unidadSeleccionada != null) ...[
-        const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.only(left: 12),
-          child: Row(
-            children: [
-              Icon(Icons.info_outline, size: 16, color: Colors.blue.shade600),
-              const SizedBox(width: 4),
-              Text(
-                'Capacidad del tanque: ${unidadSeleccionada.capacidadTanque} gal',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.blue.shade700,
-                ),
-              ),
-            ],
-          ),
+
+            return null;
+          },
         ),
+
+        // ✅ Helper text con capacidad del tanque
+        if (unidadSeleccionada != null) ...[
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, size: 16, color: Colors.blue.shade600),
+                const SizedBox(width: 4),
+                Text(
+                  'Capacidad del tanque: ${unidadSeleccionada.capacidadTanque} gal',
+                  style: TextStyle(fontSize: 12, color: Colors.blue.shade700),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
-    ],
-  );
-}
+    );
+  }
 
   Widget _buildSubmitButton(bool isLoading) {
     return CustomButton(
@@ -523,62 +527,58 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     );
   }
 
- 
-
-
-
   Future<void> _createTicket() async {
-  if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) return;
 
-  if (_selectedUnidadId == null) {
-    SnackBarHelper.showError(context, 'Selecciona una unidad');
-    return;
-  }
+    if (_selectedUnidadId == null) {
+      SnackBarHelper.showError(context, 'Selecciona una unidad');
+      return;
+    }
 
-  // Obtener la unidad seleccionada
-  final unidadSeleccionada = _bloc.state.unidades.firstWhere(
-    (u) => u.id == _selectedUnidadId,
-  );
+    // Obtener la unidad seleccionada
+    final unidadSeleccionada = _bloc.state.unidades.firstWhere(
+      (u) => u.id == _selectedUnidadId,
+    );
 
-  // Mostrar diálogo de confirmación
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (dialogContext) => TicketConfirmationDialog(
-      unidad: unidadSeleccionada,
-      location: _location!,
-      kilometraje: double.parse(_kilometrajeController.text),
-      precinto: _precintoController.text,
+    // Mostrar diálogo de confirmación
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => TicketConfirmationDialog(
+        unidad: unidadSeleccionada,
+        location: _location!,
+        kilometraje: double.parse(_kilometrajeController.text),
+        precinto: _precintoController.text,
+        cantidad: double.parse(_cantidadController.text),
+        onConfirm: () => Navigator.of(dialogContext).pop(true),
+        onCancel: () => Navigator.of(dialogContext).pop(false),
+      ),
+    );
+
+    // Si no confirmó, salir
+    if (confirmed != true) return;
+
+    // Continuar con la creación del ticket
+    final authUseCases = locator<AuthUseCases>();
+    final userSession = await authUseCases.getUserSession.run();
+
+    if (!mounted) return;
+
+    if (userSession == null) {
+      SnackBarHelper.showError(context, 'Sesión no válida');
+      return;
+    }
+
+    final request = CreateTicketRequest(
+      unidadId: _selectedUnidadId!,
+      conductorId: userSession.data!.user.id,
+      grifoId: _location!.grifo.id,
+      kilometrajeActual: double.parse(_kilometrajeController.text),
+      precintoNuevo: _precintoController.text,
       cantidad: double.parse(_cantidadController.text),
-      onConfirm: () => Navigator.of(dialogContext).pop(true),
-      onCancel: () => Navigator.of(dialogContext).pop(false),
-    ),
-  );
+    );
 
-  // Si no confirmó, salir
-  if (confirmed != true) return;
-
-  // Continuar con la creación del ticket
-  final authUseCases = locator<AuthUseCases>();
-  final userSession = await authUseCases.getUserSession.run();
-
-  if (!mounted) return;
-
-  if (userSession == null) {
-    SnackBarHelper.showError(context, 'Sesión no válida');
-    return;
+    _bloc.add(CreateTicket(request));
   }
-
-  final request = CreateTicketRequest(
-    unidadId: _selectedUnidadId!,
-    conductorId: userSession.data!.user.id,
-    grifoId: _location!.grifo.id,
-    kilometrajeActual: double.parse(_kilometrajeController.text),
-    precintoNuevo: _precintoController.text,
-    cantidad: double.parse(_cantidadController.text),
-  );
-
-  _bloc.add(CreateTicket(request));
-}
 
   void _showSuccessDialog(TicketAbastecimiento ticket) {
     showDialog(

@@ -1,11 +1,18 @@
+import 'package:consumo_combustible/core/fonts/app_text_widgets.dart';
 import 'package:consumo_combustible/core/theme/app_colors.dart';
 import 'package:consumo_combustible/core/widgets/appbar/smart_appbar.dart';
+import 'package:consumo_combustible/core/widgets/avatar_circle.dart';
 import 'package:consumo_combustible/core/widgets/custom_date_textfiels_container/custom_search_field.dart';
 import 'package:consumo_combustible/core/widgets/snack.dart';
+import 'package:consumo_combustible/data/api/api_config.dart';
+import 'package:consumo_combustible/domain/models/user.dart';
+import 'package:consumo_combustible/presentation/page/rol/bloc/rol_bloc.dart';
 import 'package:consumo_combustible/presentation/page/user/bloc/user_bloc.dart';
 import 'package:consumo_combustible/presentation/page/user/bloc/user_event.dart';
 import 'package:consumo_combustible/presentation/page/user/bloc/user_state.dart';
 import 'package:consumo_combustible/presentation/page/user/register_user_page.dart';
+import 'package:consumo_combustible/presentation/page/user/widgets/assign_rol_dialog.dart';
+import 'package:consumo_combustible/presentation/page/user/widgets/user_role_chips.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -48,10 +55,9 @@ class _UserPageState extends State<UserPage> {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.9) {
       _currentPage++;
-      context.read<UserBloc>().add(GetUsers(
-        page: _currentPage,
-        isLoadMore: true,
-      ));
+      context.read<UserBloc>().add(
+        GetUsers(page: _currentPage, isLoadMore: true),
+      );
     }
   }
 
@@ -62,21 +68,20 @@ class _UserPageState extends State<UserPage> {
       appBar: SmartAppBar(
         title: 'Usuarios',
         showUserInfo: true,
-        logoPath: "assets/img/6.svg",
+        logoPath: ApiConfig.logoPath,
       ),
       floatingActionButton: SizedBox(
         height: 40,
         width: 45,
         child: FloatingActionButton(
           onPressed: () => _showRegisterDialog(context),
-          backgroundColor: Colors.blue[600],
+          backgroundColor: AppColors.blue3,
           elevation: 2,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10)
+            borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(Icons.add, color: AppColors.white,),
+          child: Icon(Icons.add, color: AppColors.white),
         ),
-        
       ),
       body: BlocListener<UserBloc, UserState>(
         listener: (context, state) {
@@ -84,16 +89,13 @@ class _UserPageState extends State<UserPage> {
             SnackBarHelper.showSuccess(
               context,
               '✓ Usuario registrado exitosamente',
-              // Icons.check_circle,
-              // Colors.green,
             );
           } else if (state is UserRegisterError) {
-            SnackBarHelper.showError(
-              context,
-              state.message,
-              // Icons.error_outline,
-              // Colors.red,
-            );
+            SnackBarHelper.showError(context, state.message);
+          } else if (state is UserRolAssignSuccess) {
+            SnackBarHelper.showSuccess(context, state.message);
+          } else if (state is UserRolAssignError) {
+            SnackBarHelper.showError(context, state.message);
           }
         },
         child: BlocBuilder<UserBloc, UserState>(
@@ -101,7 +103,7 @@ class _UserPageState extends State<UserPage> {
             return Column(
               children: [
                 _buildModernSearchSection(context),
-                
+
                 if (state is UserLoading && state.isFirstLoad)
                   const Expanded(
                     child: Center(child: CircularProgressIndicator()),
@@ -122,9 +124,7 @@ class _UserPageState extends State<UserPage> {
                     ),
                   )
                 else
-                  const Expanded(
-                    child: Center(child: Text('No hay usuarios')),
-                  ),
+                  const Expanded(child: Center(child: Text('No hay usuarios'))),
               ],
             );
           },
@@ -137,6 +137,22 @@ class _UserPageState extends State<UserPage> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const RegisterUserPage()),
+    );
+  }
+
+  void _showAssignRolDialog(User user) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => MultiBlocProvider(
+        providers: [
+          // ✅ Proveemos el UserBloc existente
+          BlocProvider.value(value: context.read<UserBloc>()),
+          // ✅ Proveemos el RolBloc existente del árbol de widgets
+          BlocProvider.value(value: context.read<RolBloc>()),
+        ],
+        child: AssignRolDialog(user: user),
+      ),
     );
   }
 
@@ -161,10 +177,10 @@ class _UserPageState extends State<UserPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // CustomSearchField con todas las características
-                CustomSearchField(                  
+                CustomSearchField(
                   controller: _searchController,
-                  hintText: _searchType == 'nombre' 
-                      ? 'Buscar por nombre...' 
+                  hintText: _searchType == 'nombre'
+                      ? 'Buscar por nombre...'
                       : 'Buscar por DNI...',
                   borderColor: AppColors.blue3,
                   height: 35,
@@ -180,16 +196,16 @@ class _UserPageState extends State<UserPage> {
                   },
                   debounceDelay: const Duration(milliseconds: 300),
                 ),
-                
+
                 const SizedBox(height: 10),
-                
+
                 // Chips de filtro modernos
                 Row(
                   children: [
                     Text(
                       'Buscar por:',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 9,
                         fontWeight: FontWeight.w600,
                         color: Colors.grey[700],
                         letterSpacing: 0.3,
@@ -232,7 +248,7 @@ class _UserPageState extends State<UserPage> {
     required IconData icon,
   }) {
     final isSelected = _searchType == type;
-    
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeInOut,
@@ -247,30 +263,22 @@ class _UserPageState extends State<UserPage> {
               FilterUsers(_searchController.text, searchType: type),
             );
           },
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 5,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               gradient: isSelected
                   ? LinearGradient(
-                      colors: [
-                        Colors.blue[600]!,
-                        Colors.blue[700]!,
-                      ],
+                      colors: [Colors.blue[600]!, Colors.blue[700]!],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     )
                   : null,
               color: isSelected ? null : Colors.grey[100],
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(4),
               border: Border.all(
-                color: isSelected 
-                    ? Colors.blue[700]! 
-                    : Colors.grey[300]!,
-                width: isSelected ? 0 : 1,
+                color: isSelected ? Colors.blue[700]! : Colors.grey[300]!,
+                width: isSelected ? 0.5 : 0.5,
               ),
               boxShadow: isSelected
                   ? [
@@ -321,12 +329,7 @@ class _UserPageState extends State<UserPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.blue[50]?.withValues(alpha: 0.3),
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.grey[200]!,
-            width: 1,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: Colors.grey[200]!, width: 1)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -403,10 +406,7 @@ class _UserPageState extends State<UserPage> {
             const SizedBox(height: 8),
             Text(
               state.message,
-              style: TextStyle(
-                fontSize: 15,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 15, color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -447,7 +447,9 @@ class _UserPageState extends State<UserPage> {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                isSearching ? Icons.search_off_rounded : Icons.people_outline_rounded,
+                isSearching
+                    ? Icons.search_off_rounded
+                    : Icons.people_outline_rounded,
                 size: 64,
                 color: Colors.grey[400],
               ),
@@ -468,10 +470,7 @@ class _UserPageState extends State<UserPage> {
               isSearching
                   ? 'Intenta con otro término de búsqueda'
                   : 'Aún no hay usuarios en el sistema',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
               textAlign: TextAlign.center,
             ),
           ],
@@ -509,10 +508,7 @@ class _UserPageState extends State<UserPage> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: Colors.grey[200]!,
-                width: 1,
-              ),
+              border: Border.all(color: Colors.grey[200]!, width: 1),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.04),
@@ -527,120 +523,33 @@ class _UserPageState extends State<UserPage> {
                 horizontal: 16,
                 vertical: 3,
               ),
-              leading: Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.blue[400]!, Colors.blue[600]!],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blue.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    user.nombres.isNotEmpty ? user.nombres[0].toUpperCase() : '?',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ),
-              title: Text(
-                '${user.nombres} ${user.apellidos}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 10,
-                ),
-              ),
+              leading: AvatarCircle(text: user.nombres, colors: [AppColors.orange, AppColors.orange],),
+              title: AppSubtitle('${user.nombres} ${user.apellidos}'),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(Icons.phone_android_sharp, size: 14, color: Colors.grey[600]),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          user.telefono,
-                          style: TextStyle(fontSize: 9, color: Colors.grey[700]),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
                   const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.badge_outlined, size: 14, color: Colors.grey[600]),
-                      const SizedBox(width: 6),
-                      Text(
-                        'DNI: ${user.dni}',
-                        style: TextStyle(fontSize: 9, color: Colors.grey[700]),
-                      ),
-                    ],
+                  AppCaption(
+                    items: [CaptionItem(icon: Icons.badge, text: user.dni), CaptionItem(icon: Icons.phone_android_rounded, text: user.telefono)],
                   ),
+                  //!Mostrar roles
                   if (user.hasRoles) ...[
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: user.simpleRoles.map((role) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Colors.blue[50]!, Colors.blue[100]!],
-                            ),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(
-                              color: Colors.blue[200]!,
-                              width: 0.5,
-                            ),
-                          ),
-                          child: Text(
-                            role.nombre,
-                            style: TextStyle(
-                              fontSize: 8,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.blue[800],
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
+                    const SizedBox(height: 10),
+                    UserRoleChips(user: user),
                   ],
                 ],
               ),
-              trailing: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: user.activo 
-                      ? Colors.green[50] 
-                      : Colors.red[50],
-                  shape: BoxShape.circle,
+              //! Botón de asignar rol
+              trailing: IconButton(
+                icon: Icon(
+                  Icons.admin_panel_settings_outlined,
+                  color: AppColors.blue3,
+                  size: 22,
                 ),
-                child: Icon(
-                  user.activo 
-                      ? Icons.check_circle_rounded 
-                      : Icons.cancel_rounded,
-                  color: user.activo ? Colors.green[600] : Colors.red[600],
-                  size: 18,
-                ),
+                onPressed: () => _showAssignRolDialog(user),
+                tooltip: 'Asignar rol',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
               ),
             ),
           );

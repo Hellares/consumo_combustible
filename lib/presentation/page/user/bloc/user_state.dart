@@ -1,5 +1,3 @@
-// lib/presentation/page/user/bloc/user_state.dart
-
 import 'package:consumo_combustible/domain/models/auth_response.dart';
 import 'package:consumo_combustible/domain/models/user.dart';
 import 'package:consumo_combustible/domain/models/user_response.dart';
@@ -116,4 +114,38 @@ class UserRegisterError extends UserState {
   
   @override
   List<Object?> get props => [message];
+}
+
+//  Estado de éxito al asignar rol
+class UserRolAssignSuccess extends UserState {
+  final String message;
+  final int userId;
+
+  const UserRolAssignSuccess({
+    required this.message,
+    required this.userId,
+  });
+  
+  @override
+  List<Object?> get props => [message, userId];
+}
+
+// Estado de error al asignar rol
+class UserRolAssignError extends UserState {
+  final String message;
+
+  const UserRolAssignError(this.message);
+  
+  @override
+  List<Object?> get props => [message];
+}
+
+// Estado mientras se asigna rol
+class UserRolAssigning extends UserState {
+  final int userId;
+
+  const UserRolAssigning(this.userId);
+  
+  @override
+  List<Object?> get props => [userId];
 }

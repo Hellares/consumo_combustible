@@ -1,6 +1,8 @@
 // lib/presentation/page/user/bloc/user_bloc.dart
 
+import 'package:consumo_combustible/domain/models/rol_asignado.dart';
 import 'package:consumo_combustible/domain/models/user_response.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:consumo_combustible/domain/use_cases/user/user_use_cases.dart';
 import 'package:consumo_combustible/domain/utils/resource.dart';
@@ -14,6 +16,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     on<GetUsers>(_onGetUsers);
     on<FilterUsers>(_onFilterUsers);
     on<RegisterUser>(_onRegisterUser);
+    on<AssignRolToUser>(_onAssignRolToUser);
   }
 
   Future<void> _onGetUsers(GetUsers event, Emitter<UserState> emit) async {
@@ -96,6 +99,58 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         emit(currentState.copyWith(isRegistering: false));
       }
       emit(UserRegisterError(errorResource.message));
+    }
+  }
+
+   Future<void> _onAssignRolToUser(
+    AssignRolToUser event,
+    Emitter<UserState> emit,
+  ) async {
+    try {
+      if (kDebugMode) {
+        print('🔄 [UserBloc] Asignando rol ${event.rolId} al usuario ${event.userId}...');
+      }
+
+      // Emitir estado de carga
+      emit(UserRolAssigning(event.userId));
+
+      // Llamar al use case
+      final result = await _userUseCases.assignRolToUser.run(
+        userId: event.userId,
+        rolId: event.rolId,
+        asignadoPorId: event.asignadoPorId,
+      );
+
+      if (result is Success<RolAsignado>) {
+        final rolAsignado = result.data;
+        
+        if (kDebugMode) {
+          print('✅ [UserBloc] Rol ${rolAsignado.rol.nombre} asignado exitosamente');
+        }
+
+        // Emitir estado de éxito
+        emit(UserRolAssignSuccess(
+          message: 'Rol ${rolAsignado.rol.nombre} asignado exitosamente',
+          userId: event.userId,
+        ));
+
+        // Recargar la lista de usuarios para reflejar el cambio
+        add(const GetUsers(page: 1));
+
+      } else if (result is Error<RolAsignado>) {
+        if (kDebugMode) {
+          print('❌ [UserBloc] Error: ${result.message}');
+        }
+
+        emit(UserRolAssignError(result.message));
+      }
+
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ [UserBloc] Exception: $e');
+      }
+
+      emit(UserRolAssignError('Error inesperado al asignar rol: $e'));
     }
   }
 }

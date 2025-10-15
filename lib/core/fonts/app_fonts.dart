@@ -116,7 +116,7 @@ extension AppFontPresetStyles on AppFont {
       );
 
   TextStyle get caption => style(
-        fontSize: 10,
+        fontSize: 9,
         fontWeight: FontWeight.w300,
         color: Colors.grey[700],
       );

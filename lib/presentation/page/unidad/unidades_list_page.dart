@@ -4,6 +4,7 @@ import 'package:consumo_combustible/core/fonts/app_fonts.dart';
 import 'package:consumo_combustible/core/fonts/app_text_widgets.dart';
 import 'package:consumo_combustible/core/theme/app_colors.dart';
 import 'package:consumo_combustible/core/widgets/appbar/smart_appbar.dart';
+import 'package:consumo_combustible/data/api/api_config.dart';
 import 'package:consumo_combustible/domain/models/unidad.dart';
 import 'package:consumo_combustible/presentation/page/unidad/bloc/unidad_bloc.dart';
 import 'package:consumo_combustible/presentation/page/unidad/bloc/unidad_event.dart';
@@ -57,7 +58,7 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
       appBar: SmartAppBar(
         title: 'Unidades',
         showLogo: true,
-        logoPath: 'assets/img/6.svg',
+        logoPath: ApiConfig.logoPath,
       ),
       body: BlocConsumer<UnidadBloc, UnidadState>(
         listener: (context, state) {
@@ -234,11 +235,11 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
       child: InkWell(
         onTap: () {
           // Navegar a detalle
-          Navigator.pushNamed(
-            context,
-            '/unidad-detalle',
-            arguments: unidad.id,
-          );
+          // Navigator.pushNamed(
+          //   context,
+          //   '/unidad-detalle',
+          //   arguments: unidad.id,
+          // );
         },
         borderRadius: BorderRadius.circular(8),
         child: Padding(

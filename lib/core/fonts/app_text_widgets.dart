@@ -66,31 +66,51 @@ class AppSubtitle extends StatelessWidget {
 }
 
 /// Texto pequeño tipo caption
-class AppCaption extends StatelessWidget {
+class CaptionItem {
+  final IconData? icon;
   final String text;
+
+  CaptionItem({required this.icon, required this.text});
+}
+
+class AppCaption extends StatelessWidget {
+  final List<CaptionItem> items;
   final AppFont font;
   final Color? color;
   final double? fontSize;
   final TextAlign? textAlign;
+  final double spacing; // Espacio entre cada item
 
-  const AppCaption(
-    this.text, {
+  const AppCaption({
     super.key,
-    this.font = AppFont.oxygenLight,
+    required this.items,
+    this.font = AppFont.oxygenRegular,
     this.color,
     this.fontSize,
     this.textAlign,
+    this.spacing = 10,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: font.caption.copyWith(
-        color: color ?? Colors.grey,
-        fontSize: fontSize,
-      ),
-      textAlign: textAlign,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: items
+          .map((item) => Row(
+                children: [
+                  Icon(item.icon, size: fontSize ?? 12, color: color ?? AppColors.blueGrey),
+                  const SizedBox(width: 4),
+                  Text(
+                    item.text,
+                    style: font.caption.copyWith(
+                      color: color ?? AppColors.blueGrey,
+                      fontSize: fontSize,
+                    ),
+                  ),
+                  SizedBox(width: spacing),
+                ],
+              ))
+          .toList(),
     );
   }
 }

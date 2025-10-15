@@ -7,6 +7,7 @@ import 'package:consumo_combustible/core/theme/app_gradients.dart';
 import 'package:consumo_combustible/core/theme/gradient_container.dart';
 import 'package:consumo_combustible/core/widgets/appbar/smart_appbar.dart';
 import 'package:consumo_combustible/core/widgets/snack.dart';
+import 'package:consumo_combustible/data/api/api_config.dart';
 import 'package:consumo_combustible/domain/models/rol.dart';
 import 'package:consumo_combustible/domain/utils/resource.dart';
 import 'package:consumo_combustible/presentation/page/rol/bloc/rol_bloc.dart';
@@ -78,7 +79,7 @@ class _RolesPageState extends State<RolesPage> {
       appBar: SmartAppBar.withUser(
         title: 'Gestión de Roles',
         showLogo: true,
-        logoPath: 'assets/img/6.svg',
+        logoPath: ApiConfig.logoPath,
       ),
       body: GradientContainer(
         gradient: AppGradients.sinfondo,

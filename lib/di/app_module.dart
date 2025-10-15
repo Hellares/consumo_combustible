@@ -76,6 +76,7 @@ import 'package:consumo_combustible/domain/use_cases/sedes/get_sedes_sedes_by_zo
 import 'package:consumo_combustible/domain/use_cases/sedes/get_sedes_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/sedes/sede_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/unidad/create_unidad_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/user/assign_rol_to_user_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/user/get_users_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/user/register_users_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/user/search_users_use_case.dart';
@@ -388,7 +389,8 @@ abstract class AppModule {
     return UserUseCases(
       getUsers: GetUsersUseCase(repository),
       searchUsers: SearchUsersUseCase(repository),
-      registerUser: RegisterUserUseCase(repository)
+      registerUser: RegisterUserUseCase(repository),
+      assignRolToUser: AssignRolToUserUseCase(repository),
     );
   }
 
