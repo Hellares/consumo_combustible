@@ -1,3 +1,4 @@
+import 'package:consumo_combustible/domain/models/ultimo_ticket_unidad.dart';
 import 'package:consumo_combustible/domain/models/unidad.dart';
 import 'package:consumo_combustible/domain/utils/resource.dart';
 import 'package:equatable/equatable.dart';
@@ -69,21 +70,31 @@ class TicketState extends Equatable {
   final Resource? unidadesResponse;
   final List<Unidad> unidades;
 
+  final Resource? ultimoTicketResponse;
+  final UltimoTicketUnidad? ultimoTicket;
+
   const TicketState({
     this.createResponse,
     this.unidadesResponse,
     this.unidades = const [],
+    this.ultimoTicketResponse,
+    this.ultimoTicket,
   });
 
   TicketState copyWith({
     Resource? createResponse,
     Resource? unidadesResponse,
     List<Unidad>? unidades,
+    Resource? ultimoTicketResponse,
+    UltimoTicketUnidad? ultimoTicket,
+    bool clearUltimoTicket = false,
   }) {
     return TicketState(
       createResponse: createResponse ?? this.createResponse,
       unidadesResponse: unidadesResponse ?? this.unidadesResponse,
       unidades: unidades ?? this.unidades,
+      ultimoTicketResponse: clearUltimoTicket ? null : (ultimoTicketResponse ?? this.ultimoTicketResponse),
+      ultimoTicket: clearUltimoTicket ? null : (ultimoTicket ?? this.ultimoTicket),
     );
   }
 
@@ -92,6 +103,8 @@ class TicketState extends Equatable {
         createResponse,
         unidadesResponse,
         unidades,
+        ultimoTicketResponse,
+        ultimoTicket,
       ];
 
   // ✅ Helpers existentes
@@ -100,11 +113,7 @@ class TicketState extends Equatable {
   bool get hasUnidades => unidades.isNotEmpty;
   bool get isCreatingTicket => createResponse is Loading;
   bool get ticketCreated => createResponse is Success;
-  
-  // ✅ NUEVO: Getter general para isLoading
   bool get isLoading => isCreatingTicket || isLoadingUnidades;
-  
-  // ✅ Helper para el Resource completo (útil en el listener)
   Resource? get resource => createResponse;
   
   String? get unidadesErrorMessage {
@@ -113,4 +122,26 @@ class TicketState extends Equatable {
     }
     return null;
   }
+  /// Verificar si está cargando el último ticket
+  bool get isLoadingUltimoTicket => ultimoTicketResponse is Loading;
+
+  /// Verificar si hay error al cargar el último ticket
+  bool get hasUltimoTicketError => ultimoTicketResponse is Error;
+
+  /// Verificar si el último ticket está cargado
+  bool get hasUltimoTicket => ultimoTicket != null;
+
+  /// Obtener mensaje de error del último ticket
+  String? get ultimoTicketErrorMessage {
+    if (ultimoTicketResponse is Error) {
+      return (ultimoTicketResponse as Error).message;
+    }
+    return null;
+  }
+
+  /// Obtener el kilometraje sugerido (si existe)
+  double? get kilometrajeSugerido => ultimoTicket?.sugerencias.kilometrajeAnteriorSugerido;
+
+  /// Obtener el precinto sugerido (si existe)
+  String? get precintoSugerido => ultimoTicket?.sugerencias.precintoAnteriorSugerido;
 }

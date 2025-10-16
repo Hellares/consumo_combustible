@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 class NavCustomPainter extends CustomPainter {
@@ -14,7 +15,7 @@ class NavCustomPainter extends CustomPainter {
       this.textDirection,
       {this.curveDepth = 0.40}) {
     final span = 1.0 / itemsLength;
-    s = 0.2;
+    s = 0.15;  // ✅ AJUSTE: Reduce de 0.2 a 0.15 para curva más estrecha (prueba 0.1 si quieres aún más delgada)
     double l = startingLoc + (span - s) / 2;
     loc = textDirection == TextDirection.rtl ? 0.8 - l : l;
   }
@@ -23,13 +24,14 @@ class NavCustomPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;  // ✅ Mantiene suavizado
 
     final path = Path()
       ..moveTo(0, 0)
       ..lineTo((loc - 0.1) * size.width, 0)
       ..cubicTo(
-        (loc + s * 0.20) * size.width,
+        (loc + s * 0.20) * size.width,  // ✅ AJUSTE: Escala con el nuevo 's' para mantener proporción
         size.height * 0.05,
         loc * size.width,
         size.height * curveDepth,
@@ -37,7 +39,7 @@ class NavCustomPainter extends CustomPainter {
         size.height * curveDepth,
       )
       ..cubicTo(
-        (loc + s) * size.width,
+        (loc + s) * size.width,  // ✅ AJUSTE: Escala con el nuevo 's'
         size.height * curveDepth,
         (loc + s - s * 0.20) * size.width,
         size.height * 0.05,
@@ -56,3 +58,4 @@ class NavCustomPainter extends CustomPainter {
     return this != oldDelegate;
   }
 }
+

@@ -90,7 +90,7 @@ extension AppFontExtension on AppFont {
 /// Extensión con estilos predefinidos como .label, .title, etc.
 extension AppFontPresetStyles on AppFont {
   TextStyle get label => style(
-        fontSize: 11,
+        fontSize: 9,
         // fontWeight: FontWeight.w400,
         color: Colors.black87,
         

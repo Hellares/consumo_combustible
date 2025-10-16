@@ -1,4 +1,5 @@
 import 'package:consumo_combustible/core/fonts/app_text_widgets.dart';
+import 'package:consumo_combustible/core/theme/app_colors.dart';
 import 'package:consumo_combustible/presentation/page/licencias/licencias_page.dart';
 import 'package:flutter/material.dart';
 
@@ -24,11 +25,14 @@ class _AdminPageState extends State<AdminPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+
       appBar: AppBar(
-        title: AppTitle(_currentTitle),
-        backgroundColor: Colors.blue,
+        toolbarHeight: 35,
+        title: AppTitle(_currentTitle, color: AppColors.white,),
+        backgroundColor: AppColors.blue3,
         foregroundColor: Colors.white,
       ),
+      
       drawer: _buildDrawer(),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),

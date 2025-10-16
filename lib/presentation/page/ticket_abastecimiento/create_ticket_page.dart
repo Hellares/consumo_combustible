@@ -21,6 +21,7 @@ import 'package:consumo_combustible/presentation/page/ticket_abastecimiento/bloc
 import 'package:consumo_combustible/presentation/page/ticket_abastecimiento/bloc/ticket_event.dart';
 import 'package:consumo_combustible/presentation/page/ticket_abastecimiento/bloc/ticket_state.dart';
 import 'package:consumo_combustible/presentation/page/ticket_abastecimiento/widgets/ticket_confirmation_dialog.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -42,9 +43,11 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
   late final TicketBloc _bloc;
 
   // Controllers
+  final _kilometrajeAnteriorController = TextEditingController();
   final _kilometrajeController = TextEditingController();
   final _precintoController = TextEditingController();
   final _cantidadController = TextEditingController();
+  final _tipoCombustibleController = TextEditingController();
 
   // Data
   SelectedLocation? _location;
@@ -78,11 +81,11 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
       _currentZonaId = location.zona.id;
     });
 
-    // ✅ CARGAR UNIDADES DE LA ZONA
+    // CARGAR UNIDADES DE LA ZONA
     _bloc.add(LoadUnidadesByZona(location.zona.id));
   }
 
-  // ✅ NUEVO: Método para recargar cuando cambia la ubicación
+  // NUEVO: Método para recargar cuando cambia la ubicación
   Future<void> _checkAndReloadLocation() async {
     // Capturar messenger ANTES de cualquier await
     final messenger = ScaffoldMessenger.of(context);
@@ -152,7 +155,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                     icon: const Icon(
                       Icons.refresh,
                       size: 20,
-                      color: Colors.blue,
+                      color: AppColors.blue3,
                     ),
                     onPressed: _refreshUnidades,
                   ),
@@ -167,6 +170,32 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                   if (state.unidadesResponse is Error) {
                     final error = state.unidadesResponse as Error;
                     SnackBarHelper.showError(context, error.message);
+                  }
+
+                  //NUEVO: Listener para cuando se carga el último ticket
+                  if (state.ultimoTicketResponse is Success) {
+                    final kilometrajeSugerido = state.kilometrajeSugerido;
+
+                    if (kilometrajeSugerido != null) {
+                      _kilometrajeAnteriorController.text = kilometrajeSugerido
+                          .toInt()
+                          .toString();
+
+                      if (kDebugMode) {
+                        print(
+                          '✅ Kilometraje anterior cargado: $kilometrajeSugerido',
+                        );
+                      }
+                    }
+                  }
+
+                  if (state.hasUltimoTicketError) {
+                    // No mostrar error, solo limpiar el campo
+                    _kilometrajeAnteriorController.clear();
+
+                    if (kDebugMode) {
+                      print('ℹ️ ${state.ultimoTicketErrorMessage}');
+                    }
                   }
 
                   // Listener para creación de ticket
@@ -199,6 +228,9 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                           const SizedBox(height: 10),
                           _conductorSelector(),
 
+                          const SizedBox(height: 10),
+                          _buildTipoCombustibleField(),
+                          
                           const SizedBox(height: 10),
                           // _buildKilometrajeField(),
                           _buildKilometrajesRow(),
@@ -238,6 +270,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
 
   Widget _buildLocationCard() {
     return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(4)),
       color: Colors.blue.shade50,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
@@ -246,10 +279,10 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
           children: [
             Row(
               children: [
-                Icon(Icons.location_on, color: AppColors.red),
+                Icon(Icons.location_on, color: AppColors.red, size: 20),
                 const SizedBox(width: 8),
                 Expanded(child: AppSubtitle('UBICACION ACTUAL', fontSize: 9)),
-                // ✅ BOTÓN PARA CAMBIAR UBICACIÓN
+                // BOTÓN PARA CAMBIAR UBICACIÓN
                 InkWell(
                   onTap: () async {
                     final result = await Navigator.pushNamed(
@@ -257,35 +290,27 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                       'location-selection', // Tu ruta de selección de ubicación
                     );
 
-                    // ✅ Si regresó con cambios (result == true)
+                    // Si regresó con cambios (result == true)
                     if (result == true && mounted) {
                       await _checkAndReloadLocation(); // ← AQUÍ SE USA
                     }
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
+                      horizontal: 2,
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade100,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.blue.shade300),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: AppColors.blueGrey,
+                        width: 0.5,
+                      ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.edit_location,
-                          size: 16,
-                          color: AppColors.red,
-                        ),
-                        const SizedBox(width: 4),
-                        AppLabelText('Cambiar', fontSize: 8),
-                      ],
+                    child: AppCaption(items: [CaptionItem(icon: Icons.edit_location, text: 'Cambiar')]),
                     ),
                   ),
-                ),
+                // ),
               ],
             ),
             const Divider(),
@@ -415,7 +440,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
           value: _selectedUnidadId,
           hintText: 'Selecciona una unidad *',
           borderColor: AppColors.blue3,
-          prefixIcon: const Icon(Icons.local_shipping),
+          prefixIcon: const Icon(Icons.local_shipping_outlined, color: AppColors.blue3,size: 20,),
           onChanged: (value) {
             setState(() => _selectedUnidadId = value);
 
@@ -437,11 +462,19 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                 // Establecer el conductor en el UserSelectorField
                 _conductorSelectorKey.currentState?.setUser(conductorUser);
 
-                // Actualizar el estado local
+                // Actualizar el estado local y el tipo de combustible
                 setState(() {
                   _selectUser = conductorUser;
+                  _tipoCombustibleController.text = unidadSeleccionada.tipoCombustible;
                 });
+                //NUEVO: Cargar el último ticket de la unidad
+                _bloc.add(LoadUltimoTicketByUnidad(value));
               }
+            } else {
+              // NUEVO: Si deselecciona, limpiar el último ticket
+              _bloc.add(const ClearUltimoTicket());
+              _kilometrajeAnteriorController.clear();
+              _tipoCombustibleController.clear();
             }
           },
           validator: (value) {
@@ -449,6 +482,21 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
             return null;
           },
         ),
+        if (state.isLoadingUltimoTicket)
+          const Padding(
+            padding: EdgeInsets.only(top: 8.0),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(strokeWidth: 1),
+                ),
+                SizedBox(width: 8),
+                AppLabelText('Cargando ultimo Kilometraje',font: AppFont.oxygenRegular, fontSize: 9,)
+              ],
+            ),
+          ),
       ],
     );
   }
@@ -469,25 +517,38 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     );
   }
 
+  Widget _buildTipoCombustibleField() {
+    return CustomTextField(
+      label: 'Tipo de Combustible',
+      controller: _tipoCombustibleController,
+      hintText: 'Tipo de combustible',
+      borderColor: AppColors.blue3,
+      prefixIcon: const Icon(Icons.local_gas_station),
+      enabled: false, // Solo lectura
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Selecciona una unidad primero';
+        }
+        return null;
+      },
+    );
+  }
+
   Widget _buildKilometrajesRow() {
-  return Row(
-    children: [
-      Expanded(
-        child: _buildKilometrajeAnteriorField(),
-      ),
-      const SizedBox(width: 12), // Espacio entre los campos
-      Expanded(
-        child: _buildKilometrajeField(),
-      ),
-    ],
-  );
-}
+    return Row(
+      children: [
+        Expanded(child: _buildKilometrajeAnteriorField()),
+        const SizedBox(width: 12), // Espacio entre los campos
+        Expanded(child: _buildKilometrajeField()),
+      ],
+    );
+  }
 
   Widget _buildKilometrajeAnteriorField() {
     return CustomTextField(
       label: 'Kilometraje Anterior',
-      controller: _kilometrajeController,
-      hintText: 'Kilometraje Actual *',
+      controller: _kilometrajeAnteriorController,
+      hintText: 'Km anterior *',
       borderColor: AppColors.blue3,
       prefixIcon: const Icon(Icons.speed),
       suffixText: 'km',
@@ -497,11 +558,17 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
         LengthLimitingTextInputFormatter(7),
       ],
       validator: (value) {
-        if (value == null || value.isEmpty) return 'Ingrese el kilometraje';
+        if (value == null || value.isEmpty) {
+          return 'Ingrese el kilometraje anterior';
+        }
         final km = double.tryParse(value);
         if (km == null) return 'Número inválido';
         if (km < 0) return 'No puede ser negativo';
         if (km > 9999999) return 'Valor muy alto';
+        final kmActual = double.tryParse(_kilometrajeController.text);
+        if (kmActual != null && km > kmActual) {
+          return 'Debe ser menor al km actual';
+        }
         return null;
       },
     );
@@ -597,9 +664,13 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
             font: AppFont.oxygenBold,
             color: AppColors.blue3,
             items: [
-              CaptionItem(icon: Icons.info_outline, text: 'Cap. del tanque: ${unidadSeleccionada.capacidadTanque} gal.')
+              CaptionItem(
+                icon: Icons.info_outline,
+                text:
+                    'Cap. del tanque: ${unidadSeleccionada.capacidadTanque} gal.',
+              ),
             ],
-          )
+          ),
         ],
       ],
     );
@@ -608,8 +679,9 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
   Widget _buildSubmitButton(bool isLoading) {
     return CustomButton(
       text: 'Crear Ticket',
+      textStyle: TextStyle(fontFamily: AppFonts.getFontFamily(AppFont.pirulentBold),fontSize: 9),
       width: double.infinity,
-      backgroundColor: AppColors.blue,
+      backgroundColor: AppColors.blue3,
       buttonState: isLoading ? ButtonState.loading : ButtonState.idle,
       loadingText: 'Creando...',
       loadingIndicatorColor: AppColors.green,
@@ -627,7 +699,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
       return;
     }
 
-    // ✅ VALIDAR: Verificar que se haya seleccionado un conductor
+    // VALIDAR: Verificar que se haya seleccionado un conductor
     if (_selectUser == null) {
       SnackBarHelper.showError(context, 'Debe seleccionar un conductor');
       return;
@@ -666,14 +738,21 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
       return;
     }
 
-    // ✅ USAR: El conductor seleccionado (puede ser diferente al de la unidad)
+    // USAR: El conductor seleccionado (puede ser diferente al de la unidad)
+
+    final kilometrajeAnterior = _kilometrajeAnteriorController.text.isNotEmpty
+      ? double.tryParse(_kilometrajeAnteriorController.text)
+      : null;
+
     final request = CreateTicketRequest(
       unidadId: _selectedUnidadId!,
       conductorId: _selectUser!.id, // ← Usar el conductor seleccionado
       grifoId: _location!.grifo.id,
+      kilometrajeAnterior: kilometrajeAnterior,
       kilometrajeActual: double.parse(_kilometrajeController.text),
       precintoNuevo: _precintoController.text,
       cantidad: double.parse(_cantidadController.text),
+      tipoCombustible: _tipoCombustibleController.text,
     );
 
     _bloc.add(CreateTicket(request));
@@ -733,14 +812,18 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     _kilometrajeController.clear();
     _precintoController.clear();
     _cantidadController.clear();
+    _kilometrajeAnteriorController.clear();
+    _tipoCombustibleController.clear();
 
-    // ✅ LIMPIAR: También limpiar el conductor seleccionado
+    // LIMPIAR: También limpiar el conductor seleccionado
     _conductorSelectorKey.currentState?.clearUser();
 
     setState(() {
       _selectedUnidadId = null;
       _selectUser = null;
     });
+
+    _bloc.add(const ClearUltimoTicket());
 
     if (_location != null) {
       _bloc.add(LoadUnidadesByZona(_location!.zona.id));
@@ -765,6 +848,8 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     _kilometrajeController.dispose();
     _precintoController.dispose();
     _cantidadController.dispose();
+    _kilometrajeAnteriorController.dispose();
+    _tipoCombustibleController.dispose();
     super.dispose();
   }
 }

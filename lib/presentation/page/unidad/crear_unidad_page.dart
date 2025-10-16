@@ -441,7 +441,7 @@ class _CrearUnidadPageState extends State<CrearUnidadPage> {
                   value: _selectedTipoCombustible,
                   borderColor: AppColors.blue3,
                   enabled: !isCreating,
-                  items: ['DIESEL', 'GASOLINA', 'GAS', 'ELECTRICO'].map((tipo) {
+                  items: ['DIESEL', 'GASOLINA_84', 'GASOLINA_90',  'GASOLINA_95',  'GASOLINA_97','GAS_NATURAL', 'ELECTRICO'].map((tipo) {
                     return DropdownItem<String>(
                       value: tipo,
                       label: tipo,

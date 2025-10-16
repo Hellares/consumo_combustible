@@ -37,3 +37,21 @@ class ResetUnidades extends TicketEvent {
   @override
   List<Object?> get props => [];
 }
+
+///NUEVO: Evento para cargar el último ticket de una unidad
+class LoadUltimoTicketByUnidad extends TicketEvent {
+  final int unidadId;
+
+  const LoadUltimoTicketByUnidad(this.unidadId);
+
+  @override
+  List<Object?> get props => [unidadId];
+}
+
+///NUEVO: Evento para limpiar los datos del último ticket
+class ClearUltimoTicket extends TicketEvent {
+  const ClearUltimoTicket();
+
+  @override
+  List<Object?> get props => [];
+}

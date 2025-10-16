@@ -96,6 +96,7 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           title: 'Combustible',
           theme: ThemeData(
+            scaffoldBackgroundColor: Colors.white,
             useMaterial3: true,
             visualDensity: VisualDensity.adaptivePlatformDensity,
           ),

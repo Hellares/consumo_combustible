@@ -1,6 +1,7 @@
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_service.dart';
 import 'package:consumo_combustible/domain/models/create_ticket_request.dart';
 import 'package:consumo_combustible/domain/models/ticket_abastecimiento.dart';
+import 'package:consumo_combustible/domain/models/ultimo_ticket_unidad.dart';
 import 'package:consumo_combustible/domain/repository/ticket_repository.dart';
 import 'package:consumo_combustible/domain/utils/resource.dart';
 
@@ -12,4 +13,9 @@ class TicketRepositoryImpl implements TicketRepository {
   Future<Resource<TicketAbastecimiento>> createTicket(
     CreateTicketRequest request,
   ) => service.createTicket(request);
+
+  @override
+  Future<Resource<UltimoTicketUnidad>> getUltimoTicketByUnidad(int unidadId) {
+    return service.getUltimoTicketByUnidad(unidadId);
+  }
 }

@@ -1,4 +1,5 @@
 import 'package:consumo_combustible/core/custom_navigator_bar/curved_navigation_bar.dart';
+import 'package:consumo_combustible/core/theme/app_colors.dart';
 import 'package:consumo_combustible/core/widgets/appbar/smart_appbar.dart';
 import 'package:consumo_combustible/presentation/page/admin/admin_page.dart';
 import 'package:consumo_combustible/presentation/page/detalle_abastecimiento/detalles_abastecimiento_page.dart';
@@ -61,6 +62,7 @@ class _HomePageAlternativeState extends State<HomePageAlternative>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: SmartAppBar.withUser(
         title: _titles[_currentIndex],
         logoPath: "assets/img/6.svg",
@@ -91,6 +93,7 @@ class _HomePageAlternativeState extends State<HomePageAlternative>
               },
               child: Container(
                 key: ValueKey<int>(_currentIndex),
+                color: Colors.white,
                 child: _pages[_currentIndex],
               ),
             ),
@@ -108,9 +111,9 @@ class _HomePageAlternativeState extends State<HomePageAlternative>
           Icon(Icons.notifications, size: 22, color: Colors.white),
           Icon(Icons.admin_panel_settings, size: 22, color: Colors.white), // ✅ CAMBIO: Icono de admin
         ],
-        color: Colors.blue,
-        buttonBackgroundColor: Colors.blue.shade700,
-        backgroundColor: Colors.grey.shade100,
+        color: AppColors.blue3,
+        buttonBackgroundColor: AppColors.blue3,
+        backgroundColor: Colors.transparent,
         animationCurve: Curves.easeInOut,
         animationDuration: const Duration(milliseconds: 400),
         onTap: (index) {
@@ -151,53 +154,53 @@ class NotificationsPage extends StatelessWidget {
   }
 }
 
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+// class ProfilePage extends StatelessWidget {
+//   const ProfilePage({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircleAvatar(
-            radius: 50,
-            backgroundColor: Colors.blue,
-            child: Icon(Icons.person, size: 60, color: Colors.white),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'Mi Perfil',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Gestiona tu cuenta y configuración',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-          const SizedBox(height: 30),
-          Card(
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.settings),
-                  title: const Text('Configuración'),
-                  trailing: const Icon(Icons.arrow_forward_ios),
-                  onTap: () {},
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.help),
-                  title: const Text('Ayuda'),
-                  trailing: const Icon(Icons.arrow_forward_ios),
-                  onTap: () {},
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return Center(
+//       child: Column(
+//         mainAxisAlignment: MainAxisAlignment.center,
+//         children: [
+//           const CircleAvatar(
+//             radius: 50,
+//             backgroundColor: Colors.blue,
+//             child: Icon(Icons.person, size: 60, color: Colors.white),
+//           ),
+//           const SizedBox(height: 20),
+//           const Text(
+//             'Mi Perfil',
+//             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+//           ),
+//           const SizedBox(height: 10),
+//           const Text(
+//             'Gestiona tu cuenta y configuración',
+//             style: TextStyle(fontSize: 16, color: Colors.grey),
+//           ),
+//           const SizedBox(height: 30),
+//           Card(
+//             margin: const EdgeInsets.symmetric(horizontal: 20),
+//             child: Column(
+//               children: [
+//                 ListTile(
+//                   leading: const Icon(Icons.settings),
+//                   title: const Text('Configuración'),
+//                   trailing: const Icon(Icons.arrow_forward_ios),
+//                   onTap: () {},
+//                 ),
+//                 const Divider(height: 1),
+//                 ListTile(
+//                   leading: const Icon(Icons.help),
+//                   title: const Text('Ayuda'),
+//                   trailing: const Icon(Icons.arrow_forward_ios),
+//                   onTap: () {},
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
