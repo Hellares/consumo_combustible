@@ -1006,7 +1006,7 @@ class _CustomTextFieldState extends State<CustomTextField>
         ),
         child: ClipRRect(
           borderRadius: _getCachedBorderRadius(),
-          child: TextFormField(                
+          child: TextFormField(
             controller: widget.controller,
             focusNode: _focusNode,
             keyboardType: _getCachedKeyboardType(),
@@ -1024,11 +1024,19 @@ class _CustomTextFieldState extends State<CustomTextField>
                 ? null
                 : widget.validator,
             style: _getCachedTextStyle(),
-            decoration: InputDecoration(                  
+            decoration: InputDecoration(
               isDense: true,
               hintText: widget.hintText,
               prefixIcon: _getCachedPrefixIcon(),
+              prefixIconConstraints: const BoxConstraints(
+                minWidth: 40,
+                minHeight: 35,
+              ),
               suffixIcon: _buildSuffixIcon(),
+              suffixIconConstraints: const BoxConstraints(
+                minWidth: 40,
+                minHeight: 35,
+              ),
               prefixText: _getCachedPrefixText(),
               suffixText: widget.suffixText,
               border: InputBorder.none,

@@ -2,6 +2,7 @@ import 'package:consumo_combustible/core/fonts/app_fonts.dart';
 import 'package:consumo_combustible/core/theme/app_colors.dart';
 import 'package:consumo_combustible/core/widgets/appbar/smart_appbar.dart';
 import 'package:consumo_combustible/core/widgets/custom_date_textfiels_container/custom_textfield.dart';
+import 'package:consumo_combustible/core/widgets/custom_date_textfiels_container/custom_time.dart';
 import 'package:consumo_combustible/core/widgets/custom_dropdown/custom_dropdown2.dart';
 import 'package:consumo_combustible/core/widgets/custom_dropdown/dropdown_adapters.dart';
 import 'package:consumo_combustible/core/widgets/cutom_button/custom_button.dart';
@@ -288,6 +289,7 @@ class _CreateGrifoPageState extends State<CreateGrifoPage> {
   Widget _buildNombreField(GrifoState state) {
     return CustomTextField(
       controller: _nombreController,
+      textCase: TextCase.upper,
       label: 'Nombre *',
       hintText: 'Ej: Grifo Central A',
       prefixIcon: const Icon(Icons.local_gas_station_outlined),
@@ -333,6 +335,7 @@ class _CreateGrifoPageState extends State<CreateGrifoPage> {
   Widget _buildDireccionField(GrifoState state) {
     return CustomTextField(
       label: 'Dirección',
+      textCase: TextCase.upper,
       hintText: 'Dirección del grifo',
       controller: _direccionController,
       prefixIcon: const Icon(Icons.location_on_outlined),
@@ -345,11 +348,10 @@ class _CreateGrifoPageState extends State<CreateGrifoPage> {
   }
 
   Widget _buildTelefonoField(GrifoState state) {
-    return CustomTextField(
+    return CustomTextFieldHelpers.phone(
       label: 'Teléfono',
       hintText: 'Teléfono de contacto',
       controller: _telefonoController,
-      prefixIcon: const Icon(Icons.phone_outlined),
       borderColor: AppColors.blue3,
       enableRealTimeValidation: false,
       onChanged: (value) {
@@ -362,33 +364,72 @@ class _CreateGrifoPageState extends State<CreateGrifoPage> {
     return Row(
       children: [
         Expanded(
-          child: CustomTextField(
+          child: _buildTimeField(
             label: 'Apertura',
-            hintText: '06:00',
             controller: _horarioAperturaController,
-            prefixIcon: const Icon(Icons.access_time, size: 18),
-            borderColor: AppColors.blue3,
-            enableRealTimeValidation: false,
-            onChanged: (value) {
-              context.read<GrifoBloc>().add(GrifoHorarioAperturaChangedEvent(value));
+            onTimeSelected: (hour, minute) {
+              final timeString = '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+              _horarioAperturaController.text = timeString;
+              context.read<GrifoBloc>().add(GrifoHorarioAperturaChangedEvent(timeString));
             },
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: CustomTextField(
+          child: _buildTimeField(
             label: 'Cierre',
-            hintText: '22:00',
             controller: _horarioCierreController,
-            prefixIcon: const Icon(Icons.access_time, size: 18),
-            borderColor: AppColors.blue3,
-            enableRealTimeValidation: false,
-            onChanged: (value) {
-              context.read<GrifoBloc>().add(GrifoHorarioCierreChangedEvent(value));
+            onTimeSelected: (hour, minute) {
+              final timeString = '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+              _horarioCierreController.text = timeString;
+              context.read<GrifoBloc>().add(GrifoHorarioCierreChangedEvent(timeString));
             },
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildTimeField({
+    required String label,
+    required TextEditingController controller,
+    required void Function(int hour, int minute) onTimeSelected,
+  }) {
+    return GestureDetector(
+      onTap: () async {
+        // Parsear la hora actual del controller
+        int initialHour = 0;
+        int initialMinute = 0;
+        
+        if (controller.text.isNotEmpty) {
+          final parts = controller.text.split(':');
+          if (parts.length == 2) {
+            initialHour = int.tryParse(parts[0]) ?? 0;
+            initialMinute = int.tryParse(parts[1]) ?? 0;
+          }
+        }
+
+        await showDialog(
+          context: context,
+          builder: (context) => TimeScrollPicker(
+            initialHour: initialHour,
+            initialMinute: initialMinute,
+            primaryColor: AppColors.blue3,
+            onTimeSelected: onTimeSelected,
+          ),
+        );
+      },
+      child: AbsorbPointer(
+        child: CustomTextField(
+          label: label,
+          hintText: '00:00',
+          controller: controller,
+          prefixIcon: const Icon(Icons.access_time, size: 18),
+          suffixIcon: const Icon(Icons.arrow_drop_down, size: 20),
+          borderColor: AppColors.blue3,
+          enableRealTimeValidation: false,
+        ),
+      ),
     );
   }
 

@@ -48,10 +48,10 @@ class UserSelectorField extends StatefulWidget {
   });
 
   @override
-  State<UserSelectorField> createState() => _UserSelectorFieldState();
+  State<UserSelectorField> createState() => UserSelectorFieldState();
 }
 
-class _UserSelectorFieldState extends State<UserSelectorField> with AutomaticKeepAliveClientMixin {
+class UserSelectorFieldState extends State<UserSelectorField> with AutomaticKeepAliveClientMixin {
   UserSelection? _selectedUser;
   late TextEditingController _controller;
 
@@ -72,6 +72,27 @@ class _UserSelectorFieldState extends State<UserSelectorField> with AutomaticKee
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  /// Método público para establecer el usuario programáticamente
+  void setUser(UserSelection user) {
+    if (mounted) {
+      setState(() {
+        _selectedUser = user;
+        _controller.text = user.nombreCompleto;
+      });
+      widget.onUserSelected(user);
+    }
+  }
+
+  /// Método público para limpiar la selección
+  void clearUser() {
+    if (mounted) {
+      setState(() {
+        _selectedUser = null;
+        _controller.clear();
+      });
+    }
   }
 
   Future<void> _showUserSearchDialog() async {
@@ -115,9 +136,9 @@ class _UserSelectorFieldState extends State<UserSelectorField> with AutomaticKee
               enabled: true,
               height: widget.height,
               borderColor: widget.borderColor ?? AppColors.blue3,
-              backgroundColor: _selectedUser != null 
-                  ? AppColors.blue3.withValues(alpha: 0.05)
-                  : Colors.white,
+              // backgroundColor: _selectedUser != null 
+              //     ? AppColors.blue3.withValues(alpha: 0.05)
+              //     : Colors.white,
               prefixIcon: Icon(Icons.person_outline_rounded),
               suffixIcon: Icon(Icons.arrow_drop_down,size: 20,),
               validator: widget.isRequired

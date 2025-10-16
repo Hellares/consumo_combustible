@@ -1,3 +1,4 @@
+import 'package:consumo_combustible/core/fonts/app_fonts.dart';
 import 'package:consumo_combustible/core/fonts/app_text_widgets.dart';
 import 'package:consumo_combustible/core/theme/app_colors.dart';
 import 'package:consumo_combustible/core/theme/app_gradients.dart';
@@ -6,10 +7,11 @@ import 'package:consumo_combustible/core/widgets/custom_date_textfiels_container
 import 'package:consumo_combustible/core/widgets/custom_date_textfiels_container/custom_textfield.dart';
 import 'package:consumo_combustible/core/widgets/cutom_button/custom_button.dart';
 import 'package:consumo_combustible/core/widgets/snack.dart';
+import 'package:consumo_combustible/core/widgets/user_selector_field.dart';
 import 'package:consumo_combustible/domain/models/create_ticket_request.dart';
 import 'package:consumo_combustible/domain/models/selected_location.dart';
 import 'package:consumo_combustible/domain/models/ticket_abastecimiento.dart';
-// import 'package:consumo_combustible/domain/models/unidad.dart';
+import 'package:consumo_combustible/domain/models/user_selection.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/location/location_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/unidad/unidad_use_cases.dart';
@@ -33,6 +35,10 @@ class CreateTicketPage extends StatefulWidget {
 
 class _CreateTicketPageState extends State<CreateTicketPage> {
   final _formKey = GlobalKey<FormState>();
+  final _conductorSelectorKey =
+      GlobalKey<
+        UserSelectorFieldState
+      >(); // NUEVO: Key para controlar el UserSelectorField
   late final TicketBloc _bloc;
 
   // Controllers
@@ -43,7 +49,9 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
   // Data
   SelectedLocation? _location;
   int? _selectedUnidadId;
-  int? _currentZonaId; // ✅ NUEVO: Para detectar cambios de zona
+  int? _currentZonaId; // NUEVO: Para detectar cambios de zona
+
+  UserSelection? _selectUser;
 
   @override
   void initState() {
@@ -52,7 +60,8 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     _loadData();
   }
 
-  Future<void> _loadData() async { //! cargar unidades de la zona
+  Future<void> _loadData() async {
+    //! cargar unidades de la zona
     final locationUseCases = locator<LocationUseCases>();
     final location = await locationUseCases.getSelectedLocation.run();
 
@@ -182,17 +191,21 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildLocationCard(),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 15),
 
-                          // ✅ DROPDOWN DINÁMICO
+                          //DROPDOWN DINÁMICO
                           _buildUnidadSelector(state),
 
-                          const SizedBox(height: 16),
-                          _buildKilometrajeField(),
+                          const SizedBox(height: 10),
+                          _conductorSelector(),
 
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 10),
+                          // _buildKilometrajeField(),
+                          _buildKilometrajesRow(),
+
+                          const SizedBox(height: 10),
                           _buildPrecintoField(),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 10),
                           _buildCantidadField(),
                           const SizedBox(height: 32),
                           _buildSubmitButton(isLoadingTicket),
@@ -389,31 +402,114 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
       );
     }
 
-    return CustomDropdown<int>(
-      items: unidades.map((unidad) {
-        return DropdownItem(
-          value: unidad.id,
-          label: '${unidad.placa} - ${unidad.marca} ${unidad.modelo}',
-        );
-      }).toList(),
-      value: _selectedUnidadId,
-      hintText: 'Selecciona una unidad *',
+    return Column(
+      children: [
+        CustomDropdown<int>(
+          label: 'Unidad',
+          items: unidades.map((unidad) {
+            return DropdownItem(
+              value: unidad.id,
+              label: '${unidad.placa} - ${unidad.marca} ${unidad.modelo}',
+            );
+          }).toList(),
+          value: _selectedUnidadId,
+          hintText: 'Selecciona una unidad *',
+          borderColor: AppColors.blue3,
+          prefixIcon: const Icon(Icons.local_shipping),
+          onChanged: (value) {
+            setState(() => _selectedUnidadId = value);
+
+            // NUEVO: Cargar automáticamente el conductor de la unidad seleccionada
+            if (value != null) {
+              final unidadSeleccionada = unidades.firstWhereOrNull(
+                (u) => u.id == value,
+              );
+
+              if (unidadSeleccionada != null) {
+                // Crear UserSelection desde el ConductorOperador de la unidad
+                final conductorUser = UserSelection(
+                  id: unidadSeleccionada.conductorOperador.id,
+                  nombreCompleto:
+                      unidadSeleccionada.conductorOperador.nombreCompleto,
+                  dni: unidadSeleccionada.conductorOperador.dni,
+                );
+
+                // Establecer el conductor en el UserSelectorField
+                _conductorSelectorKey.currentState?.setUser(conductorUser);
+
+                // Actualizar el estado local
+                setState(() {
+                  _selectUser = conductorUser;
+                });
+              }
+            }
+          },
+          validator: (value) {
+            if (value == null) return 'Selecciona una unidad';
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _conductorSelector() {
+    return UserSelectorField(
+      height: 35,
+      key: _conductorSelectorKey, // NUEVO: Agregar el key para control externo
+      label: 'Conductor',
+      roleFilter: null,
+      isRequired: true,
       borderColor: AppColors.blue3,
-      prefixIcon: const Icon(Icons.local_shipping),
-      onChanged: (value) {
-        setState(() => _selectedUnidadId = value);
+      onUserSelected: (user) {
+        setState(() {
+          _selectUser = user;
+        });
       },
+    );
+  }
+
+  Widget _buildKilometrajesRow() {
+  return Row(
+    children: [
+      Expanded(
+        child: _buildKilometrajeAnteriorField(),
+      ),
+      const SizedBox(width: 12), // Espacio entre los campos
+      Expanded(
+        child: _buildKilometrajeField(),
+      ),
+    ],
+  );
+}
+
+  Widget _buildKilometrajeAnteriorField() {
+    return CustomTextField(
+      label: 'Kilometraje Anterior',
+      controller: _kilometrajeController,
+      hintText: 'Kilometraje Actual *',
+      borderColor: AppColors.blue3,
+      prefixIcon: const Icon(Icons.speed),
+      suffixText: 'km',
+      keyboardType: TextInputType.number,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(7),
+      ],
       validator: (value) {
-        if (value == null) return 'Selecciona una unidad';
+        if (value == null || value.isEmpty) return 'Ingrese el kilometraje';
+        final km = double.tryParse(value);
+        if (km == null) return 'Número inválido';
+        if (km < 0) return 'No puede ser negativo';
+        if (km > 9999999) return 'Valor muy alto';
         return null;
       },
     );
   }
 
-
-
   Widget _buildKilometrajeField() {
     return CustomTextField(
+      label: 'Kilometraje Actual',
       controller: _kilometrajeController,
       hintText: 'Kilometraje Actual *',
       borderColor: AppColors.blue3,
@@ -437,6 +533,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
 
   Widget _buildPrecintoField() {
     return CustomTextField(
+      label: 'Precinto',
       textCase: TextCase.upper,
       controller: _precintoController,
       hintText: 'Precinto Nuevo *',
@@ -462,6 +559,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CustomTextField(
+          label: 'Galones',
           controller: _cantidadController,
           hintText: 'Cantidad de Combustible *',
           borderColor: AppColors.blue3,
@@ -494,20 +592,14 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
 
         // ✅ Helper text con capacidad del tanque
         if (unidadSeleccionada != null) ...[
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.only(left: 12),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline, size: 16, color: Colors.blue.shade600),
-                const SizedBox(width: 4),
-                Text(
-                  'Capacidad del tanque: ${unidadSeleccionada.capacidadTanque} gal',
-                  style: TextStyle(fontSize: 12, color: Colors.blue.shade700),
-                ),
-              ],
-            ),
-          ),
+          const SizedBox(height: 4),
+          AppCaption(
+            font: AppFont.oxygenBold,
+            color: AppColors.blue3,
+            items: [
+              CaptionItem(icon: Icons.info_outline, text: 'Cap. del tanque: ${unidadSeleccionada.capacidadTanque} gal.')
+            ],
+          )
         ],
       ],
     );
@@ -532,6 +624,12 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
 
     if (_selectedUnidadId == null) {
       SnackBarHelper.showError(context, 'Selecciona una unidad');
+      return;
+    }
+
+    // ✅ VALIDAR: Verificar que se haya seleccionado un conductor
+    if (_selectUser == null) {
+      SnackBarHelper.showError(context, 'Debe seleccionar un conductor');
       return;
     }
 
@@ -568,9 +666,10 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
       return;
     }
 
+    // ✅ USAR: El conductor seleccionado (puede ser diferente al de la unidad)
     final request = CreateTicketRequest(
       unidadId: _selectedUnidadId!,
-      conductorId: userSession.data!.user.id,
+      conductorId: _selectUser!.id, // ← Usar el conductor seleccionado
       grifoId: _location!.grifo.id,
       kilometrajeActual: double.parse(_kilometrajeController.text),
       precintoNuevo: _precintoController.text,
@@ -634,7 +733,15 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     _kilometrajeController.clear();
     _precintoController.clear();
     _cantidadController.clear();
-    setState(() => _selectedUnidadId = null);
+
+    // ✅ LIMPIAR: También limpiar el conductor seleccionado
+    _conductorSelectorKey.currentState?.clearUser();
+
+    setState(() {
+      _selectedUnidadId = null;
+      _selectUser = null;
+    });
+
     if (_location != null) {
       _bloc.add(LoadUnidadesByZona(_location!.zona.id));
     }
