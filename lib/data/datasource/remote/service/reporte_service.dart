@@ -7,6 +7,7 @@ import 'package:consumo_combustible/domain/utils/resource.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 /// Servicio para la API de reportes
 /// Maneja todas las peticiones HTTP relacionadas con reportes
@@ -244,7 +245,29 @@ class ReporteService {
   /// Obtener directorio de descargas según la plataforma
   Future<Directory> _getDownloadDirectory() async {
     if (Platform.isAndroid) {
-      // Android: Usar directorio de descargas público
+      // Android: Solicitar permisos y usar directorio de descargas público
+      final status = await Permission.storage.request();
+      if (!status.isGranted) {
+        throw Exception('Permisos de almacenamiento denegados. No se puede guardar el archivo.');
+      }
+
+      // Intentar primero con getExternalStorageDirectory() para mejor compatibilidad
+      try {
+        final directory = await getExternalStorageDirectory();
+        if (directory != null) {
+          final reportesDir = Directory('${directory.path}/Download/Reportes');
+          if (!await reportesDir.exists()) {
+            await reportesDir.create(recursive: true);
+          }
+          return reportesDir;
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('❌ Error obteniendo directorio externo: $e');
+        }
+      }
+
+      // Fallback: ruta directa (requiere permisos)
       final directory = Directory('/storage/emulated/0/Download/Reportes');
       if (!await directory.exists()) {
         await directory.create(recursive: true);
@@ -268,7 +291,7 @@ class ReporteService {
         }
         return reportesDir;
       }
-      
+
       // Fallback: directorio de documentos
       return await getApplicationDocumentsDirectory();
     }

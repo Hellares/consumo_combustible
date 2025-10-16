@@ -145,6 +145,7 @@ class _FiltrosReporteWidgetState extends State<FiltrosReporteWidget> {
                 icon: Icons.filter_list,
                 children: [
                   CustomTextField(
+                    borderColor: AppColors.blue3,
                     controller: _placaController,
                     label: 'Placa (Opcional)',
                     hintText: 'Ej: ABC-123',
@@ -161,30 +162,31 @@ class _FiltrosReporteWidgetState extends State<FiltrosReporteWidget> {
                 children: [
                   Expanded(
                     child: CustomButton(
+                      borderRadius: 10,
                       text: 'Limpiar',
+                      textStyle: TextStyle(fontFamily: AppFonts.getFontFamily(AppFont.pirulentBold),fontSize: 8),
                       onPressed: isLoading ? null : _limpiarFiltros,
                       backgroundColor: AppColors.white,
                       textColor: AppColors.blue3,
                       borderColor: AppColors.blue3,
-                      borderWidth: 1.5,
-                      height: 45,
+                      borderWidth: 1,
+                      height: 35,
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     flex: 2,
                     child: CustomButton(
+                      borderRadius: 10,
                       text: 'Generar Reporte',
+                      textStyle: TextStyle(fontFamily: AppFonts.getFontFamily(AppFont.pirulentBold),fontSize: 8),
                       onPressed: isLoading ? null : _generarReporte,
                       gradient: const LinearGradient(
                         colors: [Color(0xFF0A4A6B), Color(0xFF065A82)],
                       ),
                       buttonState: isLoading ? ButtonState.loading : ButtonState.idle,
                       loadingText: 'Generando...',
-                      height: 45,
-                      // prefixIcon: Icons.download,
-                      
-                      // prefixIconColor: AppColors.white,
+                      height: 35,
                     ),
                   ),
                 ],

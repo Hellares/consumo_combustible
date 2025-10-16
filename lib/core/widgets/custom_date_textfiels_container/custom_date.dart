@@ -831,7 +831,7 @@ class _CustomDateState extends State<CustomDate>
       child: IconTheme(
         data: IconThemeData(
           color: _isFocused ? const Color(0xFF666666) : Colors.grey[600],
-          size: 17,
+          size: 16,
         ),
         child: Icon(icon),
       ),
@@ -848,7 +848,7 @@ class _CustomDateState extends State<CustomDate>
         icon: const Icon(Icons.access_time_outlined),
         onPressed: widget.enabled ? _showTimeOnlyPicker : null,
         color: _isFocused ? const Color(0xFF666666) : Colors.grey[600],
-        iconSize: 18,
+        iconSize: 16,
         splashRadius: 16,
         padding: const EdgeInsets.all(6),
         constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
