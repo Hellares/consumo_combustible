@@ -170,6 +170,20 @@ class _AdminPageState extends State<AdminPage> {
             },
           ),
           const Divider(),
+        
+        // ✅ NUEVA SECCIÓN: Reportes y Análisis
+        _buildDrawerSection('Reportes y Análisis'),
+        _buildDrawerItem(
+          icon: Icons.assessment,
+          title: 'Reportes',
+          subtitle: 'Generar reportes de abastecimientos',
+          onTap: () {
+            Navigator.pop(context); // Cierra el drawer
+            Navigator.pushNamed(context, 'reportes'); // ✅ Navega a reportes
+          },
+        ),
+        
+          const Divider(),
           _buildDrawerSection('Configuración'),
           _buildDrawerItem(
             icon: Icons.map,

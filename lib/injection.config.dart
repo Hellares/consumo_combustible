@@ -22,6 +22,8 @@ import 'package:consumo_combustible/data/datasource/remote/service/licencia_serv
     as _i858;
 import 'package:consumo_combustible/data/datasource/remote/service/location_service.dart'
     as _i200;
+import 'package:consumo_combustible/data/datasource/remote/service/reporte_service.dart'
+    as _i176;
 import 'package:consumo_combustible/data/datasource/remote/service/rol_service.dart'
     as _i530;
 import 'package:consumo_combustible/data/datasource/remote/service/sede_service.dart'
@@ -49,6 +51,8 @@ import 'package:consumo_combustible/domain/repository/licencia_repository.dart'
     as _i1047;
 import 'package:consumo_combustible/domain/repository/location_repository.dart'
     as _i611;
+import 'package:consumo_combustible/domain/repository/reporte_repository.dart'
+    as _i90;
 import 'package:consumo_combustible/domain/repository/rol_repository.dart'
     as _i859;
 import 'package:consumo_combustible/domain/repository/sede_repository.dart'
@@ -75,6 +79,8 @@ import 'package:consumo_combustible/domain/use_cases/licencia/licencia_use_cases
     as _i767;
 import 'package:consumo_combustible/domain/use_cases/location/location_use_cases.dart'
     as _i636;
+import 'package:consumo_combustible/domain/use_cases/reporte/reporte_use_cases.dart'
+    as _i605;
 import 'package:consumo_combustible/domain/use_cases/rol/rol_use_cases.dart'
     as _i10;
 import 'package:consumo_combustible/domain/use_cases/sedes/sede_use_cases.dart'
@@ -129,6 +135,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i779.SedeService>(() => appModule.sedeService(gh<_i361.Dio>()));
     gh.factory<_i440.GrifoService>(
       () => appModule.grifoService(gh<_i361.Dio>()),
+    );
+    gh.factory<_i176.ReporteService>(
+      () => appModule.reporteService(gh<_i361.Dio>()),
     );
     gh.singleton<_i343.DetalleAbastecimientoRepository>(
       () => appModule.detalleAbastecimientoRepository(
@@ -199,6 +208,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i636.LocationUseCases>(
       () => appModule.locationUseCases(gh<_i611.LocationRepository>()),
     );
+    gh.singleton<_i90.ReporteRepository>(
+      () => appModule.reporteRepository(gh<_i176.ReporteService>()),
+    );
     gh.singleton<_i107.TicketRepository>(
       () => appModule.ticketRepository(gh<_i1037.TicketService>()),
     );
@@ -207,6 +219,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i14.AuthService>(),
         gh<_i782.FastStorageService>(),
       ),
+    );
+    gh.singleton<_i605.ReporteUseCases>(
+      () => appModule.reporteUseCases(gh<_i90.ReporteRepository>()),
     );
     gh.singleton<_i1047.LicenciaRepository>(
       () => appModule.licenciaRepository(gh<_i858.LicenciaService>()),

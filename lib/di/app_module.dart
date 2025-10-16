@@ -6,6 +6,7 @@ import 'package:consumo_combustible/data/datasource/remote/service/grifo_service
 import 'package:consumo_combustible/data/datasource/remote/service/licencia_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/location_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/detalle_abastecimiento_service.dart';
+import 'package:consumo_combustible/data/datasource/remote/service/reporte_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/rol_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/sede_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_aprobacion_service.dart';
@@ -18,6 +19,7 @@ import 'package:consumo_combustible/data/repository/detalle_abastecimiento_repos
 import 'package:consumo_combustible/data/repository/grifo_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/licencia_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/location_repository_impl.dart';
+import 'package:consumo_combustible/data/repository/reporte_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/rol_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/sede_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/ticket_aprobacion_repository_impl.dart';
@@ -30,6 +32,7 @@ import 'package:consumo_combustible/domain/repository/detalle_abastecimiento_rep
 import 'package:consumo_combustible/domain/repository/grifo_repository.dart';
 import 'package:consumo_combustible/domain/repository/licencia_repository.dart';
 import 'package:consumo_combustible/domain/repository/location_repository.dart';
+import 'package:consumo_combustible/domain/repository/reporte_repository.dart';
 import 'package:consumo_combustible/domain/repository/rol_repository.dart';
 import 'package:consumo_combustible/domain/repository/sede_repository.dart';
 import 'package:consumo_combustible/domain/repository/ticket_aprobacion_repository.dart';
@@ -64,6 +67,10 @@ import 'package:consumo_combustible/domain/use_cases/licencia/licencia_use_cases
 import 'package:consumo_combustible/data/datasource/remote/service/user_service.dart';
 import 'package:consumo_combustible/data/repository/user_repository_impl.dart';
 import 'package:consumo_combustible/domain/repository/user_repository.dart';
+import 'package:consumo_combustible/domain/use_cases/reporte/exportar_reporte_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/reporte/obtener_datos_reporte_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/reporte/obtener_resumen_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/reporte/reporte_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/rol/activar_rol_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/rol/create_rol_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/rol/delete_rol_use_case.dart';
@@ -289,6 +296,18 @@ abstract class AppModule {
     return RolRepositoryImpl(service);
   }
 
+  @injectable
+  ReporteService reporteService(Dio dio) {
+    if (kDebugMode) print('📊 Creando ReporteService');
+    return ReporteService(dio);
+  }
+
+  @singleton
+  ReporteRepository reporteRepository(ReporteService service) {
+    if (kDebugMode) print('📦 Creando ReporteRepository singleton');
+    return ReporteRepositoryImpl(service);
+  }
+
   
   //---------------------------------------------------------------------------------//
   // ✅ USE CASES CONTAINERS - Singleton optimizado
@@ -448,6 +467,16 @@ abstract class AppModule {
       updateRol: UpdateRolUseCase(repository),
       deleteRol: DeleteRolUseCase(repository),
       activarRol: ActivarRolUseCase(repository),
+    );
+  }
+
+  @singleton
+  ReporteUseCases reporteUseCases(ReporteRepository repository) {
+    if (kDebugMode) print('🎯 Creando ReporteUseCases singleton');
+    return ReporteUseCases(
+      exportarReporte: ExportarReporteUseCase(repository),
+      obtenerDatos: ObtenerDatosReporteUseCase(repository),
+      obtenerResumen: ObtenerResumenUseCase(repository),
     );
   }
 }

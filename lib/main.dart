@@ -11,6 +11,7 @@ import 'package:consumo_combustible/presentation/page/grifos/grifos_list_page.da
 import 'package:consumo_combustible/presentation/page/home_page.dart';
 import 'package:consumo_combustible/presentation/page/licencias/licencias_page.dart';
 import 'package:consumo_combustible/presentation/page/location/location_selection_page.dart';
+import 'package:consumo_combustible/presentation/page/reportes/reportes_page.dart';
 import 'package:consumo_combustible/presentation/page/rol/create_rol_page.dart';
 import 'package:consumo_combustible/presentation/page/rol/roles_page.dart';
 import 'package:consumo_combustible/presentation/page/sedes/create_sede_page.dart';
@@ -138,6 +139,7 @@ class MyApp extends StatelessWidget {
               final rol = ModalRoute.of(context)?.settings.arguments;
               return CreateRolPage(rolToEdit: rol as dynamic);
             },
+            'reportes': (context) => const ReportesPage(),
           },
         ),
       ),
