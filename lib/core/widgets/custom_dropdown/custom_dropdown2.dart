@@ -8,6 +8,7 @@ abstract class DropdownItem {
   String get displayText;
   String get code;
   bool get isActive;
+  IconData? get icon => null;
 }
 
 /// Widget de Dropdown personalizado y reutilizable
@@ -296,6 +297,18 @@ class _CustomDropdown2State<T extends DropdownItem> extends State<CustomDropdown
                                               ),
                                             ),
                                             const SizedBox(width: 12),
+
+                                            // Icono del item si existe
+                                            if (item.icon != null) ...[
+                                              Icon(
+                                                item.icon,
+                                                size: 18,
+                                                color: isSelected
+                                                    ? widget.borderColor
+                                                    : Colors.grey[600],
+                                              ),
+                                              const SizedBox(width: 8),
+                                            ],
 
                                             // Texto principal
                                             Expanded(

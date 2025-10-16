@@ -78,27 +78,20 @@ class _FiltrosReporteWidgetState extends State<FiltrosReporteWidget> {
                 title: 'Configuración del Reporte',
                 icon: Icons.settings,
                 children: [
-                  _buildLabel('Tipo de Reporte'),
-                  const SizedBox(height: 8),
                   _buildTipoReporteDropdown(),
-                  const SizedBox(height: 16),
-                  _buildLabel('Formato de Exportación'),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   _buildFormatoDropdown(),
                 ],
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
 
-              // ✅ NUEVO: Card de filtros de ubicación
               _buildCard(
                 title: 'Filtros de Ubicación',
                 icon: Icons.location_on,
                 children: [
-                  _buildLabel('Zona (Opcional)'),
-                  const SizedBox(height: 8),
-                  _buildZonaDropdown(), // ✅ NUEVO
-                  const SizedBox(height: 8),
+                  _buildZonaDropdown(),
+                  const SizedBox(height: 3),
                   _buildInfoText(
                     'Si no seleccionas zona, se incluirán todas las zonas',
                   ),
@@ -116,6 +109,8 @@ class _FiltrosReporteWidgetState extends State<FiltrosReporteWidget> {
                     children: [
                       Expanded(
                         child: CustomDate(
+                          textStyle: TextStyle(fontSize: 9),
+                          borderColor: AppColors.blue3,
                           controller: _fechaInicioController,
                           label: 'Fecha Inicio',
                           hintText: 'Seleccionar',
@@ -127,6 +122,8 @@ class _FiltrosReporteWidgetState extends State<FiltrosReporteWidget> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: CustomDate(
+                          textStyle: TextStyle(fontSize: 9),
+                          borderColor: AppColors.blue3,
                           controller: _fechaFinController,
                           label: 'Fecha Fin',
                           hintText: 'Seleccionar',
@@ -224,7 +221,7 @@ class _FiltrosReporteWidgetState extends State<FiltrosReporteWidget> {
         children: [
           // Header del card
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
               color: AppColors.blue3.withValues(alpha: 0.05),
               borderRadius: const BorderRadius.only(
@@ -238,7 +235,7 @@ class _FiltrosReporteWidgetState extends State<FiltrosReporteWidget> {
                 const SizedBox(width: 8),
                 AppSubtitle(
                   title,
-                  fontSize: 5.5,
+                  fontSize: 9,
                   color: AppColors.blue3,
                 ),
               ],
@@ -262,7 +259,7 @@ class _FiltrosReporteWidgetState extends State<FiltrosReporteWidget> {
     return BlocBuilder<ZonaBloc, ZonaState>(
       builder: (context, zonaState) {
         return CustomDropdown2<ZonaDropdownItem>(
-          label: 'Zona',
+          label: 'Zona (Opcional)',
           hint: 'Todas las zonas',
           selectedId: _zonaId,
           items: zonaState.zonas.map((zona) => ZonaDropdownItem(zona)).toList(),
@@ -282,92 +279,56 @@ class _FiltrosReporteWidgetState extends State<FiltrosReporteWidget> {
     );
   }
 
-  /// Dropdown de tipo de reporte
+  /// Dropdown de tipo de reporte usando CustomDropdown2
   Widget _buildTipoReporteDropdown() {
-    return Container(
-      height: 40,
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.blue3.withValues(alpha: 0.3)),
-        borderRadius: BorderRadius.circular(8),
+    return CustomDropdown2<TipoReporteDropdownItem>(
+      label: 'Tipo de Reporte',
+      hint: 'Seleccionar tipo',
+      selectedId: _tipoReporte.index,
+      items: TipoReporte.values.map((tipo) => TipoReporteDropdownItem(tipo)).toList(),
+      borderColor: AppColors.blue3,
+      iconColor: AppColors.blue3,
+      itemTextStyle: AppFont.oxygenRegular.style(fontSize: 10),
+      codeTextStyle: AppFont.oxygenBold.style(
+        fontSize: 8,
+        color: AppColors.grey,
       ),
-      child: DropdownButtonFormField<TipoReporte>(
-        initialValue: _tipoReporte,
-        decoration: InputDecoration(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          border: InputBorder.none,
-          prefixIcon: Icon(Icons.article, color: AppColors.blue3, size: 16),
-        ),
-        dropdownColor: AppColors.white,
-        style: TextStyle(fontSize: 10, color: AppColors.blue3),
-        items: TipoReporte.values.map((tipo) {
-          return DropdownMenuItem(
-            value: tipo,
-            child: Text(_getTipoReporteLabel(tipo)),
-          );
-        }).toList(),
-        onChanged: (value) {
-          if (value != null) {
-            setState(() => _tipoReporte = value);
-          }
-        },
-      ),
+      onChanged: (id) {
+        if (id != null) {
+          setState(() => _tipoReporte = TipoReporte.values[id]);
+        }
+      },
     );
   }
 
-  /// Dropdown de formato
+  /// Dropdown de formato usando CustomDropdown2
   Widget _buildFormatoDropdown() {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.blue3.withOpacity(0.3)),
-        borderRadius: BorderRadius.circular(8),
+    return CustomDropdown2<FormatoExportacionDropdownItem>(
+      label: 'Formato de Exportación',
+      hint: 'Seleccionar formato',
+      selectedId: _formato.index,
+      items: FormatoExportacion.values.map((formato) => FormatoExportacionDropdownItem(formato)).toList(),
+      borderColor: AppColors.blue3,
+      iconColor: AppColors.blue3,
+      itemTextStyle: AppFont.oxygenRegular.style(fontSize: 10),
+      codeTextStyle: AppFont.oxygenBold.style(
+        fontSize: 8,
+        color: AppColors.grey,
       ),
-      child: DropdownButtonFormField<FormatoExportacion>(
-        initialValue: _formato,
-        decoration: InputDecoration(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          border: InputBorder.none,
-          prefixIcon: Icon(Icons.file_present, color: AppColors.blue3, size: 20),
-        ),
-        dropdownColor: AppColors.white,
-        style: TextStyle(fontSize: 5, color: AppColors.blue3),
-        items: FormatoExportacion.values.map((formato) {
-          return DropdownMenuItem(
-            value: formato,
-            child: Row(
-              children: [
-                _getFormatoIcon(formato),
-                const SizedBox(width: 8),
-                Text(_getFormatoLabel(formato)),
-              ],
-            ),
-          );
-        }).toList(),
-        onChanged: (value) {
-          if (value != null) {
-            setState(() => _formato = value);
-          }
-        },
-      ),
+      onChanged: (id) {
+        if (id != null) {
+          setState(() => _formato = FormatoExportacion.values[id]);
+        }
+      },
     );
-  }
-
-  /// Label de campo
-  Widget _buildLabel(String text) {
-    return AppSubtitle(text);
   }
 
   /// Texto informativo
   Widget _buildInfoText(String text) {
-    return Row(
-      children: [
-        Icon(Icons.info_outline, color: AppColors.grey, size: 16),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(fontSize: 4.5, color: AppColors.grey),
-          ),
-        ),
+   return AppCaption(
+    fontSize: 8,
+      items: [
+        CaptionItem(icon: Icons.info_outline, text: text)
       ],
     );
   }
@@ -404,50 +365,6 @@ class _FiltrosReporteWidgetState extends State<FiltrosReporteWidget> {
     });
   }
 
-  /// Helpers para labels
-  String _getTipoReporteLabel(TipoReporte tipo) {
-    switch (tipo) {
-      case TipoReporte.abastecimientos:
-        return 'Reporte de Abastecimientos';
-      case TipoReporte.consumoPorUnidad:
-        return 'Consumo por Unidad';
-      case TipoReporte.estadisticasGrifo:
-        return 'Estadísticas por Grifo';
-      case TipoReporte.rendimiento:
-        return 'Reporte de Rendimiento';
-    }
-  }
 
-  String _getFormatoLabel(FormatoExportacion formato) {
-    switch (formato) {
-      case FormatoExportacion.excel:
-        return 'Excel (.xlsx)';
-      case FormatoExportacion.csv:
-        return 'CSV (.csv)';
-      case FormatoExportacion.json:
-        return 'JSON (.json)';
-    }
-  }
 
-  Icon _getFormatoIcon(FormatoExportacion formato) {
-    IconData iconData;
-    Color color;
-
-    switch (formato) {
-      case FormatoExportacion.excel:
-        iconData = Icons.table_chart;
-        color = AppColors.green;
-        break;
-      case FormatoExportacion.csv:
-        iconData = Icons.text_snippet;
-        color = AppColors.orange;
-        break;
-      case FormatoExportacion.json:
-        iconData = Icons.code;
-        color = AppColors.blue3;
-        break;
-    }
-
-    return Icon(iconData, color: color, size: 18);
-  }
 }
