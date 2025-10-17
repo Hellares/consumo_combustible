@@ -158,14 +158,7 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
         child: FloatingActionButton.extended(
           backgroundColor: AppColors.blue3,
           icon: const Icon(Icons.add, color: Colors.white,size: 16,),
-          onPressed: () async {
-            final result = await Navigator.pushNamed(context, 'crear-unidad');
-            // Verificar que el widget sigue montado antes de usar el context
-            if (mounted && result != null) {
-              // Recargar lista después de crear
-              context.read<UnidadBloc>().add(const LoadAllUnidades(refresh: true));
-            }
-          },
+          onPressed: _navigateToCreateUnidad,
           label: Text(
               'Nueva Unidad',
               style: AppFont.pirulentBold.style(
@@ -452,5 +445,18 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
         ),
       ],
     );
+  }
+
+  /// Navegar a crear unidad
+  Future<void> _navigateToCreateUnidad() async {
+    final result = await Navigator.pushNamed(context, 'crear-unidad');
+    
+    // Verificar que el widget sigue montado antes de usar el context
+    if (!mounted) return;
+    
+    if (result != null) {
+      // Recargar lista después de crear
+      context.read<UnidadBloc>().add(const LoadAllUnidades(refresh: true));
+    }
   }
 }

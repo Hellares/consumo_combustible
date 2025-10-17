@@ -113,19 +113,7 @@ class _LicenciasPageState extends State<LicenciasPage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const CreateLicenciaPage(),
-            ),
-          );
-          
-          // Si se creó exitosamente, recargar la lista
-          if (result == true && mounted) {
-            context.read<LicenciaBloc>().add(const LoadLicencias(page: 1));
-          }
-        },
+        onPressed: () => _navigateToCreateLicencia(),
         backgroundColor: AppColors.blue3,
         child: const Icon(Icons.add, color: Colors.white),
       ),
@@ -273,5 +261,22 @@ class _LicenciasPageState extends State<LicenciasPage> {
         },
       ),
     );
+  }
+
+  /// Navegar a crear licencia
+  Future<void> _navigateToCreateLicencia() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const CreateLicenciaPage(),
+      ),
+    );
+    
+    // Si se creó exitosamente, recargar la lista
+    if (!mounted) return;
+    
+    if (result == true) {
+      context.read<LicenciaBloc>().add(const LoadLicencias(page: 1));
+    }
   }
 }

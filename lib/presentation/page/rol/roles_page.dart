@@ -377,30 +377,37 @@ class _RolesPageState extends State<RolesPage> {
 
   // === NAVIGATION ===
 
-  void _navigateToCreateRol(BuildContext context) async {
-    final result = await Navigator.push(
-      context,
+  Future<void> _navigateToCreateRol(BuildContext context) async {
+    final navigator = Navigator.of(context);
+    final bloc = context.read<RolBloc>();
+    
+    final result = await navigator.push(
       MaterialPageRoute(
         builder: (context) => const CreateRolPage(),
       ),
     );
 
     // Si se creó un rol, recargar la lista
-    if (result == true && mounted) {
-      context.read<RolBloc>().add(const GetRolesEvent());
+    if (!mounted) return;
+    
+    if (result == true) {
+      bloc.add(const GetRolesEvent());
     }
   }
 
-  void _navigateToEditRol(BuildContext context, Rol rol) async {
-    final result = await Navigator.push(
-      context,
+  Future<void> _navigateToEditRol(BuildContext context, Rol rol) async {
+    final navigator = Navigator.of(context);
+    
+    final result = await navigator.push(
       MaterialPageRoute(
         builder: (context) => CreateRolPage(rolToEdit: rol),
       ),
     );
 
     // Si se editó un rol, la lista ya se actualiza automáticamente por el BLoC
-    if (result == true && mounted) {
+    if (!mounted) return;
+    
+    if (result == true) {
       // Opcional: puedes mostrar un mensaje o hacer scroll al inicio
     }
   }

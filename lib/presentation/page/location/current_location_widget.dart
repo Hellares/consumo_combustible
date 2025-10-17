@@ -104,17 +104,21 @@ class _CurrentLocationWidgetState extends State<CurrentLocationWidget> {
   }
 
   Future<void> _navigateToSelection(BuildContext context) async {
-    final result = await Navigator.pushNamed(context, 'location-selection');
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final bloc = context.read<LocationBloc>();
     
-    // ✅ Verificar mounted y usar context de forma segura
+    final result = await navigator.pushNamed('location-selection');
+    
+    // ✅ Verificar mounted antes de usar context
     if (!mounted) return;
     
     // Recargar ubicación después de regresar
-    context.read<LocationBloc>().add(const LoadSavedLocation());
+    bloc.add(const LoadSavedLocation());
     
     // Mostrar confirmación si se guardó exitosamente
     if (result == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(
           content: Text('✅ Ubicación actualizada'),
           backgroundColor: Colors.green,

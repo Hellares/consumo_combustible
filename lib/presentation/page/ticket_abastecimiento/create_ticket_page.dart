@@ -41,6 +41,9 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
         UserSelectorFieldState
       >(); // NUEVO: Key para controlar el UserSelectorField
   late final TicketBloc _bloc;
+  
+  // Key para forzar reconstrucción del dropdown de unidades
+  Key _unidadDropdownKey = UniqueKey();
 
   // Controllers
   final _kilometrajeAnteriorController = TextEditingController();
@@ -48,6 +51,13 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
   final _precintoController = TextEditingController();
   final _cantidadController = TextEditingController();
   final _tipoCombustibleController = TextEditingController();
+
+  // FocusNodes para controlar el foco manualmente
+  final _kilometrajeAnteriorFocus = FocusNode();
+  final _kilometrajeFocus = FocusNode();
+  final _precintoFocus = FocusNode();
+  final _cantidadFocus = FocusNode();
+  final _tipoCombustibleFocus = FocusNode();
 
   // Data
   SelectedLocation? _location;
@@ -130,16 +140,21 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return GradientContainer(
-      gradient: AppGradients.custom(
-        startColor: AppColors.white,
-        middleColor: AppColors.white,
-        endColor: AppColors.white,
-        stops: [0.0, 0.5, 1.0],
-      ),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Column(
+    return GestureDetector(
+      // Quitar foco al tocar fuera de los campos
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: GradientContainer(
+        gradient: AppGradients.custom(
+          startColor: AppColors.white,
+          middleColor: AppColors.white,
+          endColor: AppColors.white,
+          stops: [0.0, 0.5, 1.0],
+        ),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Column(
           children: [
             Container(
               height: 25,
@@ -180,6 +195,15 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                       _kilometrajeAnteriorController.text = kilometrajeSugerido
                           .toInt()
                           .toString();
+
+                      // Quitar el foco inmediatamente después de actualizar el texto
+                      // para evitar que el teclado aparezca
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          _kilometrajeAnteriorFocus.unfocus();
+                          FocusScope.of(context).unfocus();
+                        }
+                      });
 
                       if (kDebugMode) {
                         print(
@@ -248,7 +272,8 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                 },
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -430,6 +455,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     return Column(
       children: [
         CustomDropdown<int>(
+          key: _unidadDropdownKey, // Usar key para forzar reconstrucción
           label: 'Unidad',
           items: unidades.map((unidad) {
             return DropdownItem(
@@ -521,6 +547,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     return CustomTextField(
       label: 'Tipo de Combustible',
       controller: _tipoCombustibleController,
+      focusNode: _tipoCombustibleFocus,
       hintText: 'Tipo de combustible',
       borderColor: AppColors.blue3,
       prefixIcon: const Icon(Icons.local_gas_station),
@@ -548,6 +575,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     return CustomTextField(
       label: 'Kilometraje Anterior',
       controller: _kilometrajeAnteriorController,
+      focusNode: _kilometrajeAnteriorFocus,
       hintText: 'Km anterior *',
       borderColor: AppColors.blue3,
       prefixIcon: const Icon(Icons.speed),
@@ -578,6 +606,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     return CustomTextField(
       label: 'Kilometraje Actual',
       controller: _kilometrajeController,
+      focusNode: _kilometrajeFocus,
       hintText: 'Kilometraje Actual *',
       borderColor: AppColors.blue3,
       prefixIcon: const Icon(Icons.speed),
@@ -603,6 +632,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
       label: 'Precinto',
       textCase: TextCase.upper,
       controller: _precintoController,
+      focusNode: _precintoFocus,
       hintText: 'Precinto Nuevo *',
       borderColor: AppColors.blue3,
       prefixIcon: const Icon(Icons.lock),
@@ -628,6 +658,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
         CustomTextField(
           label: 'Galones',
           controller: _cantidadController,
+          focusNode: _cantidadFocus,
           hintText: 'Cantidad de Combustible *',
           borderColor: AppColors.blue3,
           prefixIcon: const Icon(Icons.local_gas_station),
@@ -692,16 +723,34 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
   }
 
   Future<void> _createTicket() async {
+    // Quitar el foco del teclado ANTES de validar
+    FocusScope.of(context).unfocus();
+    
+    // Pequeño delay para asegurar que el teclado se oculte
+    await Future.delayed(const Duration(milliseconds: 100));
+    
     if (!_formKey.currentState!.validate()) return;
 
     if (_selectedUnidadId == null) {
-      SnackBarHelper.showError(context, 'Selecciona una unidad');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Selecciona una unidad'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
     // VALIDAR: Verificar que se haya seleccionado un conductor
     if (_selectUser == null) {
-      SnackBarHelper.showError(context, 'Debe seleccionar un conductor');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Debe seleccionar un conductor'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
@@ -711,6 +760,8 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     );
 
     // Mostrar diálogo de confirmación
+    if (!mounted) return;
+    
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => TicketConfirmationDialog(
@@ -734,7 +785,12 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     if (!mounted) return;
 
     if (userSession == null) {
-      SnackBarHelper.showError(context, 'Sesión no válida');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Sesión no válida'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
@@ -759,6 +815,9 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
   }
 
   void _showSuccessDialog(TicketAbastecimiento ticket) {
+    // Asegurar que el foco esté completamente eliminado
+    FocusScope.of(context).unfocus();
+    
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -808,6 +867,17 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
   }
 
   void _clearForm() {
+    // 1. Quitar TODOS los focos de TODOS los campos
+    _kilometrajeAnteriorFocus.unfocus();
+    _kilometrajeFocus.unfocus();
+    _precintoFocus.unfocus();
+    _cantidadFocus.unfocus();
+    _tipoCombustibleFocus.unfocus();
+    
+    // 2. Quitar el foco general
+    FocusScope.of(context).unfocus();
+    
+    // 3. Limpiar el formulario
     _formKey.currentState?.reset();
     _kilometrajeController.clear();
     _precintoController.clear();
@@ -815,12 +885,14 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     _kilometrajeAnteriorController.clear();
     _tipoCombustibleController.clear();
 
-    // LIMPIAR: También limpiar el conductor seleccionado
+    // 4. Limpiar el conductor seleccionado
     _conductorSelectorKey.currentState?.clearUser();
 
     setState(() {
       _selectedUnidadId = null;
       _selectUser = null;
+      // 5. Generar nueva key para forzar reconstrucción del dropdown
+      _unidadDropdownKey = UniqueKey();
     });
 
     _bloc.add(const ClearUltimoTicket());
@@ -845,11 +917,20 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
 
   @override
   void dispose() {
+    // Dispose controllers
     _kilometrajeController.dispose();
     _precintoController.dispose();
     _cantidadController.dispose();
     _kilometrajeAnteriorController.dispose();
     _tipoCombustibleController.dispose();
+    
+    // Dispose focus nodes
+    _kilometrajeAnteriorFocus.dispose();
+    _kilometrajeFocus.dispose();
+    _precintoFocus.dispose();
+    _cantidadFocus.dispose();
+    _tipoCombustibleFocus.dispose();
+    
     super.dispose();
   }
 }

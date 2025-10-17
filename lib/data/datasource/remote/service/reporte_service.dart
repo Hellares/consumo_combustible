@@ -245,33 +245,71 @@ class ReporteService {
   /// Obtener directorio de descargas según la plataforma
   Future<Directory> _getDownloadDirectory() async {
     if (Platform.isAndroid) {
-      // Android: Solicitar permisos y usar directorio de descargas público
-      final status = await Permission.storage.request();
+      // Android: Solicitar permisos según la versión de Android
+      if (kDebugMode) {
+        print('📱 [ReporteService] Solicitando permisos de almacenamiento...');
+      }
+
+      // Para Android 11+ (API 30+), solicitar MANAGE_EXTERNAL_STORAGE
+      // Para Android 10 y anteriores, usar WRITE_EXTERNAL_STORAGE
+      PermissionStatus status;
+      
+      if (await Permission.manageExternalStorage.isGranted) {
+        status = PermissionStatus.granted;
+      } else {
+        status = await Permission.manageExternalStorage.request();
+        
+        // Si no se concede MANAGE_EXTERNAL_STORAGE, intentar con storage normal
+        if (!status.isGranted) {
+          status = await Permission.storage.request();
+        }
+      }
+
       if (!status.isGranted) {
+        if (kDebugMode) {
+          print('❌ Permisos denegados');
+        }
         throw Exception('Permisos de almacenamiento denegados. No se puede guardar el archivo.');
       }
 
-      // Intentar primero con getExternalStorageDirectory() para mejor compatibilidad
+      if (kDebugMode) {
+        print('✅ Permisos concedidos');
+      }
+
+      // Usar directamente la carpeta de Descargas pública de Android
+      // Esta es la carpeta que el usuario puede ver en "Mis archivos" > "Descargas"
+      final directory = Directory('/storage/emulated/0/Download/Reportes');
+      
+      if (kDebugMode) {
+        print('📁 [ReporteService] Usando carpeta de Descargas pública');
+        print('   Ruta: ${directory.path}');
+      }
+      
       try {
-        final directory = await getExternalStorageDirectory();
-        if (directory != null) {
-          final reportesDir = Directory('${directory.path}/Download/Reportes');
-          if (!await reportesDir.exists()) {
-            await reportesDir.create(recursive: true);
+        if (!await directory.exists()) {
+          await directory.create(recursive: true);
+          if (kDebugMode) {
+            print('✅ Carpeta creada exitosamente');
           }
-          return reportesDir;
         }
       } catch (e) {
         if (kDebugMode) {
-          print('❌ Error obteniendo directorio externo: $e');
+          print('❌ Error al crear carpeta: $e');
+          print('⚠️ Intentando con ruta alternativa...');
         }
+        
+        // Fallback: Usar carpeta sin subcarpeta "Reportes"
+        final fallbackDir = Directory('/storage/emulated/0/Download');
+        if (await fallbackDir.exists()) {
+          if (kDebugMode) {
+            print('✅ Usando carpeta de Descargas sin subcarpeta');
+          }
+          return fallbackDir;
+        }
+        
+        throw Exception('No se pudo acceder a la carpeta de Descargas');
       }
-
-      // Fallback: ruta directa (requiere permisos)
-      final directory = Directory('/storage/emulated/0/Download/Reportes');
-      if (!await directory.exists()) {
-        await directory.create(recursive: true);
-      }
+      
       return directory;
     } else if (Platform.isIOS) {
       // iOS: Usar directorio de documentos de la app

@@ -3,12 +3,16 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Permisos para image_picker -->
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
                      android:maxSdkVersion="32" />
-    <!-- Para Android 13+ -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+                     android:maxSdkVersion="32" />
+    <!-- Para Android 13+ (Scoped Storage) -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <!-- Para guardar archivos en carpeta de Descargas pública (Android 11+) -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+                     android:maxSdkVersion="32" />
     
     <application
         android:label="consumo_combustible"
