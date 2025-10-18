@@ -25,14 +25,13 @@ class _AdminPageState extends State<AdminPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       appBar: AppBar(
         toolbarHeight: 35,
-        title: AppTitle(_currentTitle, color: AppColors.white,),
+        title: AppTitle(_currentTitle, color: AppColors.white),
         backgroundColor: AppColors.blue3,
         foregroundColor: Colors.white,
       ),
-      
+
       drawer: _buildDrawer(),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
@@ -104,6 +103,23 @@ class _AdminPageState extends State<AdminPage> {
             ),
           ),
           const Divider(),
+
+          // 🆕 NUEVA SECCIÓN: Monitoreo GPS
+          _buildDrawerSection('Monitoreo en Tiempo Real'),
+          _buildDrawerItem(
+            icon: Icons.map,
+            title: 'Tracking GPS',
+            subtitle: 'Monitorear unidades en tiempo real',
+            onTap: () {
+              Navigator.pop(context); // Cierra el drawer
+              Navigator.pushNamed(
+                context,
+                'gps-admin',
+              ); // 🆕 Navega a GPS Admin
+            },
+          ),
+
+          const Divider(),
           _buildDrawerSection('Gestión de Recursos'),
           _buildDrawerItem(
             icon: Icons.local_shipping,
@@ -170,19 +186,19 @@ class _AdminPageState extends State<AdminPage> {
             },
           ),
           const Divider(),
-        
-        // ✅ NUEVA SECCIÓN: Reportes y Análisis
-        _buildDrawerSection('Reportes y Análisis'),
-        _buildDrawerItem(
-          icon: Icons.assessment,
-          title: 'Reportes',
-          subtitle: 'Generar reportes de abastecimientos',
-          onTap: () {
-            Navigator.pop(context); // Cierra el drawer
-            Navigator.pushNamed(context, 'reportes'); // ✅ Navega a reportes
-          },
-        ),
-        
+
+          // ✅ NUEVA SECCIÓN: Reportes y Análisis
+          _buildDrawerSection('Reportes y Análisis'),
+          _buildDrawerItem(
+            icon: Icons.assessment,
+            title: 'Reportes',
+            subtitle: 'Generar reportes de abastecimientos',
+            onTap: () {
+              Navigator.pop(context); // Cierra el drawer
+              Navigator.pushNamed(context, 'reportes'); // ✅ Navega a reportes
+            },
+          ),
+
           const Divider(),
           _buildDrawerSection('Configuración'),
           _buildDrawerItem(
@@ -274,6 +290,19 @@ class AdminDashboard extends StatelessWidget {
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
               children: [
+                // 🆕 Card GPS Tracking (con acción)
+                InkWell(
+                  onTap: () {
+                    Navigator.pushNamed(context, 'gps-admin');
+                  },
+                  child: _buildDashboardCard(
+                    icon: Icons.gps_fixed,
+                    title: 'Tracking GPS',
+                    count: 'En Vivo',
+                    color: Colors.red,
+                    isAction: true,
+                  ),
+                ),
                 _buildDashboardCard(
                   icon: Icons.local_shipping,
                   title: 'Unidades',
@@ -292,12 +321,6 @@ class AdminDashboard extends StatelessWidget {
                   count: '8',
                   color: Colors.orange,
                 ),
-                _buildDashboardCard(
-                  icon: Icons.location_city,
-                  title: 'Zonas',
-                  count: '5',
-                  color: Colors.purple,
-                ),
               ],
             ),
           ),
@@ -311,20 +334,43 @@ class AdminDashboard extends StatelessWidget {
     required String title,
     required String count,
     required Color color,
+    bool isAction = false,
   }) {
     return Card(
-      elevation: 2,
+      elevation: isAction ? 4 : 2,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 48, color: color),
+            Icon(
+              icon, 
+              size: 48, 
+              color: color,
+            ),
+            if (isAction) ...[
+              const SizedBox(height: 8),
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.5),
+                      blurRadius: 8,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             Text(
               count,
               style: TextStyle(
-                fontSize: 32,
+                fontSize: isAction ? 20 : 32,
                 fontWeight: FontWeight.bold,
                 color: color,
               ),
@@ -341,22 +387,6 @@ class AdminDashboard extends StatelessWidget {
   }
 }
 
-// ============================================
-// PÁGINAS PLACEHOLDER (Para implementar después)
-// ============================================
-// class UnidadesManagementPage extends StatelessWidget {
-//   const UnidadesManagementPage({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return _buildPlaceholder(
-//       icon: Icons.local_shipping,
-//       title: 'Gestión de Unidades',
-//       description: 'Aquí podrás registrar y gestionar las unidades vehiculares',
-//     );
-//   }
-// }
-
 class ConductoresManagementPage extends StatelessWidget {
   const ConductoresManagementPage({super.key});
 
@@ -369,32 +399,6 @@ class ConductoresManagementPage extends StatelessWidget {
     );
   }
 }
-
-// class GrifosManagementPage extends StatelessWidget {
-//   const GrifosManagementPage({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return _buildPlaceholder(
-//       icon: Icons.local_gas_station,
-//       title: 'Gestión de Grifos',
-//       description: 'Aquí podrás registrar y gestionar los grifos',
-//     );
-//   }
-// }
-
-// class SedesManagementPage extends StatelessWidget {
-//   const SedesManagementPage({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return _buildPlaceholder(
-//       icon: Icons.business,
-//       title: 'Gestión de Sedes',
-//       description: 'Aquí podrás registrar y gestionar las sedes por zona',
-//     );
-//   }
-// }
 
 class ConfiguracionPage extends StatelessWidget {
   const ConfiguracionPage({super.key});

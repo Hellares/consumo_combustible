@@ -1,6 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    
     <!-- Permisos para image_picker -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
@@ -14,10 +15,47 @@
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
                      android:maxSdkVersion="32" />
     
+    <!-- ========================================== -->
+    <!-- PERMISOS DE UBICACIÓN GPS -->
+    <!-- ========================================== -->
+    
+    <!-- Ubicación precisa (requerido) -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    
+    <!-- Ubicación aproximada (opcional, pero recomendado) -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    
+    <!-- Ubicación en segundo plano (Android 10+) -->
+    <!-- IMPORTANTE: Solo se solicita si realmente se necesita tracking en background -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    
+    <!-- Servicio en primer plano (Android 9+) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    
+    <!-- Wake Lock para mantener el dispositivo activo durante tracking -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Feature de GPS (no requerido, pero recomendado) -->
+    <uses-feature
+        android:name="android.hardware.location.gps"
+        android:required="false" />
+    
+    <uses-feature
+        android:name="android.hardware.location.network"
+        android:required="false" />
+
     <application
         android:label="consumo_combustible"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true">
+        
+        <!-- 🆕 API Key de Google Maps -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyC5KeXX3Mlrj_i7sFETZ5MgRz1BVEZ6NrA"/>
+    
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -143,28 +143,42 @@ class _LocationSelectionPageState extends State<LocationSelectionPage> {
                     },
               controlsBuilder: (context, details) {
                 return Padding(
-                  padding: const EdgeInsets.only(top: 16),
+                  padding: const EdgeInsets.only(top: 8),
                   child: Row(
                     children: [
-                      ElevatedButton(
-                        onPressed: (_isSaving || !canContinue)
-                            ? null
-                            : details.onStepContinue,
-                        child: _isSaving
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
+                      SizedBox(
+                        height: 30,
+                        width: 100,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8),),
+                            backgroundColor: AppColors.white
+                          ),
+                          onPressed: (_isSaving || !canContinue)
+                              ? null
+                              : details.onStepContinue,
+                          child: _isSaving
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 1,
+                                  ),
+                                )
+                              : Text(
+                                  _currentStep == 2 ? 'Guardar' : 'Continuar',
+                                  style: TextStyle(fontSize: 10,color: AppColors.blue3),
                                 ),
-                              )
-                            : Text(_currentStep == 2 ? 'Guardar' : 'Continuar'),
+                        ),
                       ),
                       const SizedBox(width: 8),
                       if (_currentStep > 0 || Navigator.of(context).canPop())
                         TextButton(
                           onPressed: _isSaving ? null : details.onStepCancel,
-                          child: Text(_currentStep > 0 ? 'Atrás' : 'Cancelar'),
+                          child: Text(
+                            _currentStep > 0 ? 'Atrás' : 'Cancelar',
+                            style: TextStyle(fontSize: 10),
+                          ),
                         ),
                     ],
                   ),
@@ -268,7 +282,7 @@ class _LocationSelectionPageState extends State<LocationSelectionPage> {
                     // Leading Icon
                     Icon(
                       Icons.location_on,
-                      color: isSelected ? AppColors.blue3 : null,
+                      color: isSelected ? AppColors.red : null,
                     ),
                     const SizedBox(width: 16),
                     // Title y Subtitle
@@ -289,7 +303,7 @@ class _LocationSelectionPageState extends State<LocationSelectionPage> {
 
                     // Trailing Icon
                     if (isSelected)
-                      const Icon(Icons.check_circle, color: AppColors.blue3),
+                      const Icon(Icons.check_circle, color: AppColors.green),
                   ],
                 ),
               ),
@@ -529,8 +543,14 @@ class _LocationSelectionPageState extends State<LocationSelectionPage> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            grifo.estaAbierto! ? 'Abierto ahora' : 'Cerrado', style: TextStyle(fontSize: 10,color: grifo.estaAbierto! ? AppColors.green : AppColors.red),) ,
-                     
+                            grifo.estaAbierto! ? 'Abierto ahora' : 'Cerrado',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: grifo.estaAbierto!
+                                  ? AppColors.green
+                                  : AppColors.red,
+                            ),
+                          ),
                         ],
                       ),
                     ),

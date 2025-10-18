@@ -186,41 +186,7 @@ class _RolesPageState extends State<RolesPage> {
     );
   }
 
-  // Widget _buildSearchBar() {
-  //   return TextField(
-  //     controller: _searchController,
-  //     decoration: InputDecoration(
-  //       hintText: 'Buscar roles...',
-  //       prefixIcon: Icon(Icons.search, color: AppColors.blue3),
-  //       suffixIcon: _searchController.text.isNotEmpty
-  //           ? IconButton(
-  //               icon: Icon(Icons.clear, color: AppColors.blue3),
-  //               onPressed: () {
-  //                 _searchController.clear();
-  //                 setState(() {});
-  //                 // TODO: Implementar búsqueda cuando esté disponible en el backend
-  //               },
-  //             )
-  //           : null,
-  //       filled: true,
-  //       fillColor: Colors.white,
-  //       border: OutlineInputBorder(
-  //         borderRadius: BorderRadius.circular(12),
-  //         borderSide: BorderSide.none,
-  //       ),
-  //       contentPadding: const EdgeInsets.symmetric(
-  //         horizontal: 16,
-  //         vertical: 12,
-  //       ),
-  //     ),
-  //     onChanged: (value) {
-  //       setState(() {});
-  //       // TODO: Implementar búsqueda con debounce
-  //     },
-  //   );
-  // }
-
-  // === CONTENT ===
+   // === CONTENT ===
 
   Widget _buildContent(BuildContext context, RolState state) {
     final response = state.rolesResponse;

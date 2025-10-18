@@ -6,6 +6,9 @@ import 'package:consumo_combustible/core/theme/app_colors.dart';
 import 'package:consumo_combustible/core/widgets/appbar/smart_appbar.dart';
 import 'package:consumo_combustible/data/api/api_config.dart';
 import 'package:consumo_combustible/domain/models/unidad.dart';
+import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart';
+import 'package:consumo_combustible/injection.dart';
+import 'package:consumo_combustible/presentation/page/gps/conductor/conductor_tracking_page.dart';
 import 'package:consumo_combustible/presentation/page/unidad/bloc/unidad_bloc.dart';
 import 'package:consumo_combustible/presentation/page/unidad/bloc/unidad_event.dart';
 import 'package:consumo_combustible/presentation/page/unidad/bloc/unidad_state.dart';
@@ -343,6 +346,25 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _navigateToGpsTracking(unidad),
+                  icon: const Icon(Icons.gps_fixed, size: 18),
+                  label: const Text('Ver Tracking GPS'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.blue3,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              )
             ],
           ),
         ),
@@ -445,6 +467,52 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
         ),
       ],
     );
+  }
+
+  Future<void> _navigateToGpsTracking(Unidad unidad) async {
+    try {
+      // ✅ Obtener AuthUseCases del locator (igual que en tus otros archivos)
+      final authUseCases = locator<AuthUseCases>();
+      
+      // ✅ Obtener sesión del storage
+      final session = await authUseCases.getUserSession.run();
+      
+      // Validar que haya sesión
+      if (session?.data?.token == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No hay sesión activa. Por favor, inicia sesión.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      final token = session!.data!.token;
+
+      if (!mounted) return;
+
+      // Navegar a la página de tracking
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ConductorTrackingPage(
+            unidadId: unidad.id,
+            placa: unidad.placa,
+            jwtToken: token,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al abrir tracking: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   /// Navegar a crear unidad

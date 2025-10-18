@@ -5,6 +5,7 @@ import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_stat
 import 'package:consumo_combustible/presentation/page/auth/login/main_login_page.dart';
 import 'package:consumo_combustible/presentation/page/auth/rol_selection/role_selection_page.dart';
 import 'package:consumo_combustible/presentation/page/detalle_abastecimiento/detalles_abastecimiento_page.dart';
+import 'package:consumo_combustible/presentation/page/gps/admin/admin_tracking_page.dart';
 import 'package:consumo_combustible/presentation/page/grifos/create_grifo_page.dart';
 import 'package:consumo_combustible/presentation/page/grifos/edit_grifo_page.dart';
 import 'package:consumo_combustible/presentation/page/grifos/grifos_list_page.dart';
@@ -140,6 +141,7 @@ class MyApp extends StatelessWidget {
               return CreateRolPage(rolToEdit: rol as dynamic);
             },
             'reportes': (context) => const ReportesPage(),
+            'gps-admin': (context) => const AdminTrackingPage(),
           },
         ),
       ),

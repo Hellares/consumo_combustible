@@ -113,13 +113,13 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
       children: [
         Text(
           'Hola, ${user.nombres}',
-          style: AppFont.oxygenBold.style(fontSize: 18, color: AppColors.blue3),
+          style: AppFont.oxygenBold.style(fontSize: 14, color: AppColors.blue3),
         ),
         const SizedBox(height: 8),
         Text(
           'Selecciona tu rol',
           style: AppFont.orbitronMedium.style(
-            fontSize: 16,
+            fontSize: 12,
             color: AppColors.orange,
           ),
         ),
@@ -143,7 +143,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
             child: Text(
               'Tienes múltiples roles asignados. Selecciona el rol con el que deseas trabajar.',
               style: AppFont.oxygenBold.style(
-                fontSize: 12,
+                fontSize: 11,
                 color: AppColors.blue3,
               ),
             ),
@@ -179,7 +179,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                     color: isSelected
                         ? AppColors.blue
                         : AppColors.grey.withValues(alpha: 0.3),
-                    width: isSelected ? 2 : 1,
+                    width: isSelected ? 1.5 : 1,
                   ),
                   boxShadow: isSelected
                       ? [
@@ -194,8 +194,8 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                 child: Row(
                   children: [
                     Container(
-                      width: 48,
-                      height: 48,
+                      width: 35,
+                      height: 35,
                       decoration: BoxDecoration(
                         color: isSelected
                             ? AppColors.blue
@@ -205,7 +205,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                       child: Icon(
                         _getRoleIcon(role.rol.nombre),
                         color: isSelected ? Colors.white : AppColors.blue2,
-                        size: 24,
+                        size: 20,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -216,7 +216,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                           Text(
                             role.rol.nombre,
                             style: AppFont.oxygenBold.style(
-                              fontSize: 16,
+                              fontSize: 14,
                               color: AppColors.blue2,
                             ),
                           ),
@@ -224,7 +224,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                           Text(
                             role.rol.descripcion,
                             style: AppFont.oxygenRegular.style(
-                              fontSize: 12,
+                              fontSize: 10,
                               color: AppColors.grey,
                             ),
                             maxLines: 2,
@@ -234,7 +234,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                       ),
                     ),
                     if (isSelected)
-                      Icon(Icons.check_circle, color: AppColors.blue, size: 28),
+                      Icon(Icons.check_circle, color: AppColors.green, size: 24),
                   ],
                 ),
               ),
@@ -251,7 +251,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
       backgroundColor: AppColors.blue3,
       textColor: AppColors.white,
       borderRadius: 28,
-      textStyle: AppFont.pirulentBold.style(fontSize: 14),
+      textStyle: AppFont.pirulentBold.style(fontSize: 10),
       onPressed: _selectedRole != null && !_isLoading
           ? () => _confirmRoleSelection(user)
           : null,

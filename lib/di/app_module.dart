@@ -1,7 +1,10 @@
 import 'package:consumo_combustible/core/fast_storage_service.dart';
+import 'package:consumo_combustible/data/api/api_config.dart';
 import 'package:consumo_combustible/data/api/dio_config.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/archivo_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/auth_service.dart';
+import 'package:consumo_combustible/data/datasource/remote/service/gps_service.dart';
+import 'package:consumo_combustible/data/datasource/remote/service/gps_socket_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/grifo_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/licencia_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/location_service.dart';
@@ -16,6 +19,7 @@ import 'package:consumo_combustible/data/datasource/remote/service/zona_service.
 import 'package:consumo_combustible/data/repository/archivo_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/auth_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/detalle_abastecimiento_repository_impl.dart';
+import 'package:consumo_combustible/data/repository/gps_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/grifo_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/licencia_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/location_repository_impl.dart';
@@ -29,6 +33,7 @@ import 'package:consumo_combustible/data/repository/zona_repository_impl.dart';
 import 'package:consumo_combustible/domain/repository/archivo_repository.dart';
 import 'package:consumo_combustible/domain/repository/auth_repository.dart';
 import 'package:consumo_combustible/domain/repository/detalle_abastecimiento_repository.dart';
+import 'package:consumo_combustible/domain/repository/gps_repository.dart';
 import 'package:consumo_combustible/domain/repository/grifo_repository.dart';
 import 'package:consumo_combustible/domain/repository/licencia_repository.dart';
 import 'package:consumo_combustible/domain/repository/location_repository.dart';
@@ -51,6 +56,12 @@ import 'package:consumo_combustible/domain/use_cases/auth/login_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/logout_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/save_selected_role_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/save_user_session_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/gps/get_current_locations_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/gps/get_location_history_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/gps/get_tracking_stats_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/gps/gps_usecases.dart';
+import 'package:consumo_combustible/domain/use_cases/gps/send_location_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/gps/subscribe_tracking_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/grifo/create_grifo_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/grifo/get_grifo_by_id_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/grifo/get_grifos_usecase.dart';
@@ -308,9 +319,44 @@ abstract class AppModule {
     return ReporteRepositoryImpl(service);
   }
 
+  // ==========================================
+  // GPS TRACKING MODULE
+  // ==========================================
+  @injectable
+  GpsService gpsService(Dio dio) {
+    if (kDebugMode) print('📍 Creando GpsService');
+    return GpsService(dio);
+  }
+
+  /// GPS Socket Service - WebSocket en tiempo real
+  @singleton
+  GpsSocketService gpsSocketService() {
+    if (kDebugMode) {
+      print('🔌 Creando GpsSocketService singleton');
+      print('   WebSocket URL: ${ApiConfig.baseUrl}');
+    }
+    
+    // Usa la misma configuración que el resto de tu app
+    return GpsSocketService(baseUrl: ApiConfig.baseUrl);
+  }
+
+  /// GPS Repository - Combina REST + WebSocket
+  @singleton
+  GpsRepository gpsRepository(
+    GpsService gpsService,
+    GpsSocketService gpsSocketService,
+  ) {
+    if (kDebugMode) print('📦 Creando GpsRepository singleton');
+    return GpsRepositoryImpl(
+      gpsService: gpsService,
+      gpsSocketService: gpsSocketService,
+    );
+  }
+
   
   //---------------------------------------------------------------------------------//
-  // ✅ USE CASES CONTAINERS - Singleton optimizado
+  //---------------------------------------------------------------------------------//
+  //  USE CASES CONTAINERS - Singleton optimizado
   @singleton
   AuthUseCases authUseCases(AuthRepository authRepository) {
     if (kDebugMode) print('🎯 Creando AuthUseCases singleton');
@@ -477,6 +523,21 @@ abstract class AppModule {
       exportarReporte: ExportarReporteUseCase(repository),
       obtenerDatos: ObtenerDatosReporteUseCase(repository),
       obtenerResumen: ObtenerResumenUseCase(repository),
+    );
+  }
+
+  /// GPS Use Cases - Agrupador de todos los casos de uso
+  @singleton
+  GpsUseCases gpsUseCases(GpsRepository repository) {
+    if (kDebugMode) print('🎯 Creando GpsUseCases singleton');
+    
+    return GpsUseCases(
+      sendLocation: SendLocationUseCase(repository),
+      getCurrentLocations: GetCurrentLocationsUseCase(repository),
+      getCurrentLocation: GetCurrentLocationUseCase(repository),
+      subscribeTracking: SubscribeTrackingUseCase(repository),
+      getLocationHistory: GetLocationHistoryUseCase(repository),
+      getTrackingStats: GetTrackingStatsUseCase(repository),
     );
   }
 }
