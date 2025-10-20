@@ -791,7 +791,8 @@ void _listenToWebSocketStreams() {
 
         // ✅ CORRECCIÓN CRÍTICA: Si estábamos recibiendo updates, mantener ese estado
         if (wasReceivingUpdates) {
-          final currentState = previousState as GpsReceivingUpdates;
+          // Dart ya sabe que previousState es GpsReceivingUpdates por el if
+          final currentState = previousState;
           
           if (kDebugMode) {
             print('📦 [GPS BLoC] Manteniendo GpsReceivingUpdates');
