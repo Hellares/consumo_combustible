@@ -90,13 +90,30 @@ class GpsReceivingUpdates extends GpsState {
   List<Object?> get props => [unidades, lastUpdate, isConnected, totalUnidades];
 
   /// Agregar o actualizar una unidad
+  /// ✅ CORRECCIÓN CRÍTICA: Fusiona datos del WebSocket con datos existentes
+  /// para preservar información como placa, conductor, etc.
   GpsReceivingUpdates updateUnidad(UnidadTracking newUnidad) {
     final updatedList = List<UnidadTracking>.from(unidades);
     final index = updatedList.indexWhere((u) => u.unidadId == newUnidad.unidadId);
 
     if (index != -1) {
-      updatedList[index] = newUnidad;
+      // ✅ FUSIONAR: Mantener datos existentes y solo actualizar ubicación
+      final existingUnidad = updatedList[index];
+      
+      updatedList[index] = UnidadTracking(
+        unidadId: newUnidad.unidadId,
+        // ✅ Preservar placa existente si la nueva está vacía
+        placa: newUnidad.placa.isNotEmpty ? newUnidad.placa : existingUnidad.placa,
+        // ✅ Actualizar ubicación (lo más importante)
+        ultimaUbicacion: newUnidad.ultimaUbicacion ?? existingUnidad.ultimaUbicacion,
+        // ✅ Actualizar tiempo y estado
+        tiempoTranscurrido: newUnidad.tiempoTranscurrido,
+        estado: newUnidad.estado,
+        // ✅ Preservar conductor existente si el nuevo es null
+        conductor: newUnidad.conductor ?? existingUnidad.conductor,
+      );
     } else {
+      // Agregar nueva unidad (no estaba en la lista inicial)
       updatedList.add(newUnidad);
     }
 

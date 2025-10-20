@@ -16,6 +16,16 @@ class ApiConfig {
     ? 'https://$productionApi'
     : 'http://$localApi';
 
+  // ✅ WebSocket URL
+  static String get webSocketUrl => isProduction
+    ? 'wss://$productionApi'        // WSS en producción con SSL
+    : 'ws://$localApi';              // WS en desarrollo
+
+  // ✅ Socket.IO específico
+  static String get socketIOUrl => isProduction
+    ? 'https://$productionApi'      // HTTPS para Socket.IO
+    : 'http://$localApi';
+
   static Uri getUri(String path) {
     return isProduction
       ? Uri.https(apiSyncronize, path)
@@ -73,8 +83,9 @@ class ApiConfig {
     if (kDebugMode) {
       print('🌐 Entorno: ${isProduction ? "PRODUCCIÓN" : "DESARROLLO"}');
       print('🔗 Base URL: $baseUrl');
+      print('🔌 WebSocket URL: $webSocketUrl');
       print('⏱️ Timeouts: Connect=${connectTimeout.inSeconds}s, Receive=${receiveTimeout.inSeconds}s');
-      print('🔐 Login Timeouts: Connect=${loginConnectTimeout.inSeconds}s, Receive=${loginReceiveTimeout.inSeconds}s');
+      // print('🔐 Login Timeouts: Connect=${loginConnectTimeout.inSeconds}s, Receive=${loginReceiveTimeout.inSeconds}s');
     }
   }
 }

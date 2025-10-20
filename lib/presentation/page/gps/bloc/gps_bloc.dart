@@ -29,6 +29,9 @@ class GpsBloc extends Bloc<GpsEvent, GpsState> {
 
   // Timer para envío automático de ubicaciones
   Timer? _trackingTimer;
+  
+  // ✅ CORRECCIÓN: Cache de unidades cargadas para preservarlas
+  List<UnidadTracking> _cachedUnidades = [];
 
   GpsBloc({
     required GpsUseCases gpsUseCases,
@@ -62,60 +65,129 @@ class GpsBloc extends Bloc<GpsEvent, GpsState> {
     
     on<ClearGpsErrorEvent>(_onClearGpsError);
     on<ResetGpsStateEvent>(_onResetGpsState);
+
+    on<LocationReceivedEvent>(_onLocationReceived);
+  on<ConnectionStatusChangedEvent>(_onConnectionStatusChanged);
   }
 
   // ==========================================
   // WEBSOCKET - CONEXIÓN
   // ==========================================
 
-  /// Conectar al WebSocket
+  // Future<void> _onConnectWebSocket(
+  //   ConnectWebSocketEvent event,
+  //   Emitter<GpsState> emit,
+  // ) async {
+  //   try {
+  //     if (kDebugMode) {
+  //       print('🔌 [GPS BLoC] Conectando al WebSocket...');
+  //     }
+
+  //     emit(const GpsConnecting());
+
+  //     // Conectar usando el use case
+  //     final result = await _gpsUseCases.subscribeTracking.connect(event.token);
+
+  //     if (result is Success) {
+  //       if (kDebugMode) {
+  //         print('✅ [GPS BLoC] WebSocket conectado exitosamente');
+  //       }
+
+  //       // Escuchar streams del WebSocket
+  //       _listenToWebSocketStreams(emit);
+
+  //       emit(GpsConnected(
+  //         isSubscribed: false,
+  //         connectedAt: DateTime.now(),
+  //       ));
+
+  //       // ✅ CORRECCIÓN: Auto-suscribirse si se especifica
+  //       if (event.autoSubscribe ?? false) {
+  //         if (kDebugMode) {
+  //           print('🔄 [GPS BLoC] Auto-suscribiendo después de conexión...');
+  //         }
+          
+  //         // Pequeño delay para asegurar que el socket esté listo
+  //         await Future.delayed(const Duration(milliseconds: 500));
+          
+  //         // Disparar evento de suscripción
+  //         add(const SubscribeToAllUnitsEvent());
+  //       }
+  //     } else if (result is Error) {
+  //       if (kDebugMode) {
+  //         print('❌ [GPS BLoC] Error conectando: ${result.message}');
+  //       }
+
+  //       emit(GpsConnectionError(
+  //         message: result.message,
+  //         canRetry: true,
+  //       ));
+  //     }
+  //   } catch (e) {
+  //     if (kDebugMode) {
+  //       print('❌ [GPS BLoC] Excepción conectando: $e');
+  //     }
+
+  //     emit(GpsConnectionError(
+  //       message: 'Error inesperado al conectar: $e',
+  //       canRetry: true,
+  //     ));
+  //   }
+  // }
+
   Future<void> _onConnectWebSocket(
-    ConnectWebSocketEvent event,
-    Emitter<GpsState> emit,
-  ) async {
-    try {
+  ConnectWebSocketEvent event,
+  Emitter<GpsState> emit,
+) async {
+  try {
+    if (kDebugMode) {
+      print('🔌 [GPS BLoC] Conectando al WebSocket...');
+    }
+
+    emit(const GpsConnecting());
+
+    final result = await _gpsUseCases.subscribeTracking.connect(event.token);
+
+    if (result is Success) {
       if (kDebugMode) {
-        print('🔌 [GPS BLoC] Conectando al WebSocket...');
+        print('✅ [GPS BLoC] WebSocket conectado exitosamente');
       }
 
-      emit(const GpsConnecting());
+      // ✅ CAMBIO: Ya no pasar el emitter
+      _listenToWebSocketStreams();
 
-      // Conectar usando el use case
-      final result = await _gpsUseCases.subscribeTracking.connect(event.token);
+      emit(GpsConnected(
+        isSubscribed: false,
+        connectedAt: DateTime.now(),
+      ));
 
-      if (result is Success) {
+      if (event.autoSubscribe!) {
         if (kDebugMode) {
-          print('✅ [GPS BLoC] WebSocket conectado exitosamente');
+          print('🔄 [GPS BLoC] Auto-suscribiendo...');
         }
-
-        // Escuchar streams del WebSocket
-        _listenToWebSocketStreams(emit);
-
-        emit(GpsConnected(
-          isSubscribed: false,
-          connectedAt: DateTime.now(),
-        ));
-      } else if (result is Error) {
-        if (kDebugMode) {
-          print('❌ [GPS BLoC] Error conectando: ${result.message}');
-        }
-
-        emit(GpsConnectionError(
-          message: result.message,
-          canRetry: true,
-        ));
+        add(const SubscribeToAllUnitsEvent());
       }
-    } catch (e) {
+    } else if (result is Error) {
       if (kDebugMode) {
-        print('❌ [GPS BLoC] Excepción conectando: $e');
+        print('❌ [GPS BLoC] Error conectando: ${result.message}');
       }
 
       emit(GpsConnectionError(
-        message: 'Error inesperado al conectar: $e',
+        message: result.message,
         canRetry: true,
       ));
     }
+  } catch (e) {
+    if (kDebugMode) {
+      print('❌ [GPS BLoC] Excepción conectando: $e');
+    }
+
+    emit(GpsConnectionError(
+      message: 'Error inesperado al conectar: $e',
+      canRetry: true,
+    ));
   }
+}
 
   /// Desconectar del WebSocket
   Future<void> _onDisconnectWebSocket(
@@ -185,83 +257,128 @@ class GpsBloc extends Bloc<GpsEvent, GpsState> {
     }
   }
 
-  /// Escuchar streams del WebSocket
-  void _listenToWebSocketStreams(Emitter<GpsState> emit) {
-    // Stream de ubicaciones en tiempo real
-    _locationUpdatesSubscription = 
-        _gpsUseCases.subscribeTracking.locationUpdates.listen(
-      (unidadTracking) {
-        if (kDebugMode) {
-          print('📍 [GPS BLoC] Nueva ubicación recibida: ${unidadTracking.placa}');
-        }
+  Future<void> _onLocationReceived(
+  LocationReceivedEvent event,
+  Emitter<GpsState> emit,
+) async {
+  final unidadTracking = event.unidadTracking;
 
-        // Actualizar estado con nueva ubicación
-        if (state is GpsReceivingUpdates) {
-          final currentState = state as GpsReceivingUpdates;
-          emit(currentState.updateUnidad(unidadTracking));
-        } else {
-          // Primer ubicación recibida
-          emit(GpsReceivingUpdates(
-            unidades: [unidadTracking],
-            lastUpdate: DateTime.now(),
-            isConnected: true,
-            totalUnidades: 1,
-          ));
-        }
-      },
-      onError: (error) {
-        if (kDebugMode) {
-          print('❌ [GPS BLoC] Error en stream de ubicaciones: $error');
-        }
-      },
-    );
-
-    // Stream de estado de conexión
-    _connectionStatusSubscription = 
-        _gpsUseCases.subscribeTracking.connectionStatus.listen(
-      (isConnected) {
-        if (kDebugMode) {
-          print('🔌 [GPS BLoC] Estado de conexión: $isConnected');
-        }
-
-        if (!isConnected) {
-          emit(const GpsDisconnected(reason: 'Conexión perdida'));
-        } else if (state is GpsDisconnected) {
-          emit(GpsConnected(
-            isSubscribed: false,
-            connectedAt: DateTime.now(),
-          ));
-        }
-
-        // Actualizar estado si estamos recibiendo updates
-        if (state is GpsReceivingUpdates) {
-          final currentState = state as GpsReceivingUpdates;
-          emit(currentState.copyWith(isConnected: isConnected));
-        }
-      },
-      onError: (error) {
-        if (kDebugMode) {
-          print('❌ [GPS BLoC] Error en stream de conexión: $error');
-        }
-      },
-    );
-
-    // Stream de estado de GPS devices
-    _gpsDeviceStatusSubscription = 
-        _gpsUseCases.subscribeTracking.gpsDeviceStatus.listen(
-      (deviceStatus) {
-        if (kDebugMode) {
-          print('🛰️ [GPS BLoC] GPS Device status: $deviceStatus');
-        }
-        // Aquí podrías emitir un estado específico si lo necesitas
-      },
-      onError: (error) {
-        if (kDebugMode) {
-          print('❌ [GPS BLoC] Error en stream de GPS device: $error');
-        }
-      },
-    );
+  if (kDebugMode) {
+    print('📍 [GPS BLoC] Procesando ubicación recibida: ${unidadTracking.placa}');
+    print('   Estado actual: ${state.runtimeType}');
   }
+
+  // Actualizar estado con nueva ubicación
+  if (state is GpsReceivingUpdates) {
+    final currentState = state as GpsReceivingUpdates;
+    
+    if (kDebugMode) {
+      print('   Unidades antes de actualizar: ${currentState.unidades.length}');
+      print('   Placas antes: ${currentState.unidades.map((u) => u.placa).join(", ")}');
+    }
+    
+    final newState = currentState.updateUnidad(unidadTracking);
+    
+    if (kDebugMode) {
+      print('   Unidades después de actualizar: ${newState.unidades.length}');
+      print('   Placas después: ${newState.unidades.map((u) => u.placa).join(", ")}');
+    }
+    
+    emit(newState);
+  } else {
+    // Primer ubicación recibida
+    if (kDebugMode) {
+      print('⚠️ [GPS BLoC] Primera ubicación recibida sin estado previo');
+    }
+    
+    emit(GpsReceivingUpdates(
+      unidades: [unidadTracking],
+      lastUpdate: DateTime.now(),
+      isConnected: true,
+      totalUnidades: 1,
+    ));
+  }
+}
+
+Future<void> _onConnectionStatusChanged(
+  ConnectionStatusChangedEvent event,
+  Emitter<GpsState> emit,
+) async {
+  final isConnected = event.isConnected;
+
+  if (!isConnected) {
+    emit(const GpsDisconnected(reason: 'Conexión perdida'));
+  } else if (state is GpsDisconnected) {
+    emit(GpsConnected(
+      isSubscribed: false,
+      connectedAt: DateTime.now(),
+    ));
+  }
+
+  // Actualizar estado si estamos recibiendo updates
+  if (state is GpsReceivingUpdates) {
+    final currentState = state as GpsReceivingUpdates;
+    emit(currentState.copyWith(isConnected: isConnected));
+  }
+}
+
+/// Escuchar streams del WebSocket
+void _listenToWebSocketStreams() {
+  // Stream de ubicaciones en tiempo real
+  _locationUpdatesSubscription = 
+      _gpsUseCases.subscribeTracking.locationUpdates.listen(
+    (unidadTracking) {
+      if (kDebugMode) {
+        print('📍 [GPS BLoC] Nueva ubicación recibida: ${unidadTracking.placa}');
+      }
+
+      // ✅ SOLUCIÓN: Usar add() para disparar un nuevo evento
+      // Esto crea un nuevo handler con su propio Emitter
+      add(LocationReceivedEvent(unidadTracking));
+    },
+    onError: (error) {
+      if (kDebugMode) {
+        print('❌ [GPS BLoC] Error en stream de ubicaciones: $error');
+      }
+    },
+  );
+
+  // Stream de estado de conexión
+  _connectionStatusSubscription = 
+      _gpsUseCases.subscribeTracking.connectionStatus.listen(
+    (isConnected) {
+      if (kDebugMode) {
+        print('🔌 [GPS BLoC] Estado de conexión: $isConnected');
+      }
+
+      // ✅ SOLUCIÓN: Usar add() para disparar un nuevo evento
+      add(ConnectionStatusChangedEvent(isConnected));
+    },
+    onError: (error) {
+      if (kDebugMode) {
+        print('❌ [GPS BLoC] Error en stream de conexión: $error');
+      }
+    },
+  );
+
+  // Stream de estado de GPS devices
+  _gpsDeviceStatusSubscription = 
+      _gpsUseCases.subscribeTracking.gpsDeviceStatus.listen(
+    (deviceStatus) {
+      if (kDebugMode) {
+        print('🛰️ [GPS BLoC] GPS Device status: $deviceStatus');
+      }
+      // Si necesitas emitir estado, usa add() también
+      // add(_GpsDeviceStatusChangedEvent(deviceStatus));
+    },
+    onError: (error) {
+      if (kDebugMode) {
+        print('❌ [GPS BLoC] Error en stream de GPS device: $error');
+      }
+    },
+  );
+}
+
 
   /// Cancelar subscripciones a streams
   Future<void> _cancelStreamSubscriptions() async {
@@ -286,30 +403,51 @@ class GpsBloc extends Bloc<GpsEvent, GpsState> {
     try {
       if (kDebugMode) {
         print('📡 [GPS BLoC] Suscribiendo a todas las unidades...');
+        print('   Estado actual antes de suscribir: ${state.runtimeType}');
       }
 
-      await _gpsUseCases.subscribeTracking.subscribe(all: true);
+      // ✅ CRÍTICO: Esperar confirmación del servidor
+      final result = await _gpsUseCases.subscribeTracking.subscribe(all: true);
 
-      if (kDebugMode) {
-        print('✅ [GPS BLoC] Suscrito a todas las unidades');
+      if (result is Success<void>) {
+        if (kDebugMode) {
+          print('✅ [GPS BLoC] Suscripción confirmada por el servidor');
+        }
+
+        // Actualizar estado de conexión
+        if (state is GpsConnected) {
+          final currentState = state as GpsConnected;
+          emit(currentState.copyWith(isSubscribed: true));
+        }
+
+        // ✅ CORRECCIÓN: Usar unidades del caché
+        if (kDebugMode) {
+          print('📦 [GPS BLoC] Usando unidades del caché: ${_cachedUnidades.length}');
+          if (_cachedUnidades.isNotEmpty) {
+            print('   Placas: ${_cachedUnidades.map((u) => u.placa).join(", ")}');
+          }
+        }
+
+        // Inicializar estado de recepción con las unidades del caché
+        emit(GpsReceivingUpdates(
+          unidades: List.from(_cachedUnidades),
+          lastUpdate: DateTime.now(),
+          isConnected: true,
+          totalUnidades: _cachedUnidades.length,
+        ));
+      } else if (result is Error<void>) {
+        if (kDebugMode) {
+          print('❌ [GPS BLoC] Error en suscripción: ${result.message}');
+        }
+
+        emit(GpsError(
+          message: 'Error al suscribirse: ${result.message}',
+          occurredAt: DateTime.now(),
+        ));
       }
-
-      // Actualizar estado de conexión
-      if (state is GpsConnected) {
-        final currentState = state as GpsConnected;
-        emit(currentState.copyWith(isSubscribed: true));
-      }
-
-      // Inicializar estado de recepción
-      emit(GpsReceivingUpdates(
-        unidades: const [],
-        lastUpdate: DateTime.now(),
-        isConnected: true,
-        totalUnidades: 0,
-      ));
     } catch (e) {
       if (kDebugMode) {
-        print('❌ [GPS BLoC] Error suscribiendo: $e');
+        print('❌ [GPS BLoC] Excepción suscribiendo: $e');
       }
 
       emit(GpsError(
@@ -615,9 +753,21 @@ class GpsBloc extends Bloc<GpsEvent, GpsState> {
     try {
       if (kDebugMode) {
         print('🔍 [GPS BLoC] Cargando ubicaciones actuales...');
+        print('   Estado actual: ${state.runtimeType}');
       }
 
-      emit(const GpsLoadingLocations());
+      // ✅ CORRECCIÓN CRÍTICA: Guardar el estado anterior ANTES de emitir loading
+      final previousState = state;
+      final wasReceivingUpdates = previousState is GpsReceivingUpdates;
+      
+      if (kDebugMode) {
+        print('   ¿Estaba recibiendo updates?: $wasReceivingUpdates');
+      }
+
+      // Solo emitir loading si NO estamos recibiendo updates
+      if (!wasReceivingUpdates) {
+        emit(const GpsLoadingLocations());
+      }
 
       final result = await _gpsUseCases.getCurrentLocations(
         unidadesIds: event.unidadesIds,
@@ -629,12 +779,61 @@ class GpsBloc extends Bloc<GpsEvent, GpsState> {
       if (result is Success<UnidadesTrackingList>) {
         if (kDebugMode) {
           print('✅ [GPS BLoC] Ubicaciones cargadas: ${result.data.total}');
+          print('   Unidades REST: ${result.data.data.map((u) => u.placa).join(", ")}');
         }
 
-        emit(GpsLocationsLoaded(
-          data: result.data,
-          loadedAt: DateTime.now(),
-        ));
+        // ✅ CORRECCIÓN: Guardar unidades en caché
+        _cachedUnidades = result.data.data;
+        
+        if (kDebugMode) {
+          print('💾 [GPS BLoC] Unidades guardadas en caché: ${_cachedUnidades.length}');
+        }
+
+        // ✅ CORRECCIÓN CRÍTICA: Si estábamos recibiendo updates, mantener ese estado
+        if (wasReceivingUpdates) {
+          final currentState = previousState as GpsReceivingUpdates;
+          
+          if (kDebugMode) {
+            print('📦 [GPS BLoC] Manteniendo GpsReceivingUpdates');
+            print('   Unidades actuales en estado: ${currentState.unidades.length}');
+            print('   Placas actuales: ${currentState.unidades.map((u) => u.placa).join(", ")}');
+          }
+          
+          // Combinar unidades: mantener las del WebSocket y agregar/actualizar con las del REST
+          final Map<int, UnidadTracking> unidadesMap = {};
+          
+          // Primero agregar todas las unidades del REST
+          for (var unidad in result.data.data) {
+            unidadesMap[unidad.unidadId] = unidad;
+          }
+          
+          // Luego sobrescribir con las del WebSocket (más recientes)
+          for (var unidad in currentState.unidades) {
+            unidadesMap[unidad.unidadId] = unidad;
+          }
+          
+          if (kDebugMode) {
+            print('🔄 [GPS BLoC] Unidades combinadas: ${unidadesMap.length}');
+            print('   Placas finales: ${unidadesMap.values.map((u) => u.placa).join(", ")}');
+          }
+          
+          // ✅ MANTENER GpsReceivingUpdates
+          emit(GpsReceivingUpdates(
+            unidades: unidadesMap.values.toList(),
+            lastUpdate: DateTime.now(),
+            isConnected: currentState.isConnected,
+            totalUnidades: unidadesMap.length,
+          ));
+        } else {
+          // Solo emitir GpsLocationsLoaded si NO estábamos en modo WebSocket
+          if (kDebugMode) {
+            print('📦 [GPS BLoC] Emitiendo GpsLocationsLoaded (no hay WebSocket activo)');
+          }
+          emit(GpsLocationsLoaded(
+            data: result.data,
+            loadedAt: DateTime.now(),
+          ));
+        }
       } else if (result is Error<UnidadesTrackingList>) {
         if (kDebugMode) {
           print('❌ [GPS BLoC] Error cargando ubicaciones: ${result.message}');

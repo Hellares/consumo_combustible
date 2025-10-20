@@ -369,7 +369,7 @@ class GpsRepositoryImpl implements GpsRepository {
   // ==========================================
 
   @override
-  Future<void> subscribeToTracking({
+  Future<Resource<void>> subscribeToTracking({
     List<int>? unidadesIds,
     int? zonaId,
     bool all = false,
@@ -379,7 +379,7 @@ class GpsRepositoryImpl implements GpsRepository {
         if (kDebugMode) {
           print('⚠️ [Repo] No conectado a WebSocket, no se puede suscribir');
         }
-        throw Exception('WebSocket no conectado. Conecta primero.');
+        return Error('WebSocket no conectado. Conecta primero.');
       }
 
       if (kDebugMode) {
@@ -389,20 +389,31 @@ class GpsRepositoryImpl implements GpsRepository {
         if (unidadesIds != null) print('   Unidades: $unidadesIds');
       }
 
-      await _gpsSocketService.subscribeToTracking(
+      // ✅ Esperar confirmación del servidor
+      final result = await _gpsSocketService.subscribeToTracking(
         unidadesIds: unidadesIds,
         zonaId: zonaId,
         all: all,
       );
 
-      if (kDebugMode) {
-        print('✅ [Repo] Suscripción enviada');
+      if (result is Success) {
+        if (kDebugMode) {
+          print('✅ [Repo] Suscripción confirmada por el servidor');
+        }
+        return Success(null);
+      } else if (result is Error) {
+        if (kDebugMode) {
+          print('❌ [Repo] Error en suscripción: ${result.message}');
+        }
+        return Error(result.message);
       }
+
+      return Error('Error desconocido en suscripción');
     } catch (e) {
       if (kDebugMode) {
-        print('❌ [Repo] Error suscribiendo a tracking: $e');
+        print('❌ [Repo] Excepción suscribiendo a tracking: $e');
       }
-      rethrow;
+      return Error('Error suscribiendo: $e');
     }
   }
 

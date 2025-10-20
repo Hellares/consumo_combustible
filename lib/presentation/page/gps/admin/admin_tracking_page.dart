@@ -1,8 +1,3 @@
-// =============================================
-// Admin Tracking Page
-// Página principal de monitoreo GPS para Admin
-// =============================================
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -24,16 +19,18 @@ class AdminTrackingPage extends StatefulWidget {
 }
 
 class _AdminTrackingPageState extends State<AdminTrackingPage> {
-  // ✅ Ahora sin guion bajo
   final GlobalKey<AdminMapWidgetState> _mapKey = GlobalKey<AdminMapWidgetState>();
   int? _selectedUnitId;
   Timer? _refreshTimer;
+  GpsBloc? _gpsBloc;
+  bool _isWebSocketConnected = false;
+  String? _authToken;
 
   @override
   void initState() {
     super.initState();
     _initializeTracking();
-    
+
     // Auto-refresh cada 30 segundos
     _refreshTimer = Timer.periodic(
       const Duration(seconds: 30),
@@ -41,11 +38,17 @@ class _AdminTrackingPageState extends State<AdminTrackingPage> {
     );
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _gpsBloc ??= context.read<GpsBloc>();
+  }
+
   Future<void> _initializeTracking() async {
     // Obtener token
     final authUseCases = locator<AuthUseCases>();
     final session = await authUseCases.getUserSession.run();
-    
+
     if (session?.data?.token == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -57,22 +60,12 @@ class _AdminTrackingPageState extends State<AdminTrackingPage> {
       return;
     }
 
-    final token = session!.data!.token;
-
+    _authToken = session!.data!.token;
     if (!mounted) return;
 
-    // Conectar al WebSocket
-    context.read<GpsBloc>().add(ConnectWebSocketEvent(token));
-    
-    // Esperar un momento y suscribirse a todas las unidades
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    if (!mounted) return;
-    
-    context.read<GpsBloc>().add(const SubscribeToAllUnitsEvent());
-    
-    // Cargar ubicaciones actuales
-    _refreshLocations();
+    // ✅ CORRECCIÓN: Primero cargar ubicaciones REST
+    // El listener se encargará de conectar el WebSocket cuando las ubicaciones estén cargadas
+    context.read<GpsBloc>().add(const LoadCurrentLocationsEvent());
   }
 
   void _refreshLocations() {
@@ -84,8 +77,6 @@ class _AdminTrackingPageState extends State<AdminTrackingPage> {
     setState(() {
       _selectedUnitId = unidadId;
     });
-    
-    // ✅ Centrar mapa en la unidad
     _mapKey.currentState?.centerOnUnit(unidadId);
   }
 
@@ -109,6 +100,19 @@ class _AdminTrackingPageState extends State<AdminTrackingPage> {
       ),
       body: BlocConsumer<GpsBloc, GpsState>(
         listener: (context, state) {
+          // ✅ CORRECCIÓN: Conectar WebSocket después de cargar ubicaciones
+          if (state is GpsLocationsLoaded && !_isWebSocketConnected && _authToken != null) {
+            _isWebSocketConnected = true;
+            // Conectar con auto-suscripción después de que las ubicaciones estén cargadas
+            Future.delayed(const Duration(milliseconds: 100), () {
+              if (mounted) {
+                context.read<GpsBloc>().add(
+                  ConnectWebSocketEvent(_authToken!, autoSubscribe: true),
+                );
+              }
+            });
+          }
+          
           if (state is GpsError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -118,10 +122,43 @@ class _AdminTrackingPageState extends State<AdminTrackingPage> {
             );
           }
         },
-        builder: (context, state) {
-          // Obtener lista de unidades
-          List<UnidadTracking> unidades = [];
+        // ✅ OPTIMIZACIÓN: Solo reconstruir cuando cambien las ubicaciones
+        buildWhen: (previous, current) {
+          // Reconstruir si:
+          // 1. Cambia de/a estado de loading
+          if (current is GpsLoadingLocations || previous is GpsLoadingLocations) {
+            return true;
+          }
           
+          // 2. Se cargan ubicaciones nuevas
+          if (current is GpsLocationsLoaded) {
+            return true;
+          }
+          
+          // 3. Llegan actualizaciones del WebSocket
+          if (current is GpsReceivingUpdates) {
+            // Solo reconstruir si cambió el número de unidades o sus datos
+            if (previous is GpsReceivingUpdates) {
+              // Comparar si realmente cambió algo relevante
+              return current.unidades.length != previous.unidades.length ||
+                     current.lastUpdate != previous.lastUpdate;
+            }
+            return true;
+          }
+          
+          // 4. Hay un error
+          if (current is GpsError) {
+            return true;
+          }
+          
+          // Para otros estados, no reconstruir
+          return false;
+        },
+        builder: (context, state) {
+          List<UnidadTracking> unidades = [];
+
+          // ✅ CORRECCIÓN: Priorizar GpsReceivingUpdates que ahora contiene
+          // todas las unidades (activas e inactivas)
           if (state is GpsReceivingUpdates) {
             unidades = state.unidades;
           } else if (state is GpsLocationsLoaded) {
@@ -130,14 +167,10 @@ class _AdminTrackingPageState extends State<AdminTrackingPage> {
 
           return Column(
             children: [
-              // Estadísticas
               TrackingStatsWidget(unidades: unidades),
-              
-              // Contenido principal
               Expanded(
                 child: Row(
                   children: [
-                    // Panel lateral con lista de unidades
                     SizedBox(
                       width: 300,
                       child: UnitsListPanel(
@@ -147,11 +180,7 @@ class _AdminTrackingPageState extends State<AdminTrackingPage> {
                         onRefresh: _refreshLocations,
                       ),
                     ),
-                    
-                    // Mapa
-                    Expanded(
-                      child: _buildMapSection(state, unidades),
-                    ),
+                    Expanded(child: _buildMapSection(state, unidades)),
                   ],
                 ),
               ),
@@ -164,9 +193,7 @@ class _AdminTrackingPageState extends State<AdminTrackingPage> {
 
   Widget _buildMapSection(GpsState state, List<UnidadTracking> unidades) {
     if (state is GpsLoadingLocations) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (unidades.isEmpty) {
@@ -174,26 +201,16 @@ class _AdminTrackingPageState extends State<AdminTrackingPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.map_outlined,
-              size: 80,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.map_outlined, size: 80, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               'No hay unidades con ubicación',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 18, color: Colors.grey[600]),
             ),
             const SizedBox(height: 8),
             Text(
               'Las unidades aparecerán aquí cuando envíen su ubicación',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
             ),
           ],
         ),
@@ -211,7 +228,6 @@ class _AdminTrackingPageState extends State<AdminTrackingPage> {
   }
 
   void _showFilters() {
-    // TODO: Implementar filtros
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Filtros próximamente')),
     );
@@ -220,10 +236,7 @@ class _AdminTrackingPageState extends State<AdminTrackingPage> {
   @override
   void dispose() {
     _refreshTimer?.cancel();
-    
-    // Desconectar WebSocket
-    context.read<GpsBloc>().add(const DisconnectWebSocketEvent());
-    
+    _gpsBloc?.add(const DisconnectWebSocketEvent());
     super.dispose();
   }
 }

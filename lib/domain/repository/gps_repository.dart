@@ -183,12 +183,15 @@ abstract class GpsRepository {
   Stream<GpsDeviceStatus> get gpsDeviceStatusStream;
 
   /// Suscribirse a actualizaciones de tracking
-  /// 
+  ///
   /// **Parámetros:**
   /// - [unidadesIds]: Lista de IDs de unidades (opcional)
   /// - [zonaId]: ID de zona (opcional)
   /// - [all]: Suscribirse a todas las unidades (default: false)
-  Future<void> subscribeToTracking({
+  ///
+  /// **Retorna:**
+  /// - [Resource<void>]: Success si se suscribió correctamente, Error si falló
+  Future<Resource<void>> subscribeToTracking({
     List<int>? unidadesIds,
     int? zonaId,
     bool all = false,

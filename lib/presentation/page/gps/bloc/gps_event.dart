@@ -3,6 +3,7 @@
 // Eventos que dispara la UI
 // =============================================
 
+import 'package:consumo_combustible/domain/models/unidad_tracking.dart';
 import 'package:equatable/equatable.dart';
 import 'package:consumo_combustible/domain/models/gps_location.dart';
 
@@ -20,11 +21,15 @@ abstract class GpsEvent extends Equatable {
 /// Conectar al WebSocket
 class ConnectWebSocketEvent extends GpsEvent {
   final String token;
+  final bool? autoSubscribe;
 
-  const ConnectWebSocketEvent(this.token);
+  const ConnectWebSocketEvent(
+    this.token, {
+    this.autoSubscribe = true, // ✅ Por defecto true
+  });
 
   @override
-  List<Object?> get props => [token];
+  List<Object?> get props => [token, autoSubscribe];
 }
 
 /// Desconectar del WebSocket
@@ -194,6 +199,26 @@ class LoadLocationHistoryEvent extends GpsEvent {
     pageSize,
   ];
 }
+
+
+class LocationReceivedEvent extends GpsEvent {
+  final UnidadTracking unidadTracking;
+
+  const LocationReceivedEvent(this.unidadTracking);
+
+  @override
+  List<Object?> get props => [unidadTracking];
+}
+
+class ConnectionStatusChangedEvent extends GpsEvent {
+  final bool isConnected;
+
+  const ConnectionStatusChangedEvent(this.isConnected);
+
+  @override
+  List<Object?> get props => [isConnected];
+}
+
 
 /// Cargar historial del día actual
 class LoadTodayHistoryEvent extends GpsEvent {

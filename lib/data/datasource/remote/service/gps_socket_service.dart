@@ -1,20 +1,15 @@
-// =============================================
-// GPS Socket Service - WebSocket en Tiempo Real
-// PARTE 1/3: Configuración y Conexión
-// =============================================
-
 import 'dart:async';
 import 'package:consumo_combustible/domain/models/gps_location.dart';
 import 'package:consumo_combustible/domain/models/tracking_status.dart';
 import 'package:flutter/foundation.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:consumo_combustible/domain/models/unidad_tracking.dart';
 import 'package:consumo_combustible/domain/repository/gps_repository.dart';
 import 'package:consumo_combustible/domain/utils/resource.dart';
 
 class GpsSocketService {
   // Socket.IO client
-  IO.Socket? _socket;
+  io.Socket? _socket;
 
   // Configuración
   final String baseUrl;
@@ -22,12 +17,19 @@ class GpsSocketService {
 
   // Estado de conexión
   bool _isConnected = false;
+  bool _isSubscribed = false;
+  bool _isAuthenticated = false; // ✅ NUEVO: Estado de autenticación
   String? _currentToken;
 
   // Streams Controllers
   final _locationUpdatesController = StreamController<UnidadTracking>.broadcast();
   final _connectionStatusController = StreamController<bool>.broadcast();
   final _gpsDeviceStatusController = StreamController<GpsDeviceStatus>.broadcast();
+  final _subscriptionStatusController = StreamController<bool>.broadcast();
+
+  // ✅ NUEVO: Completers para sincronización
+  Completer<void>? _subscriptionCompleter;
+  Completer<void>? _authenticationCompleter; // ✅ NUEVO: Para esperar autenticación
 
   // Getters para streams
   Stream<UnidadTracking> get locationUpdatesStream => 
@@ -39,9 +41,13 @@ class GpsSocketService {
   Stream<GpsDeviceStatus> get gpsDeviceStatusStream => 
       _gpsDeviceStatusController.stream;
 
-  bool get isConnected => _isConnected;
+  // ✅ NUEVO: Stream de estado de suscripción
+  Stream<bool> get subscriptionStatusStream =>
+      _subscriptionStatusController.stream;
 
-  // GpsSocketService({required this.baseUrl});
+  bool get isConnected => _isConnected;
+  bool get isSubscribed => _isSubscribed; // ✅ NUEVO
+
   GpsSocketService({required this.baseUrl}) {
     if (kDebugMode) {
       print('🌐 [GPS Socket] Configurado con URL: $baseUrl');
@@ -49,8 +55,6 @@ class GpsSocketService {
       print('   Full URL: $baseUrl$_namespace');
     }
   }
-
-  
 
   // ==========================================
   // CONEXIÓN Y DESCONEXIÓN
@@ -73,18 +77,22 @@ class GpsSocketService {
       _currentToken = token;
 
       // Configurar opciones del socket
-      _socket = IO.io(
+      _socket = io.io(
         '$baseUrl$_namespace',
-        IO.OptionBuilder()
-            .setTransports(['websocket']) // Solo WebSocket, no polling
+        io.OptionBuilder()
+            .setTransports(['websocket', 'polling']) // ✅ Cambiado: Ambos transportes
             .enableAutoConnect()
             .enableReconnection()
             .setReconnectionAttempts(5)
             .setReconnectionDelay(2000)
             .setReconnectionDelayMax(10000)
+            .setPath('/socket.io')
             // Autenticación JWT
             .setAuth({
               'token': token,
+            })
+            .setExtraHeaders({
+              'Authorization': 'Bearer $token',
             })
             // Query params (alternativa)
             .setQuery({
@@ -93,10 +101,10 @@ class GpsSocketService {
             .build(),
       );
 
-      // Configurar listeners de eventos
+      // ✅ IMPORTANTE: Configurar listeners ANTES de conectar
       _setupSocketListeners();
 
-      // Conectar manualmente (aunque auto-connect está habilitado)
+      // Conectar
       _socket!.connect();
 
       // Esperar confirmación de conexión (timeout 10 segundos)
@@ -161,6 +169,13 @@ class GpsSocketService {
         print('🔌 [GPS Socket] Desconectando...');
       }
 
+      // ✅ Resetear estados
+      _isSubscribed = false;
+      _isAuthenticated = false;
+      _subscriptionStatusController.add(false);
+      _subscriptionCompleter = null;
+      _authenticationCompleter = null;
+
       _socket?.disconnect();
       _socket?.dispose();
       _socket = null;
@@ -200,99 +215,176 @@ class GpsSocketService {
 
   /// Configurar todos los event listeners del socket
   void _setupSocketListeners() {
-  if (_socket == null) return;
+    if (_socket == null) return;
 
-  // Conexión exitosa
-  _socket!.onConnect((_) {
-    if (kDebugMode) {
-      print('✅ [GPS Socket] Conectado - Socket ID: ${_socket!.id}');
+    // Conexión exitosa
+    _socket!.onConnect((_) {
+      if (kDebugMode) {
+        print('✅ [GPS Socket] Conectado - Socket ID: ${_socket!.id}');
+      }
+      _isConnected = true;
+      _connectionStatusController.add(true);
+    });
+
+    // Desconexión
+    _socket!.onDisconnect((reason) {
+      if (kDebugMode) {
+        print('❌ [GPS Socket] Desconectado - Razón: $reason');
+      }
+      _isConnected = false;
+      _isSubscribed = false;
+      _isAuthenticated = false; // ✅ Resetear autenticación
+      _connectionStatusController.add(false);
+      _subscriptionStatusController.add(false);
+    });
+
+    // Error de conexión
+    _socket!.onConnectError((error) {
+      if (kDebugMode) {
+        print('❌ [GPS Socket] Error de conexión: $error');
+      }
+      _isConnected = false;
+      _connectionStatusController.add(false);
+    });
+
+    // Error general
+    _socket!.onError((error) {
+      if (kDebugMode) {
+        print('❌ [GPS Socket] Error: $error');
+      }
+    });
+
+    // Reconexión exitosa
+    _socket!.onReconnect((attemptNumber) {
+      if (kDebugMode) {
+        print('🔄 [GPS Socket] Reconectado exitosamente (intento $attemptNumber)');
+      }
+      _isConnected = true;
+      _connectionStatusController.add(true);
+      // ✅ Resetear estados al reconectar
+      _isSubscribed = false;
+      _isAuthenticated = false;
+      _subscriptionStatusController.add(false);
+    });
+
+    // Intentando reconectar
+    _socket!.on('reconnect_attempt', (attemptNumber) {
+      if (kDebugMode) {
+        print('🔄 [GPS Socket] Intentando reconectar... (intento $attemptNumber)');
+      }
+    });
+
+    // Error al reconectar
+    _socket!.on('reconnect_error', (error) {
+      if (kDebugMode) {
+        print('❌ [GPS Socket] Error al reconectar: $error');
+      }
+    });
+
+    // Reconexión fallida (se agotaron intentos)
+    _socket!.on('reconnect_failed', (_) {
+      if (kDebugMode) {
+        print('❌ [GPS Socket] Reconexión fallida - Agotados los intentos');
+      }
+      _isConnected = false;
+      _connectionStatusController.add(false);
+    });
+
+    // Ping/Pong (opcional, para monitoreo)
+    _socket!.on('ping', (_) {
+      if (kDebugMode) {
+        print('🏓 [GPS Socket] Ping recibido del servidor');
+      }
+    });
+
+    _socket!.on('pong', (latency) {
+      if (kDebugMode) {
+        print('🏓 [GPS Socket] Pong - Latencia: ${latency}ms');
+      }
+    });
+
+    // ✅ NUEVO: Evento de autenticación completada
+    _socket!.on('authenticated', (data) {
+      if (kDebugMode) {
+        print('✅ [GPS Socket] Autenticación completada');
+        print('   Data: $data');
+      }
+      
+      _isAuthenticated = true;
+      
+      // Completar el Future si está esperando
+      if (_authenticationCompleter != null && !_authenticationCompleter!.isCompleted) {
+        _authenticationCompleter!.complete();
+        if (kDebugMode) {
+          print('✅ [GPS Socket] Completer de autenticación completado');
+        }
+      }
+    });
+
+    // Confirmación de conexión del servidor (fallback)
+    _socket!.on('connection:status', (data) {
+      if (kDebugMode) {
+        print('📡 [GPS Socket] Estado de conexión: $data');
+      }
+      
+      // ✅ Usar como fallback si no hay evento 'authenticated'
+      if (data != null && data is Map) {
+        final connected = data['connected'] as bool?;
+        final userId = data['userId'];
+        
+        if (connected == true && userId != null && !_isAuthenticated) {
+          if (kDebugMode) {
+            print('✅ [GPS Socket] Autenticación detectada via connection:status');
+          }
+          _isAuthenticated = true;
+          
+          if (_authenticationCompleter != null && !_authenticationCompleter!.isCompleted) {
+            _authenticationCompleter!.complete();
+          }
+        }
+      }
+    });
+
+    // Configurar eventos GPS
+    _setupGpsEventListeners();
+  }
+
+  /// ✅ NUEVO: Esperar a que se complete la autenticación
+  Future<void> _waitForAuthentication({
+    required Duration timeout,
+  }) async {
+    if (_isAuthenticated) {
+      if (kDebugMode) {
+        print('✅ [GPS Socket] Ya autenticado');
+      }
+      return;
     }
-    _isConnected = true;
-    _connectionStatusController.add(true);
-  });
 
-  // Desconexión
-  _socket!.onDisconnect((reason) {
     if (kDebugMode) {
-      print('❌ [GPS Socket] Desconectado - Razón: $reason');
+      print('⏳ [GPS Socket] Esperando autenticación del servidor...');
     }
-    _isConnected = false;
-    _connectionStatusController.add(false);
-  });
 
-  // Error de conexión
-  _socket!.onConnectError((error) {
-    if (kDebugMode) {
-      print('❌ [GPS Socket] Error de conexión: $error');
+    _authenticationCompleter = Completer<void>();
+
+    try {
+      await _authenticationCompleter!.future.timeout(
+        timeout,
+        onTimeout: () {
+          if (kDebugMode) {
+            print('⚠️ [GPS Socket] Timeout esperando autenticación');
+          }
+          throw TimeoutException('Timeout esperando autenticación del servidor');
+        },
+      );
+
+      if (kDebugMode) {
+        print('✅ [GPS Socket] Autenticación confirmada');
+      }
+    } finally {
+      _authenticationCompleter = null;
     }
-    _isConnected = false;
-    _connectionStatusController.add(false);
-  });
+  }
 
-  // Error general
-  _socket!.onError((error) {
-    if (kDebugMode) {
-      print('❌ [GPS Socket] Error: $error');
-    }
-  });
-
-  // Reconexión exitosa
-  _socket!.onReconnect((attemptNumber) {
-    if (kDebugMode) {
-      print('🔄 [GPS Socket] Reconectado exitosamente (intento $attemptNumber)');
-    }
-    _isConnected = true;
-    _connectionStatusController.add(true);
-  });
-
-  // Intentando reconectar
-  _socket!.on('reconnect_attempt', (attemptNumber) {
-    if (kDebugMode) {
-      print('🔄 [GPS Socket] Intentando reconectar... (intento $attemptNumber)');
-    }
-  });
-
-  // Error al reconectar
-  _socket!.on('reconnect_error', (error) {
-    if (kDebugMode) {
-      print('❌ [GPS Socket] Error al reconectar: $error');
-    }
-  });
-
-  // Reconexión fallida (se agotaron intentos)
-  _socket!.on('reconnect_failed', (_) {
-    if (kDebugMode) {
-      print('❌ [GPS Socket] Reconexión fallida - Agotados los intentos');
-    }
-    _isConnected = false;
-    _connectionStatusController.add(false);
-  });
-
-  // Ping/Pong (opcional, para monitoreo)
-  _socket!.on('ping', (_) {
-    if (kDebugMode) {
-      print('🏓 [GPS Socket] Ping recibido del servidor');
-    }
-  });
-
-  _socket!.on('pong', (latency) {
-    if (kDebugMode) {
-      print('🏓 [GPS Socket] Pong - Latencia: ${latency}ms');
-    }
-  });
-
-  // Confirmación de conexión del servidor
-  _socket!.on('connection:status', (data) {
-    if (kDebugMode) {
-      print('📡 [GPS Socket] Estado de conexión: $data');
-    }
-  });
-
-  // Configurar eventos GPS
-  _setupGpsEventListeners();
-}
-
-  /// Método placeholder para eventos GPS (lo implementamos en Parte 2)
   // ==========================================
   // EVENTOS GPS DEL SERVIDOR
   // ==========================================
@@ -361,7 +453,6 @@ class GpsSocketService {
               ? data
               : Map<String, dynamic>.from(data as Map);
 
-          // Aquí podrías emitir a otro stream si necesitas estados
           if (kDebugMode) {
             print('   Unidad: ${jsonData['unidadId']}, isOnline: ${jsonData['status']?['isOnline']}');
           }
@@ -421,7 +512,7 @@ class GpsSocketService {
     _socket!.on('gps:device:inactive', (data) {
       try {
         if (kDebugMode) {
-          print('📵 [GPS Socket] gps:device:inactive recibido');
+          print('🔵 [GPS Socket] gps:device:inactive recibido');
         }
 
         if (data != null) {
@@ -445,10 +536,23 @@ class GpsSocketService {
 
     // === EVENTOS DE CONFIRMACIÓN ===
 
-    // Suscripción exitosa
+    // ✅ CRÍTICO: Suscripción exitosa
     _socket!.on('tracking:subscribed', (data) {
       if (kDebugMode) {
-        print('✅ [GPS Socket] tracking:subscribed: $data');
+        print('✅ [GPS Socket] tracking:subscribed recibido');
+        print('   Data: $data');
+      }
+
+      // ✅ Actualizar estado
+      _isSubscribed = true;
+      _subscriptionStatusController.add(true);
+
+      // ✅ Completar el Future si está esperando
+      if (_subscriptionCompleter != null && !_subscriptionCompleter!.isCompleted) {
+        _subscriptionCompleter!.complete();
+        if (kDebugMode) {
+          print('✅ [GPS Socket] Completer de suscripción completado');
+        }
       }
     });
 
@@ -457,6 +561,8 @@ class GpsSocketService {
       if (kDebugMode) {
         print('✅ [GPS Socket] tracking:unsubscribed: $data');
       }
+      _isSubscribed = false;
+      _subscriptionStatusController.add(false);
     });
 
     // === EVENTOS DE ERROR ===
@@ -465,6 +571,11 @@ class GpsSocketService {
     _socket!.on('error', (data) {
       if (kDebugMode) {
         print('❌ [GPS Socket] error: $data');
+      }
+
+      // ✅ Si hay error durante suscripción, completar con error
+      if (_subscriptionCompleter != null && !_subscriptionCompleter!.isCompleted) {
+        _subscriptionCompleter!.completeError(data ?? 'Error desconocido');
       }
 
       if (data != null) {
@@ -496,14 +607,6 @@ class GpsSocketService {
   /// Parsear broadcast de ubicación a UnidadTracking
   UnidadTracking? _parseLocationBroadcast(Map<String, dynamic> data) {
     try {
-      // Estructura esperada del backend:
-      // {
-      //   "unidadId": 1,
-      //   "placa": "ABC-123",
-      //   "location": { ... GpsLocation ... },
-      //   "conductor": { "id": 5, "nombreCompleto": "Juan Pérez" }
-      // }
-
       final unidadId = data['unidadId'] as int?;
       final placa = data['placa'] as String?;
       final locationData = data['location'] as Map<String, dynamic>?;
@@ -516,18 +619,15 @@ class GpsSocketService {
         return null;
       }
 
-      // Importar modelos necesarios
       final location = _parseGpsLocation(locationData);
       final conductor = conductorData != null 
           ? ConductorInfo.fromJson(conductorData)
           : null;
 
-      // Calcular tiempo transcurrido
       final tiempoTranscurrido = location != null
           ? DateTime.now().difference(location.fechaHora).inSeconds
           : 0;
 
-      // Determinar estado según velocidad
       UnitMovementStatus estado;
       if (location?.velocidad != null && location!.velocidad! > 5) {
         estado = UnitMovementStatus.activo;
@@ -583,7 +683,6 @@ class GpsSocketService {
         print('📤 [GPS Socket] Enviando ubicación: Unidad ${location.unidadId}');
       }
 
-      // Evento: location:update
       _socket!.emit('location:update', location.toJson());
 
       if (kDebugMode) {
@@ -598,26 +697,47 @@ class GpsSocketService {
   }
 
   // ==========================================
-  // SUSCRIPCIONES A TRACKING
+  // SUSCRIPCIONES A TRACKING - MEJORADO ✅
   // ==========================================
 
-  /// Suscribirse a actualizaciones de tracking
-  Future<void> subscribeToTracking({
+  /// Suscribirse a actualizaciones de tracking CON CONFIRMACIÓN
+  Future<Resource<void>> subscribeToTracking({
     List<int>? unidadesIds,
     int? zonaId,
     bool all = false,
+    Duration authTimeout = const Duration(seconds: 5),
+    Duration subscriptionTimeout = const Duration(seconds: 5),
   }) async {
     if (!_isConnected || _socket == null) {
       if (kDebugMode) {
         print('⚠️ [GPS Socket] No conectado para suscribirse');
       }
-      throw Exception('WebSocket no conectado');
+      return Error('WebSocket no conectado');
     }
 
     try {
+      // ✅ PASO 1: Esperar autenticación del servidor
+      if (!_isAuthenticated) {
+        if (kDebugMode) {
+          print('⏳ [GPS Socket] Esperando autenticación antes de suscribirse...');
+        }
+        
+        try {
+          await _waitForAuthentication(timeout: authTimeout);
+        } catch (e) {
+          if (kDebugMode) {
+            print('❌ [GPS Socket] Error esperando autenticación: $e');
+          }
+          return Error('Timeout esperando autenticación del servidor');
+        }
+      }
+
+      // ✅ PASO 2: Suscribirse al tracking
       if (kDebugMode) {
         print('📡 [GPS Socket] Suscribiendo a tracking...');
       }
+
+      _subscriptionCompleter = Completer<void>();
 
       final payload = <String, dynamic>{};
 
@@ -633,20 +753,38 @@ class GpsSocketService {
         payload['unidadesIds'] = unidadesIds;
       }
 
-      // Evento: tracking:subscribe
+      // Emitir evento de suscripción
       _socket!.emit('tracking:subscribe', payload);
 
       if (kDebugMode) {
-        print('✅ [GPS Socket] Solicitud de suscripción enviada');
+        print('📤 [GPS Socket] Solicitud de suscripción enviada');
         if (all) print('   - Modo: TODAS las unidades');
         if (zonaId != null) print('   - Zona: $zonaId');
         if (unidadesIds != null) print('   - Unidades: $unidadesIds');
       }
+
+      // ✅ PASO 3: Esperar confirmación de suscripción
+      await _subscriptionCompleter!.future.timeout(
+        subscriptionTimeout,
+        onTimeout: () {
+          throw TimeoutException('Timeout esperando confirmación de suscripción');
+        },
+      );
+
+      if (kDebugMode) {
+        print('✅ [GPS Socket] Suscripción confirmada por el servidor');
+      }
+
+      return Success(null);
     } catch (e) {
       if (kDebugMode) {
         print('❌ [GPS Socket] Error suscribiendo: $e');
       }
-      rethrow;
+      _isSubscribed = false;
+      _subscriptionStatusController.add(false);
+      return Error('Error al suscribirse: $e');
+    } finally {
+      _subscriptionCompleter = null;
     }
   }
 
@@ -660,7 +798,7 @@ class GpsSocketService {
       if (kDebugMode) {
         print('⚠️ [GPS Socket] No conectado para desuscribirse');
       }
-      return; // No lanzar error, solo return
+      return;
     }
 
     try {
@@ -682,8 +820,11 @@ class GpsSocketService {
         payload['unidadesIds'] = unidadesIds;
       }
 
-      // Evento: tracking:unsubscribe
       _socket!.emit('tracking:unsubscribe', payload);
+
+      // ✅ Actualizar estado local
+      _isSubscribed = false;
+      _subscriptionStatusController.add(false);
 
       if (kDebugMode) {
         print('✅ [GPS Socket] Solicitud de desuscripción enviada');
@@ -709,7 +850,6 @@ class GpsSocketService {
         print('📡 [GPS Socket] Suscribiendo a unidad $unidadId...');
       }
 
-      // Evento: unit:subscribe
       _socket!.emit('unit:subscribe', {
         'unidadId': unidadId,
       });
@@ -731,7 +871,7 @@ class GpsSocketService {
       if (kDebugMode) {
         print('⚠️ [GPS Socket] No conectado para desuscribirse de unidad');
       }
-      return; // No lanzar error
+      return;
     }
 
     try {
@@ -739,7 +879,6 @@ class GpsSocketService {
         print('📡 [GPS Socket] Desuscribiendo de unidad $unidadId...');
       }
 
-      // Evento: unit:unsubscribe
       _socket!.emit('unit:unsubscribe', {
         'unidadId': unidadId,
       });
@@ -768,7 +907,6 @@ class GpsSocketService {
         print('📡 [GPS Socket] Solicitando estado de unidad $unidadId...');
       }
 
-      // Evento: status:request
       _socket!.emit('status:request', {
         'unidadId': unidadId,
       });
@@ -797,6 +935,8 @@ class GpsSocketService {
   Map<String, dynamic> getConnectionInfo() {
     return {
       'isConnected': _isConnected,
+      'isAuthenticated': _isAuthenticated, // ✅ NUEVO
+      'isSubscribed': _isSubscribed,
       'hasSocket': _socket != null,
       'socketConnected': _socket?.connected ?? false,
       'socketId': _socket?.id,
@@ -815,7 +955,6 @@ class GpsSocketService {
     }
   }
 
-
   // ==========================================
   // LIMPIEZA
   // ==========================================
@@ -831,8 +970,6 @@ class GpsSocketService {
     _locationUpdatesController.close();
     _connectionStatusController.close();
     _gpsDeviceStatusController.close();
+    _subscriptionStatusController.close(); // ✅ NUEVO
   }
-
-  
 }
-

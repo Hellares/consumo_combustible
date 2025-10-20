@@ -45,5 +45,35 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	
+	<!-- ========================================== -->
+	<!-- PERMISOS DE UBICACIÓN GPS -->
+	<!-- ========================================== -->
+	
+	<!-- Descripción para ubicación cuando la app está en uso -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Necesitamos acceso a tu ubicación para rastrear el vehículo mientras usas la aplicación</string>
+	
+	<!-- Descripción para ubicación siempre (en segundo plano) -->
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Necesitamos acceso a tu ubicación en segundo plano para rastrear continuamente el vehículo, incluso cuando la app no está activa</string>
+	
+	<!-- Descripción para ubicación siempre (iOS 10 y anterior) -->
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Necesitamos acceso a tu ubicación para rastrear el vehículo continuamente</string>
+	
+	<!-- Modos de ejecución en segundo plano -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
+	
+	<!-- Permitir ubicación en segundo plano -->
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.example.consumo_combustible.gps_tracking</string>
+	</array>
 </dict>
 </plist>

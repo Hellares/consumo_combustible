@@ -34,14 +34,17 @@ class SubscribeTrackingUseCase {
   }
 
   /// Suscribirse a tracking
-  /// 
+  ///
   /// **Parámetros:**
   /// - [all]: Suscribirse a todas las unidades (admin)
   /// - [zonaId]: Suscribirse a unidades de una zona
   /// - [unidadesIds]: Suscribirse a unidades específicas
-  /// 
+  ///
   /// **Nota:** Solo uno de los parámetros debe estar presente
-  Future<void> subscribe({
+  ///
+  /// **Retorna:**
+  /// - [Resource<void>]: Success si se suscribió correctamente, Error si falló
+  Future<Resource<void>> subscribe({
     bool all = false,
     int? zonaId,
     List<int>? unidadesIds,
@@ -54,24 +57,24 @@ class SubscribeTrackingUseCase {
     ].where((option) => option).length;
 
     if (optionsCount == 0) {
-      throw Exception('Debe especificar al menos una opción de suscripción');
+      return Error('Debe especificar al menos una opción de suscripción');
     }
 
     if (optionsCount > 1) {
-      throw Exception('Solo puede especificar una opción de suscripción a la vez');
+      return Error('Solo puede especificar una opción de suscripción a la vez');
     }
 
     // Validar parámetros específicos
     if (zonaId != null && zonaId <= 0) {
-      throw Exception('ID de zona inválido');
+      return Error('ID de zona inválido');
     }
 
     if (unidadesIds != null && unidadesIds.isEmpty) {
-      throw Exception('La lista de unidades no puede estar vacía');
+      return Error('La lista de unidades no puede estar vacía');
     }
 
-    // Suscribirse
-    await _repository.subscribeToTracking(
+    // Suscribirse y esperar confirmación
+    return await _repository.subscribeToTracking(
       all: all,
       zonaId: zonaId,
       unidadesIds: unidadesIds,

@@ -43,6 +43,7 @@ class _ConductorTrackingPageState extends State<ConductorTrackingPage> {
   Position? _currentPosition;
   Timer? _trackingTimer;
   bool _isTracking = false;
+  GpsBloc? _gpsBloc; // ✅ Guardar referencia al BLoC
   
   // Control de SnackBars
   DateTime? _lastSuccessSnackBarTime;
@@ -53,6 +54,13 @@ class _ConductorTrackingPageState extends State<ConductorTrackingPage> {
   void initState() {
     super.initState();
     _initializeTracking();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // ✅ Guardar referencia al BLoC de forma segura
+    _gpsBloc ??= context.read<GpsBloc>();
   }
 
   /// Inicializar tracking
@@ -77,6 +85,7 @@ class _ConductorTrackingPageState extends State<ConductorTrackingPage> {
     await _getCurrentLocation();
 
     // Conectar al WebSocket si hay token
+    // ✅ El socket service ahora espera automáticamente el evento 'authenticated'
     if (mounted && widget.jwtToken != null) {
       context.read<GpsBloc>().add(ConnectWebSocketEvent(widget.jwtToken!));
     }
@@ -493,12 +502,8 @@ class _ConductorTrackingPageState extends State<ConductorTrackingPage> {
       debugPrint('⚠️ Error limpiando location service: $error');
     });
     
-    // Desconectar WebSocket al salir
-    try {
-      context.read<GpsBloc>().add(const DisconnectWebSocketEvent());
-    } catch (e) {
-      debugPrint('⚠️ Error desconectando WebSocket: $e');
-    }
+    // ✅ Desconectar WebSocket usando la referencia guardada
+    _gpsBloc?.add(const DisconnectWebSocketEvent());
     
     super.dispose();
   }
