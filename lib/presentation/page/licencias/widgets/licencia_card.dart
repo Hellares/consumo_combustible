@@ -19,6 +19,7 @@ class LicenciaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: AppColors.white,
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -143,7 +144,7 @@ class LicenciaCard extends StatelessWidget {
     }
 
     return Container(
-      height: 25,
+      height: 22,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
         color: backgroundColor,
@@ -157,8 +158,7 @@ class LicenciaCard extends StatelessWidget {
           Text(
             licencia.estadoVigencia.replaceAll('_', ' '),
             style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.bold,
+              fontSize: 8,
               color: textColor,
             ),
           ),

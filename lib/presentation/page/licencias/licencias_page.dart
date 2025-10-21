@@ -5,7 +5,9 @@ import 'package:consumo_combustible/core/theme/app_colors.dart';
 import 'package:consumo_combustible/core/theme/app_gradients.dart';
 import 'package:consumo_combustible/core/theme/gradient_container.dart';
 import 'package:consumo_combustible/core/widgets/appbar/smart_appbar.dart';
+import 'package:consumo_combustible/core/widgets/custom_date_textfiels_container/custom_textfield.dart';
 import 'package:consumo_combustible/core/widgets/snack.dart';
+import 'package:consumo_combustible/data/api/api_config.dart';
 import 'package:consumo_combustible/domain/utils/resource.dart';
 import 'package:consumo_combustible/presentation/page/licencias/bloc/licencia_bloc.dart';
 import 'package:consumo_combustible/presentation/page/licencias/bloc/licencia_event.dart';
@@ -54,7 +56,12 @@ class _LicenciasPageState extends State<LicenciasPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: SmartAppBar(title: 'Licencias de Conducir', showUserInfo: true, logoPath: "assets/img/6.svg",),
+      appBar: SmartAppBar(
+        customHeight: 35,
+        title: 'Licencias de Conducir',
+        showLogo: true,
+        logoPath: ApiConfig.logoLottiePath,
+      ),
       body: BlocConsumer<LicenciaBloc, LicenciaState>(
         listener: (context, state) {
           if (state.response is Error) {
@@ -83,11 +90,11 @@ class _LicenciasPageState extends State<LicenciasPage> {
                   onFilterChanged: (filtro) {
                     // Limpiar búsqueda cuando se cambia de filtro
                     _searchController.clear();
-                    
+
                     final bloc = context.read<LicenciaBloc>();
                     // Limpiar filtro de búsqueda en el bloc
                     bloc.add(const FilterLicencias(''));
-                    
+
                     switch (filtro) {
                       case 'TODAS':
                         bloc.add(const LoadLicencias());
@@ -112,20 +119,27 @@ class _LicenciasPageState extends State<LicenciasPage> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToCreateLicencia(),
-        backgroundColor: AppColors.blue3,
-        child: const Icon(Icons.add, color: Colors.white),
+      floatingActionButton: SizedBox(
+        width: 40,
+        height: 35,
+        child: FloatingActionButton(
+          onPressed: () => _navigateToCreateLicencia(),
+          backgroundColor: AppColors.blue3,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          child: Icon(Icons.add, color: Colors.white),
+        ),
       ),
     );
   }
 
   Widget _buildSearchBar(BuildContext context) {
-    return TextField(
-      controller: _searchController,
-      decoration: InputDecoration(
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: CustomTextField(
+        // borderColor: AppColors.blue3,
+        controller: _searchController,
         hintText: 'Buscar por número, nombre, DNI...',
-        prefixIcon: const Icon(Icons.search, size: 18,),
+        prefixIcon: const Icon(Icons.search, size: 18),
         suffixIcon: _searchController.text.isNotEmpty
             ? IconButton(
                 icon: const Icon(Icons.clear),
@@ -135,24 +149,16 @@ class _LicenciasPageState extends State<LicenciasPage> {
                 },
               )
             : null,
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        hintStyle: TextStyle(fontSize: 11),
-        isDense: true
+        onChanged: (query) {
+          context.read<LicenciaBloc>().add(FilterLicencias(query));
+        },
       ),
-      onChanged: (query) {
-        context.read<LicenciaBloc>().add(FilterLicencias(query));
-      },
     );
   }
 
   Widget _buildStatsRow(LicenciaState state) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
@@ -199,7 +205,6 @@ class _LicenciasPageState extends State<LicenciasPage> {
         ],
       ),
     );
-    
   }
 
   Widget _buildLicenciasList(LicenciaState state) {
@@ -267,14 +272,12 @@ class _LicenciasPageState extends State<LicenciasPage> {
   Future<void> _navigateToCreateLicencia() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const CreateLicenciaPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const CreateLicenciaPage()),
     );
-    
+
     // Si se creó exitosamente, recargar la lista
     if (!mounted) return;
-    
+
     if (result == true) {
       context.read<LicenciaBloc>().add(const LoadLicencias(page: 1));
     }

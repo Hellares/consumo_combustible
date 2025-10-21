@@ -6,7 +6,9 @@ class ApiConfig {
   static const String productionApi = 'combustible-api.syncronize.net.pe';
   // static const String productionApi = '192.168.100.3:3000';
 
-  static const String logoPath = "assets/img/6.svg";
+  // static const String logoPath = "assets/img/6.svg";
+  static const String logoPath = "assets/img/logo.svg"; //! Ruta del logo en formato PNG o JPG de Empresa personalizada
+  static const String logoLottiePath = 'assets/animations/logo1.json'; //! Ruta de mi logo animado en Lottie
   
   static bool get isProduction => kReleaseMode;
 

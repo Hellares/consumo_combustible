@@ -3,6 +3,7 @@ import 'package:consumo_combustible/core/fonts/app_text_widgets.dart';
 import 'package:consumo_combustible/core/theme/app_colors.dart';
 import 'package:consumo_combustible/core/theme/app_gradients.dart';
 import 'package:consumo_combustible/core/theme/gradient_container.dart';
+import 'package:consumo_combustible/data/api/api_config.dart';
 import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_bloc.dart';
 import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_event.dart';
 import 'package:consumo_combustible/presentation/page/auth/login/cliente_login_page.dart';
@@ -108,15 +109,10 @@ void initState() {
       mainAxisSize: MainAxisSize.min,
       children: [
         SvgPicture.asset(
-          'assets/img/6.svg',
+          ApiConfig.logoPath,
           height: 140,
           width: 140,
         ),
-        // Image.asset(
-        //   height: 150,
-        //   width: 150,
-        //   fit: BoxFit.contain,
-        // ),
         const SizedBox(height: 25),
         AppTitle('Control de Combustible', font: AppFont.pirulentBold, fontSize: 9,)
         

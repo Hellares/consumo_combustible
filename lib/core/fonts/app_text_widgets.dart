@@ -186,7 +186,7 @@ class AppLabelText extends StatelessWidget {
   const AppLabelText(
     this.text, {
     super.key,
-    this.font = AppFont.oxygenBold,
+    this.font = AppFont.oxygenRegular,
     this.color,
     this.fontSize,
     this.textAlign,

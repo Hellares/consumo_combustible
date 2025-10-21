@@ -28,10 +28,10 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
   @override
   void initState() {
     super.initState();
-    
+
     // Cargar unidades al iniciar
     context.read<UnidadBloc>().add(const LoadAllUnidades(refresh: true));
-    
+
     // Listener para paginación infinita
     _scrollController.addListener(_onScroll);
   }
@@ -59,9 +59,10 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: SmartAppBar(
+        customHeight: 35,
         title: 'Unidades',
         showLogo: true,
-        logoPath: ApiConfig.logoPath,
+        logoPath: ApiConfig.logoLottiePath,
       ),
       body: BlocConsumer<UnidadBloc, UnidadState>(
         listener: (context, state) {
@@ -78,9 +79,7 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
         builder: (context, state) {
           // Estado inicial o loading completo
           if (state.status == UnidadStatus.loading && state.unidades.isEmpty) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           // Sin datos
@@ -97,16 +96,13 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
                   const SizedBox(height: 16),
                   Text(
                     'No hay unidades registradas',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
                     onPressed: () {
                       // Navegar a crear unidad
-                      Navigator.pushNamed(context, '/crear-unidad');
+                      Navigator.pushNamed(context, 'crear-unidad');
                     },
                     icon: const Icon(Icons.add),
                     label: const Text('Crear Primera Unidad'),
@@ -119,7 +115,9 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
           // Lista con datos
           return RefreshIndicator(
             onRefresh: () async {
-              context.read<UnidadBloc>().add(const LoadAllUnidades(refresh: true));
+              context.read<UnidadBloc>().add(
+                const LoadAllUnidades(refresh: true),
+              );
               // Esperar a que se complete la carga
               await Future.delayed(const Duration(milliseconds: 500));
             },
@@ -127,7 +125,7 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
               children: [
                 // Header con información
                 _buildHeader(state),
-                
+
                 // Lista de unidades
                 Expanded(
                   child: ListView.builder(
@@ -139,9 +137,7 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
                       if (index >= state.unidades.length) {
                         return const Padding(
                           padding: EdgeInsets.all(16.0),
-                          child: Center(
-                            child: CircularProgressIndicator(),
-                          ),
+                          child: Center(child: CircularProgressIndicator()),
                         );
                       }
 
@@ -160,32 +156,28 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
         width: 130,
         child: FloatingActionButton.extended(
           backgroundColor: AppColors.blue3,
-          icon: const Icon(Icons.add, color: Colors.white,size: 16,),
+          icon: const Icon(Icons.add, color: Colors.white, size: 16),
           onPressed: _navigateToCreateUnidad,
           label: Text(
-              'Nueva Unidad',
-              style: AppFont.pirulentBold.style(
-                fontSize: 8,
-                color: Colors.white,
-              ),
-            ),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),        
-      ),      
+            'Nueva Unidad',
+            style: AppFont.pirulentBold.style(fontSize: 8, color: Colors.white),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      ),
     );
   }
 
   Widget _buildHeader(UnidadState state) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      alignment: Alignment.center,
+      height: 35,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       decoration: BoxDecoration(
         // color: Theme.of(context).primaryColor.withOpacity(0.1),
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.grey[300]!,
-            width: 1,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: Colors.grey[300]!, width: 1)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -200,18 +192,16 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 'Página ${state.currentPage} de ${state.totalPages}',
-                style: TextStyle(
-                  fontSize: 8,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 8, color: Colors.grey[600]),
               ),
             ],
           ),
           IconButton(
-            icon: const Icon(Icons.filter_list),
+            padding: EdgeInsets.zero,
+            icon: const Icon(Icons.filter_list, size: 20),
             onPressed: () {
               // TODO: Implementar filtros
               ScaffoldMessenger.of(context).showSnackBar(
@@ -224,148 +214,209 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
     );
   }
 
+
   Widget _buildUnidadCard(BuildContext context, Unidad unidad) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
-      child: InkWell(
-        onTap: () {
-          // Navegar a detalle
-          // Navigator.pushNamed(
-          //   context,
-          //   '/unidad-detalle',
-          //   arguments: unidad.id,
-          // );
-        },
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10,vertical: 4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header: Placa y Estado
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            // Navegar a detalle
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header: Placa, Modelo y Estado
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.blue3.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
                         Icons.local_shipping,
                         color: AppColors.blue3,
-                        size: 20,
+                        size: 16,
                       ),
-                      const SizedBox(width: 12),
-                      Column(
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             unidad.placa,
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: 10,
                               fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
                             ),
                           ),
+                          const SizedBox(height: 2),
                           Text(
                             '${unidad.marca} ${unidad.modelo}',
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: 9,
                               color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _buildEstadoChip(unidad.estado),
+                  ],
+                ),
+
+                const SizedBox(height: 6),
+
+                // Grid de información compacta
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildInfoItem(
+                              icon: Icons.person_outline,
+                              label: 'Conductor',
+                              value: unidad.conductorOperador.nombreCompleto,
+                            ),
+                          ),
+                          SizedBox(width: 7,),
+                          Container(
+                            width: 1,
+                            height: 32,
+                            color: Colors.grey[300],
+                          ),
+                          SizedBox(width: 7,),
+                          Expanded(
+                            child: _buildInfoItem(
+                              icon: Icons.location_on_outlined,
+                              label: 'Zona',
+                              value: unidad.zonaOperacion.nombre,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      Divider(height: 20, color: Colors.grey[300]),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildInfoItem(
+                              icon: Icons.local_gas_station_outlined,
+                              label: 'Combustible',
+                              value: unidad.tipoCombustible,
+                            ),
+                          ),
+                          SizedBox(width: 7,),
+                          Container(
+                            width: 1,
+                            height: 32,
+                            color: Colors.grey[300],
+                          ),
+                          SizedBox(width: 7,),
+                          Expanded(
+                            child: _buildInfoItem(
+                              icon: Icons.water_drop_outlined,
+                              label: 'Tanque',
+                              value:
+                                  '${unidad.capacidadTanque.toStringAsFixed(0)} L',
                             ),
                           ),
                         ],
                       ),
                     ],
                   ),
-                  _buildEstadoChip(unidad.estado),
-                ],
-              ),
-              
-              const Divider(height: 24),
-              
-              // Información detallada
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildInfoItem(
-                      icon: Icons.person,
-                      label: 'Conductor',
-                      value: unidad.conductorOperador.nombreCompleto,
+                ),
+
+                const SizedBox(height: 12),
+
+                // Estadísticas en línea horizontal
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatItem(
+                        icon: Icons.speed,
+                        label: 'Km',
+                        value: unidad.odometroInicial.toStringAsFixed(0),
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: _buildInfoItem(
-                      icon: Icons.location_on,
-                      label: 'Zona',
-                      value: unidad.zonaOperacion.nombre,
+                    Container(width: 1, height: 40, color: Colors.grey[200]),
+                    Expanded(
+                      child: _buildStatItem(
+                        icon: Icons.calendar_today_outlined,
+                        label: 'Antigüedad',
+                        value: '${unidad.antiguedadAnios} años',
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              
-              const SizedBox(height: 12),
-              
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildInfoItem(
-                      icon: Icons.local_gas_station,
-                      label: 'Combustible',
-                      value: unidad.tipoCombustible,
+                    Container(width: 1, height: 40, color: Colors.grey[200]),
+                    Expanded(
+                      child: _buildStatItem(
+                        icon: Icons.build_outlined,
+                        label: 'Mantenim.',
+                        value: unidad.mantenimientosCount.toString(),
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: _buildInfoItem(
-                      icon: Icons.water_drop,
-                      label: 'Tanque',
-                      value: '${unidad.capacidadTanque.toStringAsFixed(0)} L',
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Botón de tracking mejorado
+                SizedBox(
+                  width: double.infinity,
+                  height: 35,
+                  child: ElevatedButton(
+                    onPressed: () => _navigateToGpsTracking(unidad),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.blue3,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              
-              const SizedBox(height: 12),
-              
-              // Estadísticas
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildStatItem(
-                    icon: Icons.speed,
-                    label: 'Km',
-                    value: unidad.odometroInicial.toStringAsFixed(0),
-                  ),
-                  _buildStatItem(
-                    icon: Icons.calendar_today,
-                    label: 'Antigüedad',
-                    value: '${unidad.antiguedadAnios} años',
-                  ),
-                  _buildStatItem(
-                    icon: Icons.build,
-                    label: 'Mantenimientos',
-                    value: unidad.mantenimientosCount.toString(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Divider(height: 1),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => _navigateToGpsTracking(unidad),
-                  icon: const Icon(Icons.gps_fixed, size: 18),
-                  label: const Text('Ver Tracking GPS'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.blue3,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.gps_fixed, size: 16),
+                        const SizedBox(width: 8),
+                        AppTitle(
+                          'Ver Tracking GPS',
+                          fontSize: 11,
+                          color: Colors.white,
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              )
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -383,7 +434,7 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
         break;
       case 'MANTENIMIENTO':
         color = Colors.orange;
-        icon = Icons.build;
+        icon = Icons.build_circle;
         break;
       case 'AVERIADO':
         color = Colors.red;
@@ -395,18 +446,17 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color, width: 0.5),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 12, color: color),
           const SizedBox(width: 4),
-          AppLabelText(estado,fontSize: 8,color: AppColors.green,)
+          AppLabelText(estado, fontSize: 8, color: color),
         ],
       ),
     );
@@ -417,28 +467,27 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
     required String label,
     required String value,
   }) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: Colors.grey[600]),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              AppSubtitle(label, font: AppFont.oxygenRegular,),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+              Icon(icon, size: 14, color: Colors.grey[500]),
+              const SizedBox(width: 6),
+              AppSubtitle(label, font: AppFont.oxygenRegular),
             ],
           ),
-        ),
-      ],
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w400),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
     );
   }
 
@@ -448,22 +497,19 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
     required String value,
   }) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16, color: Colors.grey[700]),
+        Icon(icon, size: 14, color: AppColors.blue3),
         const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
         ),
+        const SizedBox(height: 2),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 11,
-            color: Colors.grey[600],
-          ),
+          style: TextStyle(fontSize: 9, color: Colors.grey[600]),
+          textAlign: TextAlign.center,
         ),
       ],
     );
@@ -473,10 +519,10 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
     try {
       // ✅ Obtener AuthUseCases del locator (igual que en tus otros archivos)
       final authUseCases = locator<AuthUseCases>();
-      
+
       // ✅ Obtener sesión del storage
       final session = await authUseCases.getUserSession.run();
-      
+
       // Validar que haya sesión
       if (session?.data?.token == null) {
         if (!mounted) return;
@@ -518,10 +564,10 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
   /// Navegar a crear unidad
   Future<void> _navigateToCreateUnidad() async {
     final result = await Navigator.pushNamed(context, 'crear-unidad');
-    
+
     // Verificar que el widget sigue montado antes de usar el context
     if (!mounted) return;
-    
+
     if (result != null) {
       // Recargar lista después de crear
       context.read<UnidadBloc>().add(const LoadAllUnidades(refresh: true));

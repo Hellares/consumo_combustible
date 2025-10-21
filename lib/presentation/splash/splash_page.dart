@@ -382,7 +382,6 @@ class _SplashPageState extends State<SplashPage> {
                 fontFamily: AppFonts.getFontFamily(
                   AppFont.airstrikeBold3d,
                 ),
-                // color: const Color.fromARGB(255, 0, 74, 148),
                 color: Color(0xFF004A94),
               ),
             ),

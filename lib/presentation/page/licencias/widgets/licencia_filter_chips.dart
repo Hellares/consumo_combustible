@@ -1,5 +1,3 @@
-// lib/presentation/page/licencias/widgets/licencia_filter_chips.dart
-
 import 'package:consumo_combustible/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
@@ -44,19 +42,18 @@ class _LicenciaFilterChipsState extends State<LicenciaFilterChips> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 30,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      alignment: Alignment.center,
+      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: _filters.length,
-        // ignore: unnecessary_underscores
-        separatorBuilder: (_, __) => const SizedBox(width: 7),
+        separatorBuilder: (_, _) => const SizedBox(width: 7),
         itemBuilder: (context, index) {
           final filter = _filters[index];
           final isSelected = _selectedFilter == filter['value'];
 
-          return Center(
+          return Align(
+            alignment: Alignment.center,
             child: FilterChip(
               label: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -72,7 +69,7 @@ class _LicenciaFilterChipsState extends State<LicenciaFilterChips> {
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: isSelected ? Colors.white : AppColors.blue3,
-                      fontSize: 10
+                      fontSize: 9,
                     ),
                   ),
                 ],
@@ -88,16 +85,16 @@ class _LicenciaFilterChipsState extends State<LicenciaFilterChips> {
               backgroundColor: Colors.white,
               selectedColor: AppColors.blue3,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(4),
                 side: BorderSide(
                   color: isSelected ? AppColors.blue3 : Colors.grey[300]!,
-                  width: 1.5,
+                  width: 1,
                 ),
               ),
               elevation: isSelected ? 2 : 0,
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 4),
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              visualDensity: VisualDensity.compact,
+              visualDensity: const VisualDensity(horizontal: -2, vertical: -4),
             ),
           );
         },

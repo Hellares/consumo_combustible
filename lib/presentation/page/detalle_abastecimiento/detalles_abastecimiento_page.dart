@@ -62,7 +62,7 @@ class _DetallesAbastecimientoPageState extends State<DetallesAbastecimientoPage>
     }
   }
 
-  // ✅ NUEVO: Mostrar modal de archivos
+  // NUEVO: Mostrar modal de archivos
   void _showArchivosModal(DetalleAbastecimiento detalle) {
     showModalBottomSheet(
       context: context,
@@ -97,27 +97,14 @@ class _DetallesAbastecimientoPageState extends State<DetallesAbastecimientoPage>
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.attachment, color: Colors.blue, size: 20,),
+                        const Icon(Icons.attachment, color: AppColors.blue1, size: 20,),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Archivos de Ticket',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue.shade900,
-                                ),
-                              ),
-                              Text(
-                                detalle.ticket.numeroTicket,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.blue.shade700,
-                                ),
-                              ),
+                              AppSubtitle('Archivos de Ticket', color: AppColors.blue3,),
+                              AppLabelText(detalle.ticket.numeroTicket, color: AppColors.blueGrey, fontSize: 10,),
                             ],
                           ),
                         ),
@@ -163,7 +150,7 @@ class _DetallesAbastecimientoPageState extends State<DetallesAbastecimientoPage>
                 IconButton(
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
-                  icon: const Icon(Icons.refresh, size: 20, color: Colors.blue),
+                  icon: const Icon(Icons.refresh, size: 20, color: AppColors.blue3),
                   onPressed: (){
                     if (_grifoId != null ) {
                       _bloc.add(LoadDetallesAbastecimiento(grifoId: _grifoId!));
@@ -285,15 +272,16 @@ class _DetallesAbastecimientoPageState extends State<DetallesAbastecimientoPage>
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AppSubtitle('Total de Detalles',color: AppColors.blueGrey,),
-              AppTitle('${state.meta?.total ?? 0}', color: AppColors.orange,fontSize: 12,)
+              // AppSubtitle('Total de Detalles:',color: AppColors.blueGrey, fontSize: 10,),
+              AppLabelText('Total de Detalles:', color: AppColors.blueGrey, fontSize: 8,),
+              AppTitle('${state.meta?.total ?? 0}',fontSize: 8,color: AppColors.blue1,)
             ],
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              AppSubtitle('Página',color: AppColors.blueGrey,),
-              AppSubtitle('${state.currentPage} de ${state.meta?.totalPages ?? 0}')
+              AppLabelText('Página',color: AppColors.blueGrey,fontSize: 8,),
+              AppTitle('${state.currentPage} de ${state.meta?.totalPages ?? 0}' ,fontSize: 8,color: AppColors.blue1,),
             ],
           ),
         ],
@@ -306,8 +294,9 @@ class _DetallesAbastecimientoPageState extends State<DetallesAbastecimientoPage>
     final timeFormat = DateFormat('HH:mm');
 
     return Card(
+      color: AppColors.white,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 2,
+      elevation: 3,
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -329,7 +318,7 @@ class _DetallesAbastecimientoPageState extends State<DetallesAbastecimientoPage>
                     child: AppTitle(detalle.ticket.numeroTicket),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color: detalle.estadoColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(4),
@@ -340,7 +329,7 @@ class _DetallesAbastecimientoPageState extends State<DetallesAbastecimientoPage>
                       style: TextStyle(
                         color: detalle.estadoColor,
                         fontWeight: FontWeight.bold,
-                        fontSize: 10,
+                        fontSize: 9,
                       ),
                     ),
                   ),

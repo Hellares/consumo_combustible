@@ -1,10 +1,13 @@
+
 // lib/core/widgets/appbar/smart_appbar.dart
 
 import 'package:consumo_combustible/core/fonts/app_fonts.dart';
 import 'package:consumo_combustible/core/theme/app_colors.dart';
 import 'package:consumo_combustible/core/widgets/logout/logout_button.dart';
+import 'package:consumo_combustible/data/api/api_config.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart';
 import 'package:consumo_combustible/injection.dart';
+import 'package:consumo_combustible/presentation/page/user/widgets/user_role_chips.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
@@ -26,12 +29,12 @@ class SmartAppBar extends StatefulWidget implements PreferredSizeWidget {
   final double elevation;
   final bool centerTitle;
   final SystemUiOverlayStyle? systemOverlayStyle;
+  final double? customHeight;  // Nueva propiedad para altura personalizada
 
   // === LOGO ===
   final bool showLogo;
   final String? logoPath;
   final double logoSize;
-  final bool isLottieLogo;
 
   // === USUARIO (MODO AUTOMÁTICO) ===
   final bool showUserInfo;
@@ -58,11 +61,11 @@ class SmartAppBar extends StatefulWidget implements PreferredSizeWidget {
     this.elevation = 0,
     this.centerTitle = true,
     this.systemOverlayStyle,
+    this.customHeight,  // Por defecto null (usa kToolbarHeight)
     // Logo
     this.showLogo = true,
-    this.logoPath = 'assets/animations/logo1.json',
-    this.logoSize = 25,
-    this.isLottieLogo = true,
+    this.logoPath,
+    this.logoSize = 21,
     // Usuario automático
     this.showUserInfo = false,
     this.onUserInfoTap,
@@ -81,8 +84,17 @@ class SmartAppBar extends StatefulWidget implements PreferredSizeWidget {
   // === FACTORY CONSTRUCTORS ===
 
   /// AppBar básico sin usuario
-  factory SmartAppBar.basic({String? title, bool showLogo = true}) {
-    return SmartAppBar(title: title, showLogo: showLogo, showUserInfo: false);
+  factory SmartAppBar.basic({
+    String? title,
+    bool showLogo = true,
+    double? customHeight,
+  }) {
+    return SmartAppBar(
+      title: title,
+      showLogo: showLogo,
+      showUserInfo: false,
+      customHeight: customHeight,
+    );
   }
 
   /// AppBar con usuario automático (carga desde storage)
@@ -91,15 +103,15 @@ class SmartAppBar extends StatefulWidget implements PreferredSizeWidget {
     bool showLogo = true,
     VoidCallback? onUserTap,
     String? logoPath,
-    bool isLottieLogo = true,
+    double? customHeight,
   }) {
     return SmartAppBar(
       title: title,
       showLogo: showLogo,
       showUserInfo: true,
       onUserInfoTap: onUserTap,
-      logoPath: logoPath,
-      isLottieLogo: isLottieLogo,
+      logoPath: logoPath ?? ApiConfig.logoLottiePath,
+      customHeight: customHeight,
     );
   }
 
@@ -110,6 +122,7 @@ class SmartAppBar extends StatefulWidget implements PreferredSizeWidget {
     String? title,
     bool showLogo = true,
     VoidCallback? onUserTap,
+    double? customHeight,
   }) {
     return SmartAppBar(
       title: title,
@@ -117,6 +130,7 @@ class SmartAppBar extends StatefulWidget implements PreferredSizeWidget {
       manualUserRole: role,
       manualUserName: name,
       onUserInfoTap: onUserTap,
+      customHeight: customHeight,
     );
   }
 
@@ -125,12 +139,14 @@ class SmartAppBar extends StatefulWidget implements PreferredSizeWidget {
     String? title,
     VoidCallback? onBack,
     bool showLogo = true,
+    double? customHeight,
   }) {
     return SmartAppBar(
       title: title,
       showLogo: showLogo,
       leftIcon: Icons.arrow_back_ios,
       onLeftTap: onBack,
+      customHeight: customHeight,
     );
   }
 
@@ -141,6 +157,7 @@ class SmartAppBar extends StatefulWidget implements PreferredSizeWidget {
     IconData? leftIcon,
     VoidCallback? onLeftTap,
     bool showLogo = true,
+    double? customHeight,
   }) {
     return SmartAppBar(
       title: title,
@@ -148,6 +165,7 @@ class SmartAppBar extends StatefulWidget implements PreferredSizeWidget {
       leftWidget: leftWidget,
       leftIcon: leftIcon,
       onLeftTap: onLeftTap,
+      customHeight: customHeight,
     );
   }
 
@@ -155,7 +173,7 @@ class SmartAppBar extends StatefulWidget implements PreferredSizeWidget {
   State<SmartAppBar> createState() => _SmartAppBarState();
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => Size.fromHeight(customHeight ?? kToolbarHeight);
 }
 
 class _SmartAppBarState extends State<SmartAppBar> {
@@ -222,6 +240,8 @@ class _SmartAppBarState extends State<SmartAppBar> {
       leadingWidth: _getLeadingWidth(),
       actions: widget.showLogo ? [_buildLogo()] : null,
       iconTheme: IconThemeData(color: widget.iconColor ?? AppColors.blue3),
+      toolbarHeight: widget.customHeight ?? kToolbarHeight,  // Aplica la altura personalizada
+      surfaceTintColor: Colors.transparent,  // AGREGADO: Desactiva el tintado en Material 3 durante scroll (evita el morado claro)
     );
   }
 
@@ -338,17 +358,17 @@ class _SmartAppBarState extends State<SmartAppBar> {
           children: [
             // Avatar
             Container(
-              width: 26,
-              height: 26,
+              width: 20,
+              height: 20,
               decoration: BoxDecoration(
                 color: AppColors.blue3.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: AppColors.blue3.withValues(alpha: 0.3),
-                  width: 1.0,
+                  width: 0.5,
                 ),
               ),
-              child: Icon(Icons.person, size: 15, color: AppColors.blue2),
+              child: Icon(Icons.person, size: 12, color: AppColors.blue2),
             ),
             const SizedBox(width: 8),
             // Rol y Nombre
@@ -363,7 +383,7 @@ class _SmartAppBarState extends State<SmartAppBar> {
                       style:
                           widget.userInfoStyle ??
                           AppFont.oxygenBold.style(
-                            fontSize: 9,
+                            fontSize: 8,
                             color: AppColors.blue3,
                           ),
                       overflow: TextOverflow.ellipsis,
@@ -373,7 +393,7 @@ class _SmartAppBarState extends State<SmartAppBar> {
                       name,
                       style: AppFont.oxygenRegular.style(
                         fontSize: 7,
-                        color: AppColors.grey,
+                        color: AppColors.blueGrey,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -481,7 +501,7 @@ class _SmartAppBarState extends State<SmartAppBar> {
   }
 
   SystemUiOverlayStyle get _defaultSystemOverlayStyle {
-    return const SystemUiOverlayStyle(
+    return SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
       statusBarBrightness: Brightness.light,
@@ -493,6 +513,127 @@ class _SmartAppBarState extends State<SmartAppBar> {
 
   // === MENÚ DE USUARIO CON LOGOUT INTEGRADO ===
 
+  // void _showUserMenu(BuildContext context, Map<String, String> userData) async {
+  //   final authUseCases = locator<AuthUseCases>();
+  //   final userSession = await authUseCases.getUserSession.run();
+
+  //   if (!context.mounted) return;
+
+  //   showModalBottomSheet(
+  //     context: context,
+  //     shape: const RoundedRectangleBorder(
+  //       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+  //     ),
+  //     builder: (modalContext) => Container(
+  //       padding: const EdgeInsets.all(16),
+  //       child: Column(
+  //         mainAxisSize: MainAxisSize.min,
+  //         children: [
+  //           // Header
+  //           Row(
+  //             children: [
+  //               CircleAvatar(
+  //                 radius: 23,
+  //                 backgroundColor: AppColors.blue3.withValues(alpha: 0.1),
+  //                 child: const Icon(Icons.person, size: 22, color: AppColors.blue1),
+  //               ),
+  //               const SizedBox(width: 16),
+  //               Expanded(
+  //                 child: Column(
+  //                   crossAxisAlignment: CrossAxisAlignment.start,
+  //                   children: [
+  //                     Text(
+  //                       userData['name'] ?? '',
+  //                       style: const TextStyle(
+  //                         fontSize: 12,
+  //                         fontWeight: FontWeight.bold,
+  //                       ),
+  //                     ),
+  //                     const SizedBox(height: 4),
+  //                     Text(
+  //                       userData['email'] ?? '',
+  //                       style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+  //                     ),
+  //                     const SizedBox(height: 4),
+  //                     Chip(
+  //                       label: Text(userData['role'] ?? ''),
+  //                       backgroundColor: AppColors.blue3.withValues(alpha: 0.1),
+  //                       padding: EdgeInsets.zero,
+  //                       labelStyle: const TextStyle(fontSize: 10),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //           const SizedBox(height: 10),
+  //           const Divider(),
+  //           const SizedBox(height: 10),
+
+  //           // Cambiar Rol
+  //           ListTile(
+  //             leading: const Icon(Icons.swap_horiz, color: Colors.blue),
+  //             title: const Text('Cambiar Rol'),
+  //             onTap: () {
+  //               Navigator.pop(modalContext);
+
+  //               if (userSession?.data?.user != null) {
+  //                 Navigator.pushNamed(
+  //                   context,
+  //                   'role-selection',
+  //                   arguments: userSession!.data!.user,
+  //                 );
+  //               } else {
+  //                 ScaffoldMessenger.of(context).showSnackBar(
+  //                   const SnackBar(
+  //                     content: Text('Error: Sesión no encontrada'),
+  //                     backgroundColor: Colors.red,
+  //                   ),
+  //                 );
+  //               }
+  //             },
+  //           ),
+
+  //           ListTile(
+  //             leading: const Icon(Icons.person_outline, color: Colors.blue),
+  //             title: const Text('Mi Perfil'),
+  //             onTap: () {
+  //               Navigator.pop(modalContext);
+  //               // TODO: Implementar
+  //             },
+  //           ),
+
+  //           ListTile(
+  //             leading: const Icon(Icons.settings_outlined, color: Colors.blue),
+  //             title: const Text('Configuración'),
+  //             onTap: () {
+  //               Navigator.pop(modalContext);
+  //               // TODO: Implementar
+  //             },
+  //           ),
+
+  //           const Divider(),
+
+  //           ListTile(
+  //             // leading: const Icon(Icons.logout, color: AppColors.borderError, size: 24,),
+  //             title: LogoutButton.profile(
+  //               text: 'Cerrar Sesión',
+  //               onLogoutSuccess: () {
+  //                 Navigator.pushNamedAndRemoveUntil(
+  //                   context,
+  //                   'login',
+  //                   (route) => false,
+  //                 );
+  //               },
+  //               // onLogoutSuccess: (){},
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
   void _showUserMenu(BuildContext context, Map<String, String> userData) async {
     final authUseCases = locator<AuthUseCases>();
     final userSession = await authUseCases.getUserSession.run();
@@ -501,114 +642,137 @@ class _SmartAppBarState extends State<SmartAppBar> {
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: false,  // ✅ Mantiene el scroll controlado para altura mínima
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),  // ✅ Reducido de 20 a 16 para más compacto
       ),
-      builder: (modalContext) => Container(
-        padding: const EdgeInsets.all(15),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header
-            Row(
+      builder: (modalContext) => ConstrainedBox(  // ✅ NUEVO: Limita la altura máxima al 40% de la pantalla
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.4,
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),  // ✅ Reducido de 16 a 12 para menos padding
+          child: SingleChildScrollView(  // ✅ AGREGADO: Permite scroll si el contenido excede la altura máxima
+            physics: const ClampingScrollPhysics(),  // ✅ Scroll suave sin rebote
+            child: Column(
+              mainAxisSize: MainAxisSize.min,  // ✅ Mantiene el tamaño mínimo
               children: [
-                CircleAvatar(
-                  radius: 25,
-                  backgroundColor: AppColors.blue3.withValues(alpha: 0.1),
-                  child: const Icon(Icons.person, size: 25, color: Colors.blue),
+                // Header
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 18,  // ✅ Reducido de 23 a 20
+                      backgroundColor: AppColors.blue3.withValues(alpha: 0.1),
+                      child: const Icon(Icons.person, size: 18, color: AppColors.blue1),  // ✅ Icono más pequeño
+                    ),
+                    const SizedBox(width: 12),  // ✅ Reducido de 16 a 12
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            userData['name'] ?? '',
+                            style: const TextStyle(
+                              fontSize: 11,  // ✅ Reducido de 12 a 11
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 2),  // ✅ Reducido de 4 a 2
+                          Text(
+                            userData['email'] ?? '',
+                            style: TextStyle(fontSize: 9, color: Colors.grey[600]),  // ✅ Reducido de 10 a 9
+                          ),
+                          const SizedBox(height: 5),
+
+                          UserRoleChips(user: userSession!.data!.user ),  // !Reemplazado por UserRoleChips para mejor estilo
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 16),
-                Expanded(
+                const SizedBox(height: 5),  // ✅ Reducido de 10 a 8
+                const Divider(),
+                const SizedBox(height: 5),  // ✅ Reducido de 10 a 8
+
+                // ✅ NUEVO: Theme wrapper para ListTiles compactos (reduce altura entre opciones)
+                Theme(
+                  data: Theme.of(context).copyWith(
+                    listTileTheme: ListTileThemeData(
+                      visualDensity: VisualDensity.compact,  // ✅ Reduce altura de ListTiles ~20-30%
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),  // ✅ Elimina vertical padding extra
+                      dense: true,  // ✅ Modo dense para más compacidad
+                    ),
+                  ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        userData['name'] ?? '',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      // Cambiar Rol
+                      ListTile(
+                        leading: const Icon(Icons.swap_horiz, size: 18, color: Colors.blue),  // ✅ Icono más pequeño
+                        title: const Text('Cambiar Rol', style: TextStyle(fontSize: 12)),  // ✅ Fuente más pequeña
+                        onTap: () {
+                          Navigator.pop(modalContext);
+
+                          if (userSession.data?.user != null) {
+                            Navigator.pushNamed(
+                              context,
+                              'role-selection',
+                              arguments: userSession.data!.user,
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Error: Sesión no encontrada'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        userData['email'] ?? '',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+
+                      // Mi Perfil
+                      ListTile(
+                        leading: const Icon(Icons.person_outline, size: 18, color: Colors.blue),  // ✅ Icono más pequeño
+                        title: const Text('Mi Perfil', style: TextStyle(fontSize: 12)),  // ✅ Fuente más pequeña
+                        onTap: () {
+                          Navigator.pop(modalContext);
+                          // TODO: Implementar
+                        },
                       ),
-                      const SizedBox(height: 4),
-                      Chip(
-                        label: Text(userData['role'] ?? ''),
-                        backgroundColor: AppColors.blue3.withValues(alpha: 0.1),
-                        padding: EdgeInsets.zero,
-                        labelStyle: const TextStyle(fontSize: 10),
+
+                      // Configuración
+                      ListTile(
+                        leading: const Icon(Icons.settings_outlined, size: 18, color: Colors.blue),  // ✅ Icono más pequeño
+                        title: const Text('Configuración', style: TextStyle(fontSize: 12)),  // ✅ Fuente más pequeña
+                        onTap: () {
+                          Navigator.pop(modalContext);
+                          // TODO: Implementar
+                        },
                       ),
                     ],
                   ),
                 ),
+
+                const Divider(),
+
+                // Logout (fuera del Theme para mantener su estilo si es necesario)
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),  // ✅ Padding más compacto
+                  title: LogoutButton.profile(
+                    text: 'Cerrar Sesión',
+                    // textStyle: const TextStyle(fontSize: 12),  // ✅ Fuente más pequeña si LogoutButton lo soporta
+                    onLogoutSuccess: () {
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        'login',
+                        (route) => false,
+                      );
+                    },
+                    // onLogoutSuccess: (){},
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 20),
-            const Divider(),
-            const SizedBox(height: 10),
-
-            // Cambiar Rol
-            ListTile(
-              leading: const Icon(Icons.swap_horiz, color: Colors.blue),
-              title: const Text('Cambiar Rol'),
-              onTap: () {
-                Navigator.pop(modalContext);
-
-                if (userSession?.data?.user != null) {
-                  Navigator.pushNamed(
-                    context,
-                    'role-selection',
-                    arguments: userSession!.data!.user,
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Error: Sesión no encontrada'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.person_outline, color: Colors.blue),
-              title: const Text('Mi Perfil'),
-              onTap: () {
-                Navigator.pop(modalContext);
-                // TODO: Implementar
-              },
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.settings_outlined, color: Colors.blue),
-              title: const Text('Configuración'),
-              onTap: () {
-                Navigator.pop(modalContext);
-                // TODO: Implementar
-              },
-            ),
-
-            const Divider(),
-
-            ListTile(
-              // leading: const Icon(Icons.logout, color: AppColors.borderError, size: 24,),
-              title: LogoutButton.profile(
-                text: 'Cerrar Sesión',
-                onLogoutSuccess: () {
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    'login',
-                    (route) => false,
-                  );
-                },
-                // onLogoutSuccess: (){},
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

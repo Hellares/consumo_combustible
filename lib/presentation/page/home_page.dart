@@ -65,9 +65,7 @@ class _HomePageAlternativeState extends State<HomePageAlternative>
       backgroundColor: Colors.white,
       appBar: SmartAppBar.withUser(
         title: _titles[_currentIndex],
-        logoPath: "assets/img/6.svg",
-        showLogo: true,
-        isLottieLogo: false,
+        customHeight: 37,
       ),
       body: Column(
         children: [
@@ -153,54 +151,3 @@ class NotificationsPage extends StatelessWidget {
     );
   }
 }
-
-// class ProfilePage extends StatelessWidget {
-//   const ProfilePage({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Center(
-//       child: Column(
-//         mainAxisAlignment: MainAxisAlignment.center,
-//         children: [
-//           const CircleAvatar(
-//             radius: 50,
-//             backgroundColor: Colors.blue,
-//             child: Icon(Icons.person, size: 60, color: Colors.white),
-//           ),
-//           const SizedBox(height: 20),
-//           const Text(
-//             'Mi Perfil',
-//             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-//           ),
-//           const SizedBox(height: 10),
-//           const Text(
-//             'Gestiona tu cuenta y configuración',
-//             style: TextStyle(fontSize: 16, color: Colors.grey),
-//           ),
-//           const SizedBox(height: 30),
-//           Card(
-//             margin: const EdgeInsets.symmetric(horizontal: 20),
-//             child: Column(
-//               children: [
-//                 ListTile(
-//                   leading: const Icon(Icons.settings),
-//                   title: const Text('Configuración'),
-//                   trailing: const Icon(Icons.arrow_forward_ios),
-//                   onTap: () {},
-//                 ),
-//                 const Divider(height: 1),
-//                 ListTile(
-//                   leading: const Icon(Icons.help),
-//                   title: const Text('Ayuda'),
-//                   trailing: const Icon(Icons.arrow_forward_ios),
-//                   onTap: () {},
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
