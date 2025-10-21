@@ -19,7 +19,7 @@ class TrackingStatsWidget extends StatelessWidget {
     final stats = _calculateStats();
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
@@ -76,12 +76,12 @@ class TrackingStatsWidget extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: color, size: 24),
+        Icon(icon, color: color, size: 16),
         const SizedBox(height: 4),
         Text(
           value,
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 12,
             fontWeight: FontWeight.bold,
             color: color,
           ),
@@ -89,7 +89,7 @@ class TrackingStatsWidget extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 9,
             color: Colors.grey[600],
           ),
         ),

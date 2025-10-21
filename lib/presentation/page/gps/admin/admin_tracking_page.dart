@@ -84,15 +84,15 @@ class _AdminTrackingPageState extends State<AdminTrackingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Monitoreo GPS - Admin'),
+        title: const Text('Monitoreo GPS - Admin', style: TextStyle(fontSize: 12)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, size: 18,),
             onPressed: _refreshLocations,
             tooltip: 'Actualizar',
           ),
           IconButton(
-            icon: const Icon(Icons.filter_list),
+            icon: const Icon(Icons.filter_list, size: 18,),
             onPressed: _showFilters,
             tooltip: 'Filtros',
           ),
@@ -103,10 +103,12 @@ class _AdminTrackingPageState extends State<AdminTrackingPage> {
           // ✅ CORRECCIÓN: Conectar WebSocket después de cargar ubicaciones
           if (state is GpsLocationsLoaded && !_isWebSocketConnected && _authToken != null) {
             _isWebSocketConnected = true;
+            // ✅ Capturar BLoC antes del async gap
+            final bloc = context.read<GpsBloc>();
             // Conectar con auto-suscripción después de que las ubicaciones estén cargadas
             Future.delayed(const Duration(milliseconds: 100), () {
               if (mounted) {
-                context.read<GpsBloc>().add(
+                bloc.add(
                   ConnectWebSocketEvent(_authToken!, autoSubscribe: true),
                 );
               }
@@ -171,8 +173,9 @@ class _AdminTrackingPageState extends State<AdminTrackingPage> {
               Expanded(
                 child: Row(
                   children: [
+                    // ✅ Reducido de 300 a 250 para dar más espacio al mapa
                     SizedBox(
-                      width: 300,
+                      width: 205,
                       child: UnitsListPanel(
                         unidades: unidades,
                         selectedUnitId: _selectedUnitId,
@@ -218,7 +221,7 @@ class _AdminTrackingPageState extends State<AdminTrackingPage> {
     }
 
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(5),
       child: AdminMapWidget(
         key: _mapKey,
         unidades: unidades,

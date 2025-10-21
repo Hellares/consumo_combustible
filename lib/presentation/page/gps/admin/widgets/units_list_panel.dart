@@ -37,7 +37,7 @@ class UnitsListPanel extends StatelessWidget {
         children: [
           // Header
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
             decoration: BoxDecoration(
               color: Colors.grey.shade100,
               border: Border(
@@ -54,17 +54,17 @@ class UnitsListPanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Unidades',
+                      'Unidades de Transporte',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 11,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    // const SizedBox(height: 2),
                     Text(
                       '${_getActiveCount()} activas de ${unidades.length}',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 10,
                         color: Colors.grey[600],
                       ),
                     ),
@@ -74,6 +74,7 @@ class UnitsListPanel extends StatelessWidget {
                   icon: const Icon(Icons.refresh),
                   onPressed: onRefresh,
                   tooltip: 'Actualizar',
+                  iconSize: 18,
                 ),
               ],
             ),
@@ -108,14 +109,14 @@ class UnitsListPanel extends StatelessWidget {
         children: [
           Icon(
             Icons.location_off,
-            size: 60,
+            size: 40,
             color: Colors.grey[400],
           ),
           const SizedBox(height: 16),
           Text(
             'No hay unidades con ubicación',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               color: Colors.grey[600],
             ),
           ),

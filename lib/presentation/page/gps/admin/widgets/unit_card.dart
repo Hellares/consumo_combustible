@@ -22,14 +22,17 @@ class UnitCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(4),
+      ),
+      margin: const EdgeInsets.only(bottom: 10),
       elevation: isSelected ? 4 : 1,
-      color: isSelected ? Colors.blue.shade50 : null,
+      color: isSelected ? Colors.blue.shade50 : Colors.white,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(4),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -39,14 +42,14 @@ class UnitCard extends StatelessWidget {
                   Icon(
                     Icons.local_shipping,
                     color: unidad.isActive ? Colors.green : Colors.red,
-                    size: 20,
+                    size: 14,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       unidad.placa,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 11,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -55,7 +58,7 @@ class UnitCard extends StatelessWidget {
                 ],
               ),
               
-              const SizedBox(height: 8),
+              const SizedBox(height: 5),
               
               // Velocidad y última actualización
               if (unidad.ultimaUbicacion != null) ...[
@@ -63,59 +66,69 @@ class UnitCard extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.speed,
-                      size: 16,
+                      size: 14,
                       color: Colors.grey[600],
                     ),
                     const SizedBox(width: 4),
                     Text(
                       '${unidad.ultimaUbicacion!.velocidad?.toStringAsFixed(0) ?? 0} km/h',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 10,
                         color: Colors.grey[700],
                       ),
                     ),
-                    const Spacer(),
-                    Icon(
-                      Icons.access_time,
-                      size: 16,
-                      color: Colors.grey[600],
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      _getTimeAgo(),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
+                    // const Spacer(),
+                    // Icon(
+                    //   Icons.access_time,
+                    //   size: 16,
+                    //   color: Colors.grey[600],
+                    // ),
+                    // const SizedBox(width: 4),
+                    // Text(
+                    //   _getTimeAgo(),
+                    //   style: TextStyle(
+                    //     fontSize: 8,
+                    //     color: Colors.grey[600],
+                    //   ),
+                    // ),
                   ],
                 ),
                 
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 
                 // Precisión
                 Row(
                   children: [
                     Icon(
                       Icons.gps_fixed,
-                      size: 16,
+                      size: 14,
                       color: _getPrecisionColor(),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       'Precisión: ${unidad.ultimaUbicacion!.precision?.toStringAsFixed(1) ?? 0}m',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 10,
                         color: Colors.grey[600],
                       ),
                     ),
                   ],
                 ),
+                Container(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                        _getTimeAgo(),
+                        style: TextStyle(
+                          fontSize: 8,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                ),
               ] else ...[
                 Text(
                   'Sin ubicación reciente',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 11,
                     color: Colors.grey[600],
                     fontStyle: FontStyle.italic,
                   ),
@@ -130,8 +143,8 @@ class UnitCard extends StatelessWidget {
 
   Widget _buildStatusIndicator() {
     return Container(
-      width: 12,
-      height: 12,
+      width: 8,
+      height: 8,
       decoration: BoxDecoration(
         color: unidad.isActive ? Colors.green : Colors.red,
         shape: BoxShape.circle,
