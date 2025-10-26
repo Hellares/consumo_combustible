@@ -1,4 +1,5 @@
 import 'package:consumo_combustible/core/fonts/app_fonts.dart';
+import 'package:consumo_combustible/core/fonts/app_text_widgets.dart';
 import 'package:consumo_combustible/core/theme/app_colors.dart';
 import 'package:consumo_combustible/core/widgets/cutom_button/custom_button.dart';
 import 'package:consumo_combustible/core/widgets/snack.dart';
@@ -91,9 +92,10 @@ class LogoutButton extends StatelessWidget {
       style: LogoutButtonStyle.textOnly,
       text: text,
       onLogoutSuccess: onLogoutSuccess,
-      backgroundColor: Colors.red,
+      backgroundColor: AppColors.blue3,
       textColor: Colors.white,
       borderRadius: 28,
+      fontSize: 10,
     );
   }
 
@@ -198,7 +200,7 @@ class LogoutButton extends StatelessWidget {
         fontSize: fontSize ?? 12,
         color: textColor ?? Colors.white,
       ),
-      backgroundColor: backgroundColor ?? AppColors.red,
+      backgroundColor: backgroundColor ?? AppColors.blue3,
       borderRadius: borderRadius ?? 8,
       enabled: canLogout && !isLoading,
       onPressed: canLogout && !isLoading ? () => _handleLogout(context) : null,
@@ -238,7 +240,7 @@ class LogoutButton extends StatelessWidget {
   Widget _buildCustomIconTextButton(BuildContext context, bool isLoading, bool canLogout) {
     return Container(
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppColors.red,
+        color: backgroundColor ?? AppColors.blue3,
         borderRadius: BorderRadius.circular(borderRadius ?? 8),
       ),
       child: Material(
@@ -256,7 +258,7 @@ class LogoutButton extends StatelessWidget {
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(
-                      strokeWidth: 2,
+                      strokeWidth: 1,
                       valueColor: AlwaysStoppedAnimation<Color>(
                         textColor ?? Colors.white,
                       ),
@@ -273,7 +275,7 @@ class LogoutButton extends StatelessWidget {
                 Text(
                   isLoading ? 'Cerrando...' : (text ?? 'Cerrar Sesión'),
                   style: AppFont.pirulentBold.style(
-                    fontSize: fontSize ?? 12,
+                    fontSize: fontSize ?? 10,
                     color: textColor ?? Colors.white,
                   ),
                 ),
@@ -294,19 +296,37 @@ class LogoutButton extends StatelessWidget {
   }
 
   void _showLogoutConfirmDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        icon: Icon(Icons.logout, color: AppColors.red, size: 48),
-        title: const Text('Cerrar Sesión'),
+  showDialog(
+    context: context,
+    builder: (dialogContext) => ConstrainedBox(
+      constraints: const BoxConstraints(
+        maxWidth: 300,  // Ancho máximo para hacerlo más compacto (ajusta según tu diseño)
+        maxHeight: 250, // Altura máxima opcional para controlarlo mejor
+      ),
+      child: AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12), // Bordes redondeados (ajusta el radio)
+          side: BorderSide(
+            color: Colors.grey.shade300, // Borde sutil (opcional, quítalo si no lo quieres)
+            width: 1,
+          ),
+        ),
+        icon: const Icon(Icons.logout, color: AppColors.red, size: 25),
+        title: const AppSubtitle(
+          'Confirmar Cierre de Sesión',
+          fontSize: 14,
+        ),
+        contentPadding: const EdgeInsets.all(16), // Reduce el padding interno para compactar
         content: const Text(
           '¿Estás seguro que deseas cerrar sesión?\n\n'
           'Tendrás que iniciar sesión nuevamente.',
+          style: TextStyle(fontSize: 12),
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16), // Padding en acciones para ajustar
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancelar'),
+            child: const Text('Cancelar',style: TextStyle(fontSize: 12),),
           ),
           ElevatedButton(
             onPressed: () {
@@ -314,15 +334,18 @@ class LogoutButton extends StatelessWidget {
               _executeLogout(context);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.red,
+              maximumSize: const Size(110, 35), // Tamaño máximo para el botón
+              minimumSize: const Size(100, 35), // Tamaño mínimo para el botón
+              backgroundColor: AppColors.blue3,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Cerrar Sesión'),
+            child: const Text('Cerrar Sesión',style: TextStyle(fontSize: 10),),
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _executeLogout(BuildContext context) {
     if (onPressed != null) {

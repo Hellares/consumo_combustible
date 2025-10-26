@@ -56,56 +56,69 @@ class CustomTextFieldConstants {
   static const int defaultDecimalPlaces = 2;
 
   // Colores por defecto
-  static const Color defaultBackgroundColor = Color.fromARGB(255, 255, 255, 255);
+  static const Color defaultBackgroundColor = Color.fromARGB(
+    255,
+    255,
+    255,
+    255,
+  );
   static const Color defaultFocusedBorderColor = Color(0xFFE0E0E0);
   static const Color defaultBorderColor = Color(0xFFF0F0F0);
 
   // 🚀 MEJORA: Widgets constantes para mejor performance
   static const Widget loadingIndicator = SizedBox(
-    width: 18,
-    height: 18,
-    child: CircularProgressIndicator(strokeWidth: 2),
+    width: 16,
+    height: 16,
+    child: CircularProgressIndicator(strokeWidth: 1),
   );
 
   static const Widget validIcon = Icon(
-    Icons.check_circle, 
-    color: Colors.green, 
-    size: 16
+    Icons.check_circle,
+    color: Colors.green,
+    size: 16,
   );
 
   static const Widget invalidIcon = Icon(
-    Icons.error, 
-    color: Colors.red, 
-    size: 16
+    Icons.error,
+    color: Colors.red,
+    size: 16,
   );
 }
 
 class ValidationManager {
   Timer? _timer;
-  final ValueNotifier<ValidationState> state = ValueNotifier(const ValidationNone());
+  final ValueNotifier<ValidationState> state = ValueNotifier(
+    const ValidationNone(),
+  );
   final ValueNotifier<String?> error = ValueNotifier(null);
   bool _disposed = false; // Flag para controlar el estado
-  
+
   void startValidation(
-    String value, 
-    FieldType type, 
+    String value,
+    FieldType type,
     Duration delay,
     String? Function(String?)? validator,
     Future<String?> Function(String)? asyncValidator,
     CountryCode country,
   ) {
     if (_disposed) return; // Verificar si ya fue disposed
-    
+
     _timer?.cancel();
     state.value = const ValidationLoading();
-    
+
     _timer = Timer(delay, () async {
       if (_disposed) return; // Verificar antes de la validación async
-      
-      final result = await _validate(value, type, validator, asyncValidator, country);
-      
+
+      final result = await _validate(
+        value,
+        type,
+        validator,
+        asyncValidator,
+        country,
+      );
+
       if (_disposed) return; // Verificar después de la validación async
-      
+
       if (result != null) {
         state.value = ValidationInvalid(result);
         error.value = result;
@@ -166,15 +179,15 @@ class ValidationManager {
 
     return error;
   }
-  
+
   void clearValidation() {
     if (_disposed) return;
-    
+
     _timer?.cancel();
     state.value = const ValidationNone();
     error.value = null;
   }
-  
+
   void dispose() {
     _disposed = true;
     _timer?.cancel();
@@ -183,14 +196,16 @@ class ValidationManager {
   }
 }
 
-// FORMATEADOR DE MONEDA MEJORADO
-class CurrencyFormatter extends TextInputFormatter {
+// 💰 FORMATEADOR DE MONEDA MEJORADO
+class CurrencyFormatterFixed extends TextInputFormatter {
   final String symbol;
   final int decimalPlaces;
+  final String locale;
 
-  CurrencyFormatter({
+  CurrencyFormatterFixed({
     this.symbol = 'S/',
-    this.decimalPlaces = CustomTextFieldConstants.defaultDecimalPlaces,
+    this.decimalPlaces = 2,
+    this.locale = 'es',
   });
 
   @override
@@ -198,6 +213,7 @@ class CurrencyFormatter extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
+    // ✅ Si está completamente vacío, permitir vacío (para mostrar hint)
     if (newValue.text.isEmpty) {
       return const TextEditingValue(
         text: '',
@@ -205,8 +221,10 @@ class CurrencyFormatter extends TextInputFormatter {
       );
     }
 
-    String digitsOnly = newValue.text.replaceAll(RegExp(r'[^\d.]'), '');
+    // Extraer solo los dígitos
+    String digitsOnly = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
 
+    // ✅ Si está vacío después de limpiar, permitir vacío
     if (digitsOnly.isEmpty) {
       return const TextEditingValue(
         text: '',
@@ -214,24 +232,37 @@ class CurrencyFormatter extends TextInputFormatter {
       );
     }
 
-    List<String> parts = digitsOnly.split('.');
-    if (parts.length > 2) {
-      parts = [parts[0], parts.sublist(1).join('')];
+    // ✅ Detectar cuando el usuario está borrando
+    bool isDeleting = newValue.text.length < oldValue.text.length;
+
+    // ✅ Remover ceros a la izquierda
+    digitsOnly = digitsOnly.replaceFirst(RegExp(r'^0+'), '');
+
+    // ✅ Si después de remover ceros queda vacío (solo había ceros)
+    if (digitsOnly.isEmpty) {
+      // Si está borrando, permitir campo vacío
+      if (isDeleting) {
+        return const TextEditingValue(
+          text: '',
+          selection: TextSelection.collapsed(offset: 0),
+        );
+      }
+      // Si está escribiendo (escribió "0"), mostrar 0.00
+      else {
+        String formatted = '0.${'0' * decimalPlaces}';
+        return TextEditingValue(
+          text: formatted,
+          selection: TextSelection.collapsed(offset: formatted.length),
+        );
+      }
     }
 
-    if (parts.length == 2 && parts[1].length > decimalPlaces) {
-      parts[1] = parts[1].substring(0, decimalPlaces);
-    }
+    // Convertir a double considerando los decimales
+    // Por ejemplo: "20" -> 0.20, "200" -> 2.00, "2000" -> 20.00
+    double value = int.parse(digitsOnly) / 100;
 
-    String integerPart = parts[0];
-    if (integerPart.isNotEmpty) {
-      integerPart = _addThousandsSeparator(integerPart);
-    }
-
-    String formatted = integerPart;
-    if (parts.length == 2) {
-      formatted += '.${parts[1]}';
-    }
+    // Formatear con separadores de miles
+    String formatted = _formatCurrency(value);
 
     return TextEditingValue(
       text: formatted,
@@ -239,26 +270,86 @@ class CurrencyFormatter extends TextInputFormatter {
     );
   }
 
+  String _formatCurrency(double value) {
+    // Separar parte entera y decimal
+    List<String> parts = value.toStringAsFixed(decimalPlaces).split('.');
+    String integerPart = parts[0];
+    String decimalPart = parts.length > 1 ? parts[1] : '00';
+
+    // Agregar separadores de miles
+    integerPart = _addThousandsSeparator(integerPart);
+
+    return '$integerPart.$decimalPart';
+  }
+
   String _addThousandsSeparator(String number) {
     if (number.length <= 3) return number;
 
     String reversed = number.split('').reversed.join('');
     String withCommas = '';
+
     for (int i = 0; i < reversed.length; i++) {
       if (i > 0 && i % 3 == 0) {
         withCommas += ',';
       }
       withCommas += reversed[i];
     }
+
     return withCommas.split('').reversed.join('');
   }
 }
 
-// UTILIDADES DE MONEDA MEJORADAS
+// 💰 UTILIDADES DE MONEDA MEJORADAS
 class CurrencyUtils {
-  static String formatForDisplay(String value, String symbol) {
+  /// Convierte el texto formateado a double
+  /// Ejemplo: "2,500.50" -> 2500.50
+  static double parseToDouble(String value) {
+    if (value.isEmpty) return 0.0;
+    String cleaned = value
+        .replaceAll(',', '')
+        .replaceAll(RegExp(r'[^\d.]'), '');
+    return double.tryParse(cleaned) ?? 0.0;
+  }
+
+  /// Convierte double a texto formateado
+  /// Ejemplo: 2500.50 -> "2,500.50"
+  static String formatFromDouble(double value, {int decimals = 2}) {
+    List<String> parts = value.toStringAsFixed(decimals).split('.');
+    String integerPart = _addThousandsSeparator(parts[0]);
+    String decimalPart = parts.length > 1 ? parts[1] : '00';
+    return '$integerPart.$decimalPart';
+  }
+
+  /// Establece un valor en el controlador con formato
+  static void setControllerValue(
+    TextEditingController controller,
+    double value,
+  ) {
+    controller.text = formatFromDouble(value);
+  }
+
+  /// Obtiene el valor double del controlador
+  static double getControllerValue(TextEditingController controller) {
+    return parseToDouble(controller.text);
+  }
+
+  /// Valida si el texto es una moneda válida
+  static bool isValidCurrency(String value) {
+    if (value.isEmpty) return false;
+    double parsed = parseToDouble(value);
+    return parsed >= 0;
+  }
+
+  /// Formatea para mostrar con símbolo
+  /// Ejemplo: "2,500.50" -> "S/ 2,500.50"
+  static String formatWithSymbol(String value, String symbol) {
     if (value.isEmpty) return '';
     return '$symbol $value';
+  }
+
+  /// LEGACY: Para retrocompatibilidad
+  static String formatForDisplay(String value, String symbol) {
+    return formatWithSymbol(value, symbol);
   }
 
   static String extractNumericValue(String formattedValue, String symbol) {
@@ -266,39 +357,23 @@ class CurrencyUtils {
     return formattedValue.replaceFirst('$symbol ', '').replaceAll(',', '');
   }
 
-  static double parseToDouble(String value) {
-    if (value.isEmpty) return 0.0;
-    String cleaned = value.replaceAll(',', '');
-
-    if (!cleaned.contains('.')) {
-      cleaned += '.00';
-    } else {
-      List<String> parts = cleaned.split('.');
-      if (parts.length == 2) {
-        if (parts[1].length == 1) {
-          parts[1] += '0';
-        } else if (parts[1].length > 2) {
-          parts[1] = parts[1].substring(0, 2);
-        }
-        cleaned = '${parts[0]}.${parts[1]}';
-      }
-    }
-
-    return double.tryParse(cleaned) ?? 0.0;
-  }
-
   static String formatWithDecimals(double value) {
-    return value.toStringAsFixed(2);
+    return formatFromDouble(value);
   }
 
   static String getValueAsString(double value) {
     return value.toStringAsFixed(2);
   }
 
-  static bool isValidCurrency(String value) {
-    if (value.isEmpty) return false;
-    String cleaned = value.replaceAll(',', '');
-    return double.tryParse(cleaned) != null;
+  static String _addThousandsSeparator(String number) {
+    if (number.length <= 3) return number;
+    String reversed = number.split('').reversed.join('');
+    String withCommas = '';
+    for (int i = 0; i < reversed.length; i++) {
+      if (i > 0 && i % 3 == 0) withCommas += ',';
+      withCommas += reversed[i];
+    }
+    return withCommas.split('').reversed.join('');
   }
 }
 
@@ -501,8 +576,12 @@ class FieldValidators {
     String? value, {
     double? minAmount,
     double? maxAmount,
+    bool required = false, // ✅ Para indicar si el campo es obligatorio
   }) {
-    if (value == null || value.isEmpty) return 'Campo requerido';
+    // ✅ Si está vacío, NO mostrar error (permitir hint)
+    if (value == null || value.isEmpty) {
+      return null; // ← Siempre retornar null cuando está vacío
+    }
 
     if (!CurrencyUtils.isValidCurrency(value)) {
       return 'Monto inválido';
@@ -510,6 +589,8 @@ class FieldValidators {
 
     double amount = CurrencyUtils.parseToDouble(value);
 
+    // ✅ Solo validar si el monto es 0 cuando el campo tiene contenido
+    // Si el usuario borró todo, el campo estará vacío y no llegará aquí
     if (amount <= 0) return 'El monto debe ser mayor a 0';
 
     if (minAmount != null && amount < minAmount) {
@@ -557,16 +638,16 @@ class FieldValidators {
   }
 
   static String? validatePassword(String? value) {
-  if (value == null || value.isEmpty) {
-    return 'Campo requerido';
-  }
+    if (value == null || value.isEmpty) {
+      return 'Campo requerido';
+    }
 
-  if (value.length < 6) {
-    return 'La contraseña debe tener al menos 6 caracteres';
-  }
+    if (value.length < 6) {
+      return 'La contraseña debe tener al menos 6 caracteres';
+    }
 
-  return null;
-}
+    return null;
+  }
 }
 
 // 🚀 WIDGET PRINCIPAL OPTIMIZADO
@@ -609,7 +690,7 @@ class CustomTextField extends StatefulWidget {
   final CountryCode country;
   final String currencySymbol;
   final bool enableRealTimeValidation;
-  
+
   const CustomTextField({
     super.key,
     this.label,
@@ -649,7 +730,9 @@ class CustomTextField extends StatefulWidget {
     this.currencySymbol = 'S/',
     this.enableRealTimeValidation = true,
     this.textCase = TextCase.normal,
-  }) : obscureText = fieldType == FieldType.password ? true : (obscureText ?? false);
+  }) : obscureText = fieldType == FieldType.password
+           ? true
+           : (obscureText ?? false);
 
   @override
   State<CustomTextField> createState() => _CustomTextFieldState();
@@ -714,7 +797,13 @@ class _CustomTextFieldState extends State<CustomTextField>
       ),
     );
 
+    // 🚀 MODIFICADO: NO inicializar con 0.00, dejar vacío para mostrar hint
     if (widget.controller != null) {
+      // Limpiar si tiene "0" para que muestre el hint
+      if (widget.controller!.text == '0' || widget.controller!.text == '0.0') {
+        widget.controller!.text = '';
+      }
+
       _hasText = widget.controller!.text.isNotEmpty;
       widget.controller!.addListener(_onTextChanged);
     }
@@ -725,23 +814,23 @@ class _CustomTextFieldState extends State<CustomTextField>
   void dispose() {
     _validationManager.dispose();
     _animationController.dispose();
-    
+
     // IMPORTANTE: Remover el listener ANTES de dispose
     _focusNode.removeListener(_onFocusChange);
-    
+
     if (widget.focusNode == null) {
       _focusNode.dispose();
     }
     if (widget.controller != null) {
       widget.controller!.removeListener(_onTextChanged);
-    }   
+    }
     super.dispose();
   }
 
   // 🚀 MEJORA: Verificación de mounted
   void _onFocusChange() {
     if (!mounted) return;
-    
+
     setState(() {
       _isFocused = _focusNode.hasFocus;
     });
@@ -756,7 +845,7 @@ class _CustomTextFieldState extends State<CustomTextField>
   // 🚀 MEJORA: Verificación de mounted
   void _onTextChanged() {
     if (!mounted) return;
-    
+
     final hasText = widget.controller!.text.isNotEmpty;
     if (hasText != _hasText) {
       setState(() {
@@ -869,28 +958,30 @@ class _CustomTextFieldState extends State<CustomTextField>
     List<TextInputFormatter> formatters = [...(widget.inputFormatters ?? [])];
 
     if (widget.textCase == TextCase.upper) {
-    formatters.insert(
-      0,
-      TextInputFormatter.withFunction((oldValue, newValue) {
-        return newValue.copyWith(text: newValue.text.toUpperCase());
-      }),
-    );
-  } else if (widget.textCase == TextCase.lower) {
-    formatters.insert(
-      0,
-      TextInputFormatter.withFunction((oldValue, newValue) {
-        return newValue.copyWith(text: newValue.text.toLowerCase());
-      }),
-    );
-  }
-
+      formatters.insert(
+        0,
+        TextInputFormatter.withFunction((oldValue, newValue) {
+          return newValue.copyWith(text: newValue.text.toUpperCase());
+        }),
+      );
+    } else if (widget.textCase == TextCase.lower) {
+      formatters.insert(
+        0,
+        TextInputFormatter.withFunction((oldValue, newValue) {
+          return newValue.copyWith(text: newValue.text.toLowerCase());
+        }),
+      );
+    }
 
     switch (widget.fieldType) {
       case FieldType.phone:
         formatters.insert(0, PhoneFormatterDynamic.fromCountry(widget.country));
         break;
       case FieldType.currency:
-        formatters.insert(0, CurrencyFormatter(symbol: widget.currencySymbol));
+        formatters.insert(
+          0,
+          CurrencyFormatterFixed(symbol: widget.currencySymbol),
+        );
         break;
       case FieldType.email:
         formatters.add(FilteringTextInputFormatter.deny(RegExp(r'\s')));
@@ -925,9 +1016,9 @@ class _CustomTextFieldState extends State<CustomTextField>
       case FieldType.phone:
         icon = Icons.phone_outlined;
         break;
-      case FieldType.currency:
-        icon = Icons.attach_money_outlined;
-        break;
+      // case FieldType.currency:
+      //   icon = Icons.attach_money_outlined;
+      //   break;
       case FieldType.url:
         icon = Icons.link_outlined;
         break;
@@ -971,7 +1062,7 @@ class _CustomTextFieldState extends State<CustomTextField>
   // 🚀 MEJORA: Optimizar contador con ValueListenableBuilder
   Widget _buildCharacterCounter() {
     if (widget.maxLength == null) return const SizedBox.shrink();
-    
+
     return ValueListenableBuilder(
       valueListenable: widget.controller!,
       builder: (context, value, child) {
@@ -994,9 +1085,7 @@ class _CustomTextFieldState extends State<CustomTextField>
       child: Container(
         height: widget.height,
         decoration: BoxDecoration(
-          color: widget.filled
-              ? widget.backgroundColor
-              : Colors.transparent,
+          color: widget.filled ? widget.backgroundColor : Colors.transparent,
           borderRadius: _getCachedBorderRadius(),
           boxShadow: widget.filled ? getCachedShadows() : null,
           border: Border.all(
@@ -1029,7 +1118,7 @@ class _CustomTextFieldState extends State<CustomTextField>
               hintText: widget.hintText,
               prefixIcon: _getCachedPrefixIcon(),
               prefixIconConstraints: const BoxConstraints(
-                minWidth: 40,
+                minWidth: 30,
                 minHeight: 35,
               ),
               suffixIcon: _buildSuffixIcon(),
@@ -1072,12 +1161,7 @@ class _CustomTextFieldState extends State<CustomTextField>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Stack(
-              children: [
-                textField,
-                _buildCharacterCounter(),
-              ],
-            ),
+            Stack(children: [textField, _buildCharacterCounter()]),
             // 🚀 MEJORA: Error message optimizado
             _buildErrorMessage(),
           ],
@@ -1101,28 +1185,29 @@ class _CustomTextFieldState extends State<CustomTextField>
 
   // 🚀 MEJORA: Error message como widget separado
   Widget _buildErrorMessage() {
-  if (!widget.enableRealTimeValidation) return const SizedBox.shrink();
-  
-  return ValueListenableBuilder<ValidationState>(
-    valueListenable: _validationManager.state,
-    builder: (context, state, child) {
-      if (state is ValidationInvalid) {  // ← Usar 'is' en lugar de switch
-        return Padding(
-          padding: const EdgeInsets.only(top: 3),
-          child: Text(
-            state.error,
-            style: const TextStyle(
-              color: Colors.red,
-              fontSize: 8,
-              fontWeight: FontWeight.w400,
+    if (!widget.enableRealTimeValidation) return const SizedBox.shrink();
+
+    return ValueListenableBuilder<ValidationState>(
+      valueListenable: _validationManager.state,
+      builder: (context, state, child) {
+        if (state is ValidationInvalid) {
+          // ← Usar 'is' en lugar de switch
+          return Padding(
+            padding: const EdgeInsets.only(top: 3),
+            child: Text(
+              state.error,
+              style: const TextStyle(
+                color: Colors.red,
+                fontSize: 8,
+                fontWeight: FontWeight.w400,
+              ),
             ),
-          ),
-        );
-      }
-      return const SizedBox.shrink();
-    },
-  );
-}
+          );
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
 
   // 🚀 MÉTODOS CACHEADOS OPTIMIZADOS
   Color _getCachedBorderColor() {
@@ -1143,7 +1228,7 @@ class _CustomTextFieldState extends State<CustomTextField>
           color: widget.enabled ? AppColors.blue2 : AppColors.blue3,
           fontSize: 10,
           fontWeight: FontWeight.w600,
-          fontFamily: 'Oxygen-Regular'
+          fontFamily: 'Oxygen-Regular',
         );
   }
 
@@ -1189,7 +1274,7 @@ class _CustomTextFieldState extends State<CustomTextField>
 
   Widget _buildIconWrapper(Widget icon) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
+      margin: EdgeInsets.only(left: 4, right: 0),
       child: IconTheme(
         data: IconThemeData(
           color:
@@ -1243,9 +1328,7 @@ class _CustomTextFieldState extends State<CustomTextField>
   Widget _buildPasswordToggle() {
     return IconButton(
       icon: Icon(
-        _isObscured
-            ? Icons.visibility_off_outlined
-            : Icons.visibility_outlined,
+        _isObscured ? Icons.visibility_off_outlined : Icons.visibility_outlined,
       ),
       onPressed: () {
         setState(() {
@@ -1255,59 +1338,35 @@ class _CustomTextFieldState extends State<CustomTextField>
       color: _isFocused ? const Color(0xFF666666) : Colors.grey[600],
       iconSize: 20,
       splashRadius: 20,
-      tooltip: _isObscured
-          ? 'Mostrar contraseña'
-          : 'Ocultar contraseña',
+      tooltip: _isObscured ? 'Mostrar contraseña' : 'Ocultar contraseña',
     );
   }
 
   // 🚀 MEJORA: Usar widgets constantes
-  // Widget _buildValidationIndicator(ValidationState state) {
-  //   switch (state.runtimeType) {
-  //     case ValidationLoading:
-  //       return const Padding(
-  //         padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-  //         child: CustomTextFieldConstants.loadingIndicator,
-  //       );
-  //     case ValidationValid:
-  //       return Container(
-  //         margin: const EdgeInsets.only(right: 12),
-  //         child: CustomTextFieldConstants.validIcon,
-  //       );
-  //     case ValidationInvalid:
-  //       return Container(
-  //         margin: const EdgeInsets.only(right: 12),
-  //         child: CustomTextFieldConstants.invalidIcon,
-  //       );
-  //     default:
-  //       return const SizedBox.shrink();
-  //   }
-  // }
-
   Widget _buildValidationIndicator(ValidationState state) {
-  if (state is ValidationLoading) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-      child: CustomTextFieldConstants.loadingIndicator,
-    );
+    if (state is ValidationLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+        child: CustomTextFieldConstants.loadingIndicator,
+      );
+    }
+
+    if (state is ValidationValid) {
+      return Container(
+        margin: const EdgeInsets.only(right: 12),
+        child: CustomTextFieldConstants.validIcon,
+      );
+    }
+
+    if (state is ValidationInvalid) {
+      return Container(
+        margin: const EdgeInsets.only(right: 12),
+        child: CustomTextFieldConstants.invalidIcon,
+      );
+    }
+
+    return const SizedBox.shrink();
   }
-  
-  if (state is ValidationValid) {
-    return Container(
-      margin: const EdgeInsets.only(right: 12),
-      child: CustomTextFieldConstants.validIcon,
-    );
-  }
-  
-  if (state is ValidationInvalid) {
-    return Container(
-      margin: const EdgeInsets.only(right: 12),
-      child: CustomTextFieldConstants.invalidIcon,
-    );
-  }
-  
-  return const SizedBox.shrink();
-}
 
   EdgeInsetsGeometry _getDefaultContentPadding() {
     if (widget.height != null) {
@@ -1460,6 +1519,7 @@ class CustomTextFieldHelpers {
     Color? borderColor,
     Function(String)? onChanged,
     bool enableRealTimeValidation = true,
+    bool? enabled,
   }) {
     return CustomTextField(
       label: label,
@@ -1475,6 +1535,7 @@ class CustomTextFieldHelpers {
         maxAmount: maxAmount,
       ),
       onChanged: onChanged,
+      enabled: enabled ?? true,
     );
   }
 
@@ -1488,7 +1549,7 @@ class CustomTextFieldHelpers {
     Function(String)? onChanged,
     bool enableRealTimeValidation = true,
     TextStyle? labelStyle,
-    bool? filled
+    bool? filled,
   }) {
     return CustomTextField(
       label: label,
@@ -1559,7 +1620,7 @@ class CustomTextFieldHelpers {
     Function(String)? onChanged,
     bool enableRealTimeValidation = true,
     TextStyle? labelStyle,
-    TextStyle? hintStyle
+    TextStyle? hintStyle,
   }) {
     return CustomTextField(
       label: label,

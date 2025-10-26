@@ -513,127 +513,6 @@ class _SmartAppBarState extends State<SmartAppBar> {
 
   // === MENÚ DE USUARIO CON LOGOUT INTEGRADO ===
 
-  // void _showUserMenu(BuildContext context, Map<String, String> userData) async {
-  //   final authUseCases = locator<AuthUseCases>();
-  //   final userSession = await authUseCases.getUserSession.run();
-
-  //   if (!context.mounted) return;
-
-  //   showModalBottomSheet(
-  //     context: context,
-  //     shape: const RoundedRectangleBorder(
-  //       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-  //     ),
-  //     builder: (modalContext) => Container(
-  //       padding: const EdgeInsets.all(16),
-  //       child: Column(
-  //         mainAxisSize: MainAxisSize.min,
-  //         children: [
-  //           // Header
-  //           Row(
-  //             children: [
-  //               CircleAvatar(
-  //                 radius: 23,
-  //                 backgroundColor: AppColors.blue3.withValues(alpha: 0.1),
-  //                 child: const Icon(Icons.person, size: 22, color: AppColors.blue1),
-  //               ),
-  //               const SizedBox(width: 16),
-  //               Expanded(
-  //                 child: Column(
-  //                   crossAxisAlignment: CrossAxisAlignment.start,
-  //                   children: [
-  //                     Text(
-  //                       userData['name'] ?? '',
-  //                       style: const TextStyle(
-  //                         fontSize: 12,
-  //                         fontWeight: FontWeight.bold,
-  //                       ),
-  //                     ),
-  //                     const SizedBox(height: 4),
-  //                     Text(
-  //                       userData['email'] ?? '',
-  //                       style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-  //                     ),
-  //                     const SizedBox(height: 4),
-  //                     Chip(
-  //                       label: Text(userData['role'] ?? ''),
-  //                       backgroundColor: AppColors.blue3.withValues(alpha: 0.1),
-  //                       padding: EdgeInsets.zero,
-  //                       labelStyle: const TextStyle(fontSize: 10),
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //           const SizedBox(height: 10),
-  //           const Divider(),
-  //           const SizedBox(height: 10),
-
-  //           // Cambiar Rol
-  //           ListTile(
-  //             leading: const Icon(Icons.swap_horiz, color: Colors.blue),
-  //             title: const Text('Cambiar Rol'),
-  //             onTap: () {
-  //               Navigator.pop(modalContext);
-
-  //               if (userSession?.data?.user != null) {
-  //                 Navigator.pushNamed(
-  //                   context,
-  //                   'role-selection',
-  //                   arguments: userSession!.data!.user,
-  //                 );
-  //               } else {
-  //                 ScaffoldMessenger.of(context).showSnackBar(
-  //                   const SnackBar(
-  //                     content: Text('Error: Sesión no encontrada'),
-  //                     backgroundColor: Colors.red,
-  //                   ),
-  //                 );
-  //               }
-  //             },
-  //           ),
-
-  //           ListTile(
-  //             leading: const Icon(Icons.person_outline, color: Colors.blue),
-  //             title: const Text('Mi Perfil'),
-  //             onTap: () {
-  //               Navigator.pop(modalContext);
-  //               // TODO: Implementar
-  //             },
-  //           ),
-
-  //           ListTile(
-  //             leading: const Icon(Icons.settings_outlined, color: Colors.blue),
-  //             title: const Text('Configuración'),
-  //             onTap: () {
-  //               Navigator.pop(modalContext);
-  //               // TODO: Implementar
-  //             },
-  //           ),
-
-  //           const Divider(),
-
-  //           ListTile(
-  //             // leading: const Icon(Icons.logout, color: AppColors.borderError, size: 24,),
-  //             title: LogoutButton.profile(
-  //               text: 'Cerrar Sesión',
-  //               onLogoutSuccess: () {
-  //                 Navigator.pushNamedAndRemoveUntil(
-  //                   context,
-  //                   'login',
-  //                   (route) => false,
-  //                 );
-  //               },
-  //               // onLogoutSuccess: (){},
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
-
   void _showUserMenu(BuildContext context, Map<String, String> userData) async {
     final authUseCases = locator<AuthUseCases>();
     final userSession = await authUseCases.getUserSession.run();
@@ -759,7 +638,6 @@ class _SmartAppBarState extends State<SmartAppBar> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),  // ✅ Padding más compacto
                   title: LogoutButton.profile(
                     text: 'Cerrar Sesión',
-                    // textStyle: const TextStyle(fontSize: 12),  // ✅ Fuente más pequeña si LogoutButton lo soporta
                     onLogoutSuccess: () {
                       Navigator.pushNamedAndRemoveUntil(
                         context,

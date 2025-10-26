@@ -103,7 +103,7 @@ class _HomePageAlternativeState extends State<HomePageAlternative>
         height: 40.0,
         curveDepth: 0.48,
         items: const [
-          Icon(Icons.home, size: 22, color: Colors.white),
+          Icon(Icons.checklist_rounded, size: 22, color: Colors.white),
           Icon(Icons.list_alt, size: 22, color: Colors.white),
           Icon(Icons.receipt_long, size: 22, color: Colors.white),
           Icon(Icons.notifications, size: 22, color: Colors.white),

@@ -1,3 +1,10 @@
+import 'package:consumo_combustible/core/fonts/app_text_widgets.dart';
+import 'package:consumo_combustible/core/theme/app_colors.dart';
+import 'package:consumo_combustible/core/theme/app_gradients.dart';
+import 'package:consumo_combustible/core/theme/gradient_container.dart';
+import 'package:consumo_combustible/core/widgets/custom_date_textfiels_container/custom_dropdown.dart';
+import 'package:consumo_combustible/core/widgets/custom_date_textfiels_container/custom_textfield.dart';
+import 'package:consumo_combustible/core/widgets/cutom_button/custom_button.dart';
 import 'package:consumo_combustible/core/widgets/snack.dart';
 import 'package:consumo_combustible/domain/models/detalle_abastecimiento.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart';
@@ -10,14 +17,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
-
 class DetalleDetailPage extends StatefulWidget {
   final DetalleAbastecimiento detalle;
 
-  const DetalleDetailPage({
-    super.key,
-    required this.detalle,
-  });
+  const DetalleDetailPage({super.key, required this.detalle});
 
   @override
   State<DetalleDetailPage> createState() => _DetalleDetailPageState();
@@ -65,7 +68,9 @@ class _DetalleDetailPageState extends State<DetalleDetailPage> {
 
   void _initializeControllers() {
     _cantidadAbastecidaController = TextEditingController(
-      text: widget.detalle.cantidadAbastecida?.toString() ?? '',
+      text: (widget.detalle.cantidadAbastecida == null || widget.detalle.cantidadAbastecida == 0)
+          ? widget.detalle.ticket.cantidad.toString()
+          : widget.detalle.cantidadAbastecida.toString(),
     );
     _motivoDiferenciaController = TextEditingController(
       text: widget.detalle.motivoDiferencia ?? '',
@@ -110,7 +115,35 @@ class _DetalleDetailPageState extends State<DetalleDetailPage> {
       text: widget.detalle.observacionesControlador ?? '',
     );
     _unidadMedida = widget.detalle.unidadMedida;
+
+    _cantidadAbastecidaController.addListener(_updateTotalCost);
+    _costoPorUnidadController.addListener(_updateTotalCost);
   }
+
+  void _updateTotalCost() {
+  final qtyText = _cantidadAbastecidaController.text;
+  final unitText = _costoPorUnidadController.text;
+
+  // Si algún campo está vacío, no calcular
+  if (qtyText.isEmpty || unitText.isEmpty) {
+    _costoTotalController.text = '';
+    return;
+  }
+
+  // Parsear valores
+  final qty = double.tryParse(qtyText);
+  final unit = double.tryParse(unitText);
+
+  // Si no se pueden parsear, no calcular
+  if (qty == null || unit == null) {
+    _costoTotalController.text = '';
+    return;
+  }
+
+  // Calcular y formatear total (2 decimales)
+  final total = qty * unit;
+  _costoTotalController.text = total.toStringAsFixed(2);
+}
 
   @override
   void dispose() {
@@ -129,15 +162,24 @@ class _DetalleDetailPageState extends State<DetalleDetailPage> {
     _requerimientoController.dispose();
     _numeroSalidaAlmacenController.dispose();
     _observacionesController.dispose();
+    _cantidadAbastecidaController.removeListener(_updateTotalCost);
+    _costoPorUnidadController.removeListener(_updateTotalCost);
     super.dispose();
   }
 
   void _toggleEdit() {
     if (widget.detalle.estado == 'CONCLUIDO') {
-      SnackBarHelper.showWarning(context, 'No se puede editar un detalle concluido');
+      SnackBarHelper.showWarning(
+        context,
+        'No se puede editar un detalle concluido',
+      );
       return;
     }
     setState(() => _isEditing = !_isEditing);
+
+    if (_isEditing) {
+    _updateTotalCost();
+  }
   }
 
   void _guardarCambios() {
@@ -149,12 +191,12 @@ class _DetalleDetailPageState extends State<DetalleDetailPage> {
     }
 
     final data = <String, dynamic>{};
-
-    // Incluir el ID del controlador (usuario actual)
     data['controladorId'] = _currentUserId;
 
     if (_cantidadAbastecidaController.text.isNotEmpty) {
-      data['cantidadAbastecida'] = double.parse(_cantidadAbastecidaController.text);
+      data['cantidadAbastecida'] = double.parse(
+        _cantidadAbastecidaController.text,
+      );
     }
     if (_motivoDiferenciaController.text.isNotEmpty) {
       data['motivoDiferencia'] = _motivoDiferenciaController.text;
@@ -163,7 +205,9 @@ class _DetalleDetailPageState extends State<DetalleDetailPage> {
       data['horometroActual'] = double.parse(_horometroActualController.text);
     }
     if (_horometroAnteriorController.text.isNotEmpty) {
-      data['horometroAnterior'] = double.parse(_horometroAnteriorController.text);
+      data['horometroAnterior'] = double.parse(
+        _horometroAnteriorController.text,
+      );
     }
     if (_precintoAnteriorController.text.isNotEmpty) {
       data['precintoAnterior'] = _precintoAnteriorController.text;
@@ -174,7 +218,7 @@ class _DetalleDetailPageState extends State<DetalleDetailPage> {
     data['unidadMedida'] = _unidadMedida;
     data['costoPorUnidad'] = _costoPorUnidadController.text;
     data['costoTotal'] = _costoTotalController.text;
-    
+
     if (_numeroTicketGrifoController.text.isNotEmpty) {
       data['numeroTicketGrifo'] = _numeroTicketGrifoController.text;
     }
@@ -197,10 +241,7 @@ class _DetalleDetailPageState extends State<DetalleDetailPage> {
       data['observacionesControlador'] = _observacionesController.text;
     }
 
-    _bloc.add(ActualizarDetalleEvent(
-      detalleId: widget.detalle.id,
-      data: data,
-    ));
+    _bloc.add(ActualizarDetalleEvent(detalleId: widget.detalle.id, data: data));
 
     setState(() => _isEditing = false);
   }
@@ -214,23 +255,42 @@ class _DetalleDetailPageState extends State<DetalleDetailPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Concluir Detalle'),
-        content: const Text('¿Está seguro que desea concluir este detalle de abastecimiento?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: AppColors.green, size: 28),
+            const SizedBox(width: 12),
+            const AppSubtitle('Concluir Detalle'),
+          ],
+        ),
+        content: const AppLabelText(
+          '¿Está seguro que desea concluir este detalle de abastecimiento?',
+          fontSize: 11,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+            child: AppLabelText(
+              'Cancelar',
+              color: AppColors.grey,
+              fontSize: 11,
+            ),
           ),
-          ElevatedButton(
+          CustomButton(
+            text: 'Concluir',
+            backgroundColor: AppColors.green,
+            width: 100,
+            height: 35,
+            fontSize: 11,
             onPressed: () {
               Navigator.pop(context);
-              _bloc.add(ConcluirDetalleEvent(
-                detalleId: widget.detalle.id,
-                concluidoPorId: _currentUserId!,
-              ));
+              _bloc.add(
+                ConcluirDetalleEvent(
+                  detalleId: widget.detalle.id,
+                  concluidoPorId: _currentUserId!,
+                ),
+              );
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: const Text('Concluir'),
           ),
         ],
       ),
@@ -239,472 +299,721 @@ class _DetalleDetailPageState extends State<DetalleDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.detalle.ticket.numeroTicket),
-        actions: [
-          if (widget.detalle.estado != 'CONCLUIDO')
-            IconButton(
-              icon: Icon(_isEditing ? Icons.close : Icons.edit),
-              onPressed: _toggleEdit,
-            ),
-        ],
-      ),
-      body: BlocConsumer<DetalleAbastecimientoBloc, DetalleAbastecimientoState>(
-        bloc: _bloc,
-        listener: (context, state) {
-          if (state.actualizarResponse is Success) {
-            SnackBarHelper.showSuccess(context, 'Detalle actualizado exitosamente');
-            Navigator.pop(context);
-          } else if (state.actualizarResponse is Error) {
-            final error = state.actualizarResponse as Error;
-            SnackBarHelper.showError(context, error.message);
-          }
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: GradientContainer(
+        // gradient: AppGradients.custom(
+        //   startColor: AppColors.white,
+        //   middleColor: AppColors.white,
+        //   endColor: AppColors.white,
+        //   stops: [0.0, 0.5, 1.0],
+        // ),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body:
+              BlocConsumer<
+                DetalleAbastecimientoBloc,
+                DetalleAbastecimientoState
+              >(
+                bloc: _bloc,
+                listener: (context, state) {
+                  if (state.actualizarResponse is Success) {
+                    SnackBarHelper.showSuccess(
+                      context,
+                      'Detalle actualizado exitosamente',
+                    );
+                    Navigator.pop(context);
+                  } else if (state.actualizarResponse is Error) {
+                    final error = state.actualizarResponse as Error;
+                    SnackBarHelper.showError(context, error.message);
+                  }
 
-          if (state.concluirResponse is Success) {
-            SnackBarHelper.showSuccess(context, 'Detalle concluido exitosamente');
-            Navigator.pop(context);
-          } else if (state.concluirResponse is Error) {
-            final error = state.concluirResponse as Error;
-            SnackBarHelper.showError(context, error.message);
-          }
-        },
-        builder: (context, state) {
-          final isLoading = state.actualizarResponse is Loading || 
-                           state.concluirResponse is Loading;
+                  if (state.concluirResponse is Success) {
+                    SnackBarHelper.showSuccess(
+                      context,
+                      'Detalle concluido exitosamente',
+                    );
+                    Navigator.pop(context);
+                  } else if (state.concluirResponse is Error) {
+                    final error = state.concluirResponse as Error;
+                    SnackBarHelper.showError(context, error.message);
+                  }
+                },
+                builder: (context, state) {
+                  final isLoading =
+                      state.actualizarResponse is Loading ||
+                      state.concluirResponse is Loading;
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildEstadoCard(),
-                  const SizedBox(height: 16),
-                  _buildTicketInfoCard(),
-                  const SizedBox(height: 16),
-                  _buildMedicionesCard(),
-                  const SizedBox(height: 16),
-                  _buildCostosCard(),
-                  const SizedBox(height: 16),
-                  _buildDocumentosCard(),
-                  const SizedBox(height: 16),
-                  _buildObservacionesCard(),
-                  const SizedBox(height: 24),
-                  if (_isEditing) _buildActionButtons(isLoading),
-                  if (!_isEditing && widget.detalle.estado == 'EN_PROGRESO')
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: isLoading ? null : _concluirDetalle,
-                        icon: const Icon(Icons.check_circle),
-                        label: const Text('Concluir Detalle'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                  return Column(
+                    children: [
+                      // 🎨 HEADER PERSONALIZADO
+                      SafeArea(child: _buildCustomHeader()),
+
+                      // 📋 CONTENIDO SCROLL
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 12),
+                                _buildEstadoCard(),
+                                const SizedBox(height: 12),
+                                _buildTicketInfoCard(),
+                                const SizedBox(height: 12),
+                                _buildMedicionesCard(),
+                                const SizedBox(height: 12),
+                                _buildCostosCard(),
+                                const SizedBox(height: 12),
+                                _buildDocumentosCard(),
+                                const SizedBox(height: 12),
+                                _buildObservacionesCard(),
+                                const SizedBox(height: 16),
+                                if (_isEditing) _buildActionButtons(isLoading),
+                                if (!_isEditing &&
+                                    widget.detalle.estado == 'EN_PROGRESO')
+                                  _buildConcluirButton(isLoading),
+                                const SizedBox(height: 20),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                ],
+                    ],
+                  );
+                },
               ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildEstadoCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Estado:',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: widget.detalle.estadoColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: widget.detalle.estadoColor),
-              ),
-              child: Text(
-                widget.detalle.estadoTexto,
-                style: TextStyle(
-                  color: widget.detalle.estadoColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );
   }
 
+  // 🎨 HEADER PERSONALIZADO
+  Widget _buildCustomHeader() {
+    return Container(
+      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: Icon(Icons.arrow_back_ios, size: 18, color: AppColors.blue3),
+            onPressed: () => Navigator.pop(context),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppTitle(widget.detalle.ticket.numeroTicket, fontSize: 12),
+                AppLabelText(
+                  'Detalle de Abastecimiento',
+                  fontSize: 8,
+                  color: AppColors.blueGrey,
+                ),
+              ],
+            ),
+          ),
+          if (widget.detalle.estado != 'CONCLUIDO')
+            IconButton(
+              icon: Icon(
+                _isEditing ? Icons.close : Icons.edit,
+                size: 20,
+                color: _isEditing ? AppColors.red : AppColors.blue3,
+              ),
+              onPressed: _toggleEdit,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // 📊 CARD DE ESTADO
+  Widget _buildEstadoCard() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: widget.detalle.estadoColor.withValues(alpha: 0.3),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: widget.detalle.estadoColor.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            // padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: widget.detalle.estadoColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              widget.detalle.estado == 'CONCLUIDO'
+                  ? Icons.check_circle
+                  : Icons.pending,
+              color: widget.detalle.estadoColor,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppLabelText('Estado del Detalle', fontSize: 8),
+                const SizedBox(height: 2),
+                AppTitle(
+                  widget.detalle.estadoTexto,
+                  fontSize: 11,
+                  color: widget.detalle.estadoColor,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 🎫 INFORMACIÓN DEL TICKET
   Widget _buildTicketInfoCard() {
     final dateFormat = DateFormat('dd/MM/yyyy');
     final timeFormat = DateFormat('HH:mm');
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Información del Ticket',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const Divider(),
-            _buildReadOnlyField('Número de Ticket', widget.detalle.ticket.numeroTicket),
-            _buildReadOnlyField('Placa', widget.detalle.ticket.placaUnidad),
-            _buildReadOnlyField('Unidad', widget.detalle.ticket.unidadDescripcion),
-            _buildReadOnlyField('Conductor', widget.detalle.ticket.conductorNombre),
-            _buildReadOnlyField('Grifo', widget.detalle.ticket.grifoNombre),
-            _buildReadOnlyField('Fecha', dateFormat.format(widget.detalle.ticket.fecha)),
-            _buildReadOnlyField('Hora', timeFormat.format(widget.detalle.ticket.hora)),
-            _buildReadOnlyField(
-              'Cantidad Solicitada',
-              '${widget.detalle.ticket.cantidad.toStringAsFixed(2)} ${widget.detalle.unidadMedida}'
-            ),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildMedicionesCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Mediciones y Abastecimiento',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const Divider(),
-            TextFormField(
-              controller: _cantidadAbastecidaController,
-              decoration: InputDecoration(
-                labelText: 'Cantidad Abastecida (${widget.detalle.unidadMedida})',
-                hintText: 'Ingrese la cantidad real abastecida',
-              ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              enabled: _isEditing,
-              validator: (value) {
-                if (value != null && value.isNotEmpty) {
-                  final cantidad = double.tryParse(value);
-                  if (cantidad == null) {
-                    return 'Ingrese un número válido';
-                  }
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _motivoDiferenciaController,
-              decoration: const InputDecoration(
-                labelText: 'Motivo de Diferencia',
-                hintText: 'Si hay diferencia, explique el motivo',
-              ),
-              maxLines: 2,
-              enabled: _isEditing,
-            ),
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _horometroActualController,
-              decoration: const InputDecoration(labelText: 'Horómetro Actual'),
-              keyboardType: TextInputType.number,
-              enabled: _isEditing,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _horometroAnteriorController,
-              decoration: const InputDecoration(labelText: 'Horómetro Anterior'),
-              keyboardType: TextInputType.number,
-              enabled: _isEditing,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _precintoAnteriorController,
-              decoration: const InputDecoration(labelText: 'Precinto Anterior'),
-              enabled: _isEditing,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _precinto2Controller,
-              decoration: const InputDecoration(labelText: 'Precinto 2'),
-              enabled: _isEditing,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCostosCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Costos',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const Divider(),
-            DropdownButtonFormField<String>(
-              initialValue: _unidadMedida,
-              decoration: const InputDecoration(labelText: 'Unidad de Medida'),
-              items: const [
-                DropdownMenuItem(value: 'GALONES', child: Text('GALONES')),
-                DropdownMenuItem(value: 'LITROS', child: Text('LITROS')),
-              ],
-              onChanged: _isEditing ? (value) {
-                setState(() => _unidadMedida = value!);
-              } : null,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _costoPorUnidadController,
-              decoration: const InputDecoration(labelText: 'Costo por Unidad'),
-              keyboardType: TextInputType.number,
-              enabled: _isEditing,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _costoTotalController,
-              decoration: const InputDecoration(labelText: 'Costo Total'),
-              keyboardType: TextInputType.number,
-              enabled: _isEditing,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDocumentosCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Documentos',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const Divider(),
-            TextFormField(
-              controller: _numeroTicketGrifoController,
-              decoration: const InputDecoration(labelText: 'Número Ticket Grifo'),
-              enabled: _isEditing,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _valeDieselController,
-              decoration: const InputDecoration(labelText: 'Vale Diesel'),
-              enabled: _isEditing,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _numeroFacturaController,
-              decoration: const InputDecoration(labelText: 'Número de Factura'),
-              enabled: _isEditing,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _importeFacturaController,
-              decoration: const InputDecoration(labelText: 'Importe de Factura'),
-              keyboardType: TextInputType.number,
-              enabled: _isEditing,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _requerimientoController,
-              decoration: const InputDecoration(labelText: 'Requerimiento'),
-              enabled: _isEditing,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _numeroSalidaAlmacenController,
-              decoration: const InputDecoration(labelText: 'Número Salida Almacén'),
-              enabled: _isEditing,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildObservacionesCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Observaciones',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const Divider(),
-            TextFormField(
-              controller: _observacionesController,
-              decoration: const InputDecoration(
-                labelText: 'Observaciones del Controlador',
-                hintText: 'Ingrese observaciones...',
-              ),
-              maxLines: 3,
-              enabled: _isEditing,
-            ),
-            if (widget.detalle.aprobadoPor != null) ...[
-              const SizedBox(height: 16),
-              const Divider(),
-              Row(
-                children: [
-                  const Icon(Icons.person, size: 16, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Aprobado por:',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                        Text(
-                          widget.detalle.aprobadoPor!.nombreCompleto,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        if (widget.detalle.fechaAprobacion != null)
-                          Text(
-                            DateFormat('dd/MM/yyyy HH:mm').format(
-                              widget.detalle.fechaAprobacion!,
-                            ),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            if (widget.detalle.estado == 'CONCLUIDO' && 
-                widget.detalle.fechaConcluido != null) ...[
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  const Icon(Icons.check_circle, size: 16, color: Colors.green),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Concluido el:',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                        Text(
-                          DateFormat('dd/MM/yyyy HH:mm').format(
-                            widget.detalle.fechaConcluido!,
-                          ),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildReadOnlyField(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              '$label:',
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                color: Colors.grey,
-              ),
-            ),
+          Row(
+            children: [
+              Icon(Icons.receipt_long, size: 18, color: AppColors.blue3),
+              const SizedBox(width: 8),
+              AppSubtitle('Información del Ticket', fontSize: 11),
+            ],
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
+          const SizedBox(height: 5),
+          _buildInfoRow(
+            'N° Ticket',
+            widget.detalle.ticket.numeroTicket,
+            Icons.tag,
+          ),
+          _buildDivider(),
+          _buildInfoRow(
+            'Placa',
+            widget.detalle.ticket.placaUnidad,
+            Icons.directions_car,
+          ),
+          _buildDivider(),
+          _buildInfoRow(
+            'Unidad',
+            widget.detalle.ticket.unidadDescripcion,
+            Icons.build,
+          ),
+          _buildDivider(),
+          _buildInfoRow(
+            'Conductor',
+            widget.detalle.ticket.conductorNombre,
+            Icons.person,
+          ),
+          _buildDivider(),
+          _buildInfoRow(
+            'Grifo',
+            widget.detalle.ticket.grifoNombre,
+            Icons.local_gas_station,
+          ),
+          _buildDivider(),
+          _buildInfoRow(
+            'Fecha',
+            dateFormat.format(widget.detalle.ticket.fecha),
+            Icons.calendar_today,
+          ),
+          _buildDivider(),
+          _buildInfoRow(
+            'Hora',
+            timeFormat.format(widget.detalle.ticket.hora),
+            Icons.access_time,
+          ),
+          _buildDivider(),
+          _buildInfoRow(
+            'Cantidad Solicitada',
+            '${widget.detalle.ticket.cantidad.toStringAsFixed(2)} ${widget.detalle.unidadMedida}',
+            Icons.opacity,
           ),
         ],
       ),
     );
   }
 
+  // 📏 MEDICIONES Y ABASTECIMIENTO
+  Widget _buildMedicionesCard() {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.speed, size: 18, color: AppColors.blue3),
+              const SizedBox(width: 8),
+              AppSubtitle('Mediciones', fontSize: 11),
+            ],
+          ),
+          const SizedBox(height: 5),
+          CustomTextField(
+            label: 'Cantidad Abastecida',
+            controller: _cantidadAbastecidaController,
+            enabled: _isEditing,
+            keyboardType: TextInputType.number,
+            prefixIcon: Icon(
+              Icons.local_gas_station,
+              color: AppColors.blue3,
+              size: 16,
+            ),
+            borderColor: AppColors.blue3,
+          ),
+          const SizedBox(height: 10),
+          CustomTextField(
+            label: 'Motivo de Diferencia',
+            controller: _motivoDiferenciaController,
+            enabled: _isEditing,
+            // prefixIcon: Icons.info_outline,
+            prefixIcon: Icon(
+              Icons.info_outline,
+              color: AppColors.blue3,
+              size: 16,
+            ),
+            borderColor: AppColors.orange,
+            maxLines: 2,
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: CustomTextField(
+                  label: 'Horómetro Actual',
+                  controller: _horometroActualController,
+                  enabled: _isEditing,
+                  keyboardType: TextInputType.number,
+                  // prefixIcon: Icons.speed,
+                  prefixIcon: Icon(
+                    Icons.speed,
+                    color: AppColors.blue3,
+                    size: 16,
+                  ),
+                  borderColor: AppColors.blue3,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: CustomTextField(
+                  label: 'Horómetro Anterior',
+                  controller: _horometroAnteriorController,
+                  enabled: _isEditing,
+                  keyboardType: TextInputType.number,
+                  // prefixIcon: Icons.history,
+                  prefixIcon: Icon(
+                    Icons.history,
+                    color: AppColors.blue3,
+                    size: 16,
+                  ),
+                  borderColor: AppColors.blue3,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: CustomTextField(
+                  label: 'Precinto Anterior',
+                  controller: _precintoAnteriorController,
+                  enabled: _isEditing,
+                  // prefixIcon: Icons.lock_outline,
+                  prefixIcon: Icon(
+                    Icons.lock_outline,
+                    color: AppColors.blue3,
+                    size: 16,
+                  ),
+                  borderColor: AppColors.blue3,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: CustomTextField(
+                  label: 'Precinto Nuevo',
+                  controller: _precinto2Controller,
+                  enabled: _isEditing,
+                  // prefixIcon: Icons.lock,
+                  borderColor: AppColors.blue3,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          CustomDropdown<String>(
+            label: 'Unidad de Medida',
+            value: _unidadMedida,
+            items: const [
+              DropdownItem(value: 'GALONES', label: 'GALONES'),
+              DropdownItem(value: 'LITROS', label: 'LITROS'),
+            ],
+            onChanged: _isEditing
+                ? (value) {
+                    setState(() => _unidadMedida = value!);
+                  }
+                : null,
+            borderColor: AppColors.blue3,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 💰 COSTOS
+  Widget _buildCostosCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.attach_money, size: 18, color: AppColors.green),
+              const SizedBox(width: 8),
+              AppSubtitle('Costos', fontSize: 11),
+            ],
+          ),
+          const SizedBox(height: 5),
+          Row(
+            children: [
+              Expanded(
+                child: CustomTextField(
+                  label: 'Costo por Unidad',
+                  controller: _costoPorUnidadController,
+                  fieldType: FieldType.currency,
+                  enabled: _isEditing,
+                  hintText: '0.00',
+                  currencySymbol: 'S/',
+                  enableRealTimeValidation: true,
+                  borderColor: AppColors.green,
+                  validator: (value) => FieldValidators.validateCurrency(
+                    value,
+                    minAmount: 0.00,
+                    maxAmount: 10000.00
+                    ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: CustomTextField(
+                  label: 'Costo Total',
+                  controller: _costoTotalController,
+                  fieldType: FieldType.currency,
+                  enabled: false,
+                  hintText: '0.00',
+                  prefixIcon: Icon(
+                    Icons.calculate,
+                    color: AppColors.green,
+                    size: 16,
+                  ),
+                  enableRealTimeValidation: false,
+                  borderColor: AppColors.green,                  
+                ),
+              )
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 📄 DOCUMENTOS
+  Widget _buildDocumentosCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.description, size: 18, color: AppColors.blue3),
+              const SizedBox(width: 8),
+              AppSubtitle('Documentos', fontSize: 11),
+            ],
+          ),
+          const SizedBox(height: 12),
+          CustomTextField(
+            label: 'N° Ticket Grifo',
+            controller: _numeroTicketGrifoController,
+            enabled: _isEditing,
+            // prefixIcon: Icons.receipt,
+            prefixIcon: Icon(Icons.receipt, color: AppColors.blue3, size: 16),
+            borderColor: AppColors.blue3,
+          ),
+          const SizedBox(height: 10),
+          CustomTextField(
+            label: 'Vale Diesel',
+            controller: _valeDieselController,
+            enabled: _isEditing,
+            // prefixIcon: Icons.card_giftcard,
+            prefixIcon: Icon(
+              Icons.card_giftcard,
+              color: AppColors.blue3,
+              size: 16,
+            ),
+            borderColor: AppColors.blue3,
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: CustomTextField(
+                  label: 'N° Factura',
+                  controller: _numeroFacturaController,
+                  enabled: _isEditing,
+                  prefixIcon: Icon(
+                    Icons.description,
+                    color: AppColors.blue3,
+                    size: 16,
+                  ),
+                  // prefixIcon: Icons.description,
+                  borderColor: AppColors.blue3,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: CustomTextField(
+                  label: 'Importe Factura',
+                  controller: _importeFacturaController,
+                  fieldType: FieldType.currency,
+                  enabled: _isEditing,
+                  hintText: '0.00',
+                  currencySymbol: 'S/',
+                  enableRealTimeValidation: false,
+                  borderColor: AppColors.blue3,
+                  validator: (value) => FieldValidators.validateCurrency(
+                    value,
+                    minAmount: 0.00,
+                    maxAmount: 1000000.00
+                    ),
+                ),
+              )
+            ],
+          ),
+          const SizedBox(height: 10),
+          CustomTextField(
+            label: 'Requerimiento',
+            controller: _requerimientoController,
+            enabled: _isEditing,
+            // prefixIcon: Icons.note,
+            prefixIcon: Icon(Icons.note, color: AppColors.blue3, size: 16),
+            borderColor: AppColors.blue3,
+          ),
+          const SizedBox(height: 10),
+          CustomTextField(
+            label: 'N° Salida Almacén',
+            controller: _numeroSalidaAlmacenController,
+            enabled: _isEditing,
+            prefixIcon: Icon(Icons.warehouse, color: AppColors.blue3, size: 16),
+            // prefixIcon: Icons.warehouse,
+            borderColor: AppColors.blue3,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 📝 OBSERVACIONES (Continuación desde donde quedó)
+  Widget _buildObservacionesCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.comment, size: 18, color: AppColors.blue3),
+              const SizedBox(width: 8),
+              AppSubtitle('Observaciones', fontSize: 11),
+            ],
+          ),
+          const SizedBox(height: 12),
+          CustomTextField(
+            label: 'Observaciones del Controlador',
+            controller: _observacionesController,
+            enabled: _isEditing,
+            height: 80,
+            maxLines: 4,
+            // prefixIcon: Icons.note_alt,
+            borderColor: AppColors.blue3,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 🎯 BOTONES DE ACCIÓN (CUANDO ESTÁ EDITANDO)
   Widget _buildActionButtons(bool isLoading) {
     return Row(
       children: [
         Expanded(
-          child: OutlinedButton(
-            onPressed: isLoading ? null : () {
-              setState(() => _isEditing = false);
-              _initializeControllers(); // Restaurar valores originales
-            },
-            child: const Text('Cancelar'),
+          child: CustomButton(
+            text: 'Cancelar',
+            gradient: AppGradients.sinfondo,
+            borderColor: AppColors.grey,
+            height: 42,
+            fontSize: 11,
+            textColor: AppColors.grey,
+            onPressed: isLoading
+                ? null
+                : () {
+                    setState(() => _isEditing = false);
+                    _initializeControllers(); // Restaurar valores originales
+                  },
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
         Expanded(
-          child: ElevatedButton(
-            onPressed: isLoading ? null : _guardarCambios,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
+          child: CustomButton(
+            text: 'Guardar Cambios',
+            gradient: AppGradients.custom(
+              startColor: AppColors.blue3,
+              middleColor: AppColors.blue3,
+              endColor: AppColors.blue3.withValues(alpha: 0.8),
             ),
-            child: isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Text('Guardar'),
+            borderColor: AppColors.blue3,
+            height: 42,
+            fontSize: 11,
+            onPressed: isLoading ? null : _guardarCambios,
           ),
         ),
       ],
+    );
+  }
+
+  // ✅ BOTÓN CONCLUIR (CUANDO NO ESTÁ EDITANDO)
+  Widget _buildConcluirButton(bool isLoading) {
+    return CustomButton(
+      text: 'Concluir Detalle',
+      gradient: AppGradients.custom(
+        startColor: AppColors.green,
+        middleColor: AppColors.green,
+        endColor: AppColors.green.withValues(alpha: 0.8),
+      ),
+      borderColor: AppColors.green,
+      width: double.infinity,
+      height: 42,
+      fontSize: 12,
+      onPressed: isLoading ? null : _concluirDetalle,
+    );
+  }
+
+  // 📋 HELPER: ROW DE INFORMACIÓN
+  Widget _buildInfoRow(String label, String value, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: AppColors.blueGrey),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 120,
+            child: AppLabelText(label, fontSize: 9, color: AppColors.blueGrey),
+          ),
+          Expanded(
+            child: AppLabelText(value, fontSize: 9, color: AppColors.blue3),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 📏 HELPER: DIVIDER
+  Widget _buildDivider() {
+    return Divider(
+      height: 1,
+      thickness: 0.5,
+      color: AppColors.grey.withValues(alpha: 0.3),
     );
   }
 }

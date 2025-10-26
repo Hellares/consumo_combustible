@@ -318,17 +318,17 @@ class _DetallesAbastecimientoPageState extends State<DetallesAbastecimientoPage>
                     child: AppTitle(detalle.ticket.numeroTicket),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: detalle.estadoColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: detalle.estadoColor),
+                      color: detalle.estadoColor.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(5),
+                      // border: Border.all(color: detalle.estadoColor, width: 0),
                     ),
                     child: Text(
                       detalle.estadoTexto,
                       style: TextStyle(
                         color: detalle.estadoColor,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w500,
                         fontSize: 9,
                       ),
                     ),
@@ -395,21 +395,21 @@ class _DetallesAbastecimientoPageState extends State<DetallesAbastecimientoPage>
               if (detalle.motivoDiferencia != null) ...[
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.orange.shade50,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(6),
                     border: Border.all(color: Colors.orange.shade200),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.warning_amber, size: 16, color: Colors.orange.shade700),
+                      Icon(Icons.warning_amber, size: 14, color: Colors.orange.shade700),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Diferencia: ${detalle.motivoDiferencia}',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 10,
                             color: Colors.orange.shade900,
                             fontWeight: FontWeight.w500,
                           ),
@@ -428,7 +428,7 @@ class _DetallesAbastecimientoPageState extends State<DetallesAbastecimientoPage>
                     Text(
                       'S/ ${detalle.costoTotal}',
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: Colors.green,
                       ),

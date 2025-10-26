@@ -1,6 +1,7 @@
 // lib/presentation/page/ticket_aprobacion/tickets_aprobacion_page.dart
 
 import 'package:consumo_combustible/core/fonts/app_text_widgets.dart';
+import 'package:consumo_combustible/core/theme/app_colors.dart';
 import 'package:consumo_combustible/core/widgets/snack.dart';
 import 'package:consumo_combustible/domain/models/ticket_abastecimiento.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart';
@@ -57,7 +58,7 @@ class _TicketsAprobacionPageState extends State<TicketsAprobacionPage> {
                 IconButton(
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
-                  icon: const Icon(Icons.refresh, size: 20, color: Colors.blue),
+                  icon: const Icon(Icons.refresh, size: 20, color: AppColors.blue3),
                   onPressed: () => _bloc.add(const LoadTicketsSolicitados()),
                 ),
               ],
@@ -191,9 +192,12 @@ class _TicketsAprobacionPageState extends State<TicketsAprobacionPage> {
 
   Widget _buildTicketCard(TicketAbastecimiento ticket, bool isSelected) {
     return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       elevation: isSelected ? 4 : 1,
-      color: isSelected ? Colors.blue.shade50 : null,
+      color: isSelected ? Colors.blue.shade50 : Colors.white,
       child: InkWell(
         onTap: () => _verDetalleTicket(ticket),
         child: Row(
@@ -215,7 +219,7 @@ class _TicketsAprobacionPageState extends State<TicketsAprobacionPage> {
                     ticket.numeroTicket,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 12,
+                      fontSize: 11,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -231,8 +235,8 @@ class _TicketsAprobacionPageState extends State<TicketsAprobacionPage> {
                 IconButton(
                   icon: SvgPicture.asset(
                     'assets/img/a.svg',
-                    width: 15,
-                    height: 15,
+                    width: 13,
+                    height: 13,
                   ),
                   onPressed: () => _aprobarTicket(ticket),
                   tooltip: 'Aprobar',
@@ -240,8 +244,8 @@ class _TicketsAprobacionPageState extends State<TicketsAprobacionPage> {
                 IconButton(
                   icon: SvgPicture.asset(
                     'assets/img/r.svg',
-                    width: 15,
-                    height: 15,
+                    width: 13,
+                    height: 13,
                   ),
                   onPressed: () => _rechazarTicket(ticket),
                   tooltip: 'Rechazar',
@@ -318,18 +322,18 @@ class _TicketsAprobacionPageState extends State<TicketsAprobacionPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Aprobar Ticket'),
+        title: const Text('Aprobar Ticket', style: TextStyle(fontSize: 14),),
         content: Text(
-          '¿Confirmas la aprobación del ticket ${ticket.numeroTicket}?',
+          '¿Confirmas la aprobación del ticket ${ticket.numeroTicket}?',style: TextStyle(color: AppColors.blue3,fontSize: 12),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: const Text('Cancelar',style: TextStyle(fontSize: 12, color: AppColors.blue3),),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Aprobar'),
+            child: const Text('Aprobar',style: TextStyle(fontSize: 12, color: AppColors.blue3),),
           ),
         ],
       ),
@@ -351,18 +355,19 @@ class _TicketsAprobacionPageState extends State<TicketsAprobacionPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Aprobar ${state.selectedCount} Ticket(s)'),
+        title: Text('Aprobar ${state.selectedCount} Ticket(s)', style: TextStyle(fontSize: 15),),
         content: Text(
           '¿Confirmas la aprobación de ${state.selectedCount} ticket(s) seleccionado(s)?',
+          style: TextStyle(fontSize: 12, color: AppColors.blue3),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: const Text('Cancelar',style: TextStyle(fontSize: 12, color: AppColors.blue3),),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Aprobar'),
+            child: const Text('Aprobar',style: TextStyle(fontSize: 12, color: AppColors.blue3),),
           ),
         ],
       ),
@@ -451,40 +456,49 @@ class _TicketsAprobacionPageState extends State<TicketsAprobacionPage> {
   }
 
   void _verDetalleTicket(TicketAbastecimiento ticket) {
-    // TODO: Implementar navegación a detalle
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(ticket.numeroTicket),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildDetailRow('Unidad', ticket.unidad.placa),
-              _buildDetailRow(
-                'Conductor',
-                '${ticket.conductor.nombres} ${ticket.conductor.apellidos}',
-              ),
-              _buildDetailRow('Grifo', ticket.grifo.nombre),
-              _buildDetailRow('Cantidad', '${ticket.cantidad} gal'),
-              _buildDetailRow('Km Actual', ticket.kilometrajeActual.toString()),
-              if (ticket.kilometrajeAnterior != null)
+      builder: (context) => ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: 300,
+          maxHeight: 400
+          ),
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          // title: Text(ticket.numeroTicket,),
+          title: AppTitle(ticket.numeroTicket,fontSize: 14,),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildDetailRow('Unidad', ticket.unidad.placa),
                 _buildDetailRow(
-                  'Km Anterior',
-                  ticket.kilometrajeAnterior.toString(),
+                  'Conductor',
+                  '${ticket.conductor.nombres} ${ticket.conductor.apellidos}',
                 ),
-              _buildDetailRow('Precinto', ticket.precintoNuevo),
-              _buildDetailRow('Fecha', ticket.fecha),
-            ],
+                _buildDetailRow('Grifo', ticket.grifo.nombre),
+                _buildDetailRow('Cantidad', '${ticket.cantidad} gal'),
+                _buildDetailRow('Km Actual', ticket.kilometrajeActual.toString()),
+                if (ticket.kilometrajeAnterior != null)
+                  _buildDetailRow(
+                    'Km Anterior',
+                    ticket.kilometrajeAnterior.toString(),
+                  ),
+                _buildDetailRow('Precinto', ticket.precintoNuevo),
+                _buildDetailRow('Fecha', ticket.fecha),
+              ],
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cerrar', style: TextStyle(fontSize: 12,color: AppColors.red),),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cerrar'),
-          ),
-        ],
       ),
     );
   }
@@ -496,13 +510,13 @@ class _TicketsAprobacionPageState extends State<TicketsAprobacionPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 100,
+            width: 90,
             child: Text(
               '$label:',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.w500 , fontSize: 12),
             ),
           ),
-          Expanded(child: Text(value)),
+          Expanded(child: Text(value, style: TextStyle(fontSize: 12),)),
         ],
       ),
     );

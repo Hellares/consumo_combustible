@@ -9,6 +9,7 @@ import 'package:consumo_combustible/core/widgets/custom_date_textfiels_container
 import 'package:consumo_combustible/core/widgets/custom_date_textfiels_container/custom_textfield.dart';
 import 'package:consumo_combustible/core/widgets/cutom_button/custom_button.dart';
 import 'package:consumo_combustible/core/widgets/user_selector_field.dart';
+import 'package:consumo_combustible/data/api/api_config.dart';
 import 'package:consumo_combustible/domain/models/create_unidad_request.dart';
 import 'package:consumo_combustible/domain/models/user_selection.dart';
 import 'package:consumo_combustible/domain/models/zona.dart';
@@ -173,7 +174,7 @@ class _CrearUnidadPageState extends State<CrearUnidadPage> {
       appBar: SmartAppBar(
         title: 'Nueva Unidad',
         showLogo: true,
-        logoPath: 'assets/img/6.svg',
+        logoPath: ApiConfig.logoLottiePath,
       ),
       body: BlocConsumer<UnidadBloc, UnidadState>(
         listener: (context, state) {
@@ -441,7 +442,7 @@ class _CrearUnidadPageState extends State<CrearUnidadPage> {
                   value: _selectedTipoCombustible,
                   borderColor: AppColors.blue3,
                   enabled: !isCreating,
-                  items: ['DIESEL', 'GASOLINA_84', 'GASOLINA_90',  'GASOLINA_95',  'GASOLINA_97','GAS_NATURAL', 'ELECTRICO'].map((tipo) {
+                  items: ['DIESEL', 'GASOLINA_84', 'GASOLINA_90',  'GASOLINA_95',  'GASOLINA_97', 'GLP', 'GNV','ELECTRICO'].map((tipo) {
                     return DropdownItem<String>(
                       value: tipo,
                       label: tipo,
