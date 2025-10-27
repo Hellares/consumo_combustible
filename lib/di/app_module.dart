@@ -6,11 +6,13 @@ import 'package:consumo_combustible/data/datasource/remote/service/auth_service.
 import 'package:consumo_combustible/data/datasource/remote/service/gps_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/gps_socket_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/grifo_service.dart';
+import 'package:consumo_combustible/data/datasource/remote/service/itinerario_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/licencia_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/location_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/detalle_abastecimiento_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/reporte_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/rol_service.dart';
+import 'package:consumo_combustible/data/datasource/remote/service/ruta_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/sede_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_aprobacion_service.dart';
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_service.dart';
@@ -21,10 +23,12 @@ import 'package:consumo_combustible/data/repository/auth_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/detalle_abastecimiento_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/gps_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/grifo_repository_impl.dart';
+import 'package:consumo_combustible/data/repository/itinerario_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/licencia_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/location_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/reporte_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/rol_repository_impl.dart';
+import 'package:consumo_combustible/data/repository/ruta_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/sede_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/ticket_aprobacion_repository_impl.dart';
 import 'package:consumo_combustible/data/repository/ticket_repository_impl.dart';
@@ -35,10 +39,12 @@ import 'package:consumo_combustible/domain/repository/auth_repository.dart';
 import 'package:consumo_combustible/domain/repository/detalle_abastecimiento_repository.dart';
 import 'package:consumo_combustible/domain/repository/gps_repository.dart';
 import 'package:consumo_combustible/domain/repository/grifo_repository.dart';
+import 'package:consumo_combustible/domain/repository/itinerario_repository.dart';
 import 'package:consumo_combustible/domain/repository/licencia_repository.dart';
 import 'package:consumo_combustible/domain/repository/location_repository.dart';
 import 'package:consumo_combustible/domain/repository/reporte_repository.dart';
 import 'package:consumo_combustible/domain/repository/rol_repository.dart';
+import 'package:consumo_combustible/domain/repository/ruta_repository.dart';
 import 'package:consumo_combustible/domain/repository/sede_repository.dart';
 import 'package:consumo_combustible/domain/repository/ticket_aprobacion_repository.dart';
 import 'package:consumo_combustible/domain/repository/ticket_repository.dart';
@@ -68,6 +74,8 @@ import 'package:consumo_combustible/domain/use_cases/grifo/get_grifos_usecase.da
 import 'package:consumo_combustible/domain/use_cases/grifo/get_grifosgrifos_by_sede_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/grifo/grifo_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/grifo/update_grifo_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/itinerario/get_itinerarios_activos_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/itinerario/itinerario_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/licencia/create_licencia_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/licencia/get_licencia_by_id_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/licencia/get_licencias_by_usuario_use_case.dart';
@@ -89,10 +97,13 @@ import 'package:consumo_combustible/domain/use_cases/rol/get_rol_by_id_use_case.
 import 'package:consumo_combustible/domain/use_cases/rol/get_roles_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/rol/rol_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/rol/update_rol_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/ruta/get_rutas_activas_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/ruta/ruta_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/sedes/create_sede_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/sedes/get_sedes_sedes_by_zona_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/sedes/get_sedes_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/sedes/sede_use_cases.dart';
+import 'package:consumo_combustible/domain/use_cases/ticket/detectar_itinerario_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/ticket/get_ultimo_ticket_by_unidad_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/unidad/create_unidad_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/user/assign_rol_to_user_use_case.dart';
@@ -353,6 +364,23 @@ abstract class AppModule {
     );
   }
 
+  // NUEVOS SERVICES
+  @lazySingleton
+  ItinerarioService itinerarioService(Dio dio) => ItinerarioService(dio);
+
+  @lazySingleton
+  RutaService rutaService(Dio dio) => RutaService(dio);
+
+  // 🔥 NUEVOS REPOSITORIES
+  @lazySingleton
+  ItinerarioRepository itinerarioRepository(ItinerarioService service) =>
+      ItinerarioRepositoryImpl(service);
+
+  @lazySingleton
+  RutaRepository rutaRepository(RutaService service) =>
+      RutaRepositoryImpl(service);
+
+
   
   //---------------------------------------------------------------------------------//
   //---------------------------------------------------------------------------------//
@@ -389,6 +417,7 @@ abstract class AppModule {
     return TicketUseCases(
       createTicket: CreateTicketUseCase(repository),
       getUltimoTicketByUnidad: GetUltimoTicketByUnidadUseCase(repository),
+      detectarItinerario: DetectarItinerarioUseCase(repository),
     );
   }
 
@@ -538,6 +567,20 @@ abstract class AppModule {
       subscribeTracking: SubscribeTrackingUseCase(repository),
       getLocationHistory: GetLocationHistoryUseCase(repository),
       getTrackingStats: GetTrackingStatsUseCase(repository),
+    );
+  }
+
+  @lazySingleton
+  ItinerarioUseCases itinerarioUseCases(ItinerarioRepository repository) {
+    return ItinerarioUseCases(
+      getItinerariosActivos: GetItinerariosActivosUseCase(repository),
+    );
+  }
+
+  @lazySingleton
+  RutaUseCases rutaUseCases(RutaRepository repository) {
+    return RutaUseCases(
+      getRutasActivas: GetRutasActivasUseCase(repository),
     );
   }
 }

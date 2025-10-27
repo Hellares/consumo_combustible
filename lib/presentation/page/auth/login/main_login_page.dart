@@ -110,10 +110,10 @@ void initState() {
       children: [
         SvgPicture.asset(
           ApiConfig.logoPath,
-          height: 140,
-          width: 140,
+          height: 120,
+          width: 120,
         ),
-        const SizedBox(height: 25),
+        const SizedBox(height: 20),
         AppTitle('Control de Combustible', font: AppFont.pirulentBold, fontSize: 9,)
         
       ],

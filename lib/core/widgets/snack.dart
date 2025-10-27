@@ -62,7 +62,7 @@ class SnackBarHelper {
           ],
         ),
         backgroundColor: Colors.green,
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
@@ -110,7 +110,7 @@ class SnackBarHelper {
           ],
         ),
         backgroundColor: Colors.blue,
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
@@ -134,7 +134,7 @@ class SnackBarHelper {
           ],
         ),
         backgroundColor: Colors.orange,
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),

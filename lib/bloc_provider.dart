@@ -3,10 +3,12 @@ import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/detalle_abastecimiento/detalle_abastecimiento_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/gps/gps_usecases.dart';
 import 'package:consumo_combustible/domain/use_cases/grifo/grifo_use_cases.dart';
+import 'package:consumo_combustible/domain/use_cases/itinerario/itinerario_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/licencia/licencia_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/location/location_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/reporte/reporte_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/rol/rol_use_cases.dart';
+import 'package:consumo_combustible/domain/use_cases/ruta/ruta_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/sedes/sede_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/ticket/ticket_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/ticket_aprobacion/ticket_aprobacion_use_cases.dart';
@@ -16,8 +18,10 @@ import 'package:consumo_combustible/domain/use_cases/zona/zona_use_cases.dart';
 import 'package:consumo_combustible/presentation/page/archivo/bloc/archivo_bloc.dart';
 import 'package:consumo_combustible/presentation/page/gps/bloc/gps_bloc.dart';
 import 'package:consumo_combustible/presentation/page/grifos/bloc/grifo_bloc.dart';
+import 'package:consumo_combustible/presentation/page/itinerario/bloc/itinerario_bloc.dart';
 import 'package:consumo_combustible/presentation/page/reportes/bloc/reporte_bloc.dart';
 import 'package:consumo_combustible/presentation/page/rol/bloc/rol_bloc.dart';
+import 'package:consumo_combustible/presentation/page/ruta/bloc/ruta_bloc.dart';
 import 'package:consumo_combustible/presentation/page/sedes/bloc/sede_bloc.dart';
 import 'package:consumo_combustible/presentation/page/unidad/bloc/unidad_bloc.dart';
 import 'package:consumo_combustible/presentation/page/user/bloc/user_bloc.dart';
@@ -63,5 +67,9 @@ List<BlocProvider> blocProviders = [
   BlocProvider<ReporteBloc>(create: (context) => ReporteBloc(locator<ReporteUseCases>()),),
 
   BlocProvider<GpsBloc>(create: (context) => GpsBloc(gpsUseCases: locator<GpsUseCases>(),),),
+
+  BlocProvider<ItinerarioBloc>(create: (context) => ItinerarioBloc(locator<ItinerarioUseCases>())),
+
+  BlocProvider<RutaBloc>(create: (context) => RutaBloc(locator<RutaUseCases>())),
     
 ];

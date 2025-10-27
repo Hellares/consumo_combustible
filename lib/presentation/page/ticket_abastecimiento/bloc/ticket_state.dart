@@ -1,3 +1,4 @@
+import 'package:consumo_combustible/domain/models/itinerario_detectado.dart';
 import 'package:consumo_combustible/domain/models/ultimo_ticket_unidad.dart';
 import 'package:consumo_combustible/domain/models/unidad.dart';
 import 'package:consumo_combustible/domain/utils/resource.dart';
@@ -69,9 +70,12 @@ class TicketState extends Equatable {
   final Resource? createResponse;
   final Resource? unidadesResponse;
   final List<Unidad> unidades;
-
   final Resource? ultimoTicketResponse;
   final UltimoTicketUnidad? ultimoTicket;
+
+  // 🔥 CAMPOS PARA DETECCIÓN DE ITINERARIO
+  final Resource? deteccionItinerarioResponse;
+  final ItinerarioDetectado? itinerarioDetectado;
 
   const TicketState({
     this.createResponse,
@@ -79,6 +83,8 @@ class TicketState extends Equatable {
     this.unidades = const [],
     this.ultimoTicketResponse,
     this.ultimoTicket,
+    this.deteccionItinerarioResponse,
+    this.itinerarioDetectado,
   });
 
   TicketState copyWith({
@@ -88,13 +94,26 @@ class TicketState extends Equatable {
     Resource? ultimoTicketResponse,
     UltimoTicketUnidad? ultimoTicket,
     bool clearUltimoTicket = false,
+    Resource? deteccionItinerarioResponse,
+    ItinerarioDetectado? itinerarioDetectado,
+    bool clearDeteccion = false,
   }) {
     return TicketState(
       createResponse: createResponse ?? this.createResponse,
       unidadesResponse: unidadesResponse ?? this.unidadesResponse,
       unidades: unidades ?? this.unidades,
-      ultimoTicketResponse: clearUltimoTicket ? null : (ultimoTicketResponse ?? this.ultimoTicketResponse),
-      ultimoTicket: clearUltimoTicket ? null : (ultimoTicket ?? this.ultimoTicket),
+      ultimoTicketResponse: clearUltimoTicket 
+          ? null 
+          : (ultimoTicketResponse ?? this.ultimoTicketResponse),
+      ultimoTicket: clearUltimoTicket 
+          ? null 
+          : (ultimoTicket ?? this.ultimoTicket),
+      deteccionItinerarioResponse: clearDeteccion 
+          ? null 
+          : (deteccionItinerarioResponse ?? this.deteccionItinerarioResponse),
+      itinerarioDetectado: clearDeteccion 
+          ? null 
+          : (itinerarioDetectado ?? this.itinerarioDetectado),
     );
   }
 
@@ -105,6 +124,8 @@ class TicketState extends Equatable {
         unidades,
         ultimoTicketResponse,
         ultimoTicket,
+        deteccionItinerarioResponse,
+        itinerarioDetectado,
       ];
 
   // ✅ Helpers existentes
@@ -122,6 +143,7 @@ class TicketState extends Equatable {
     }
     return null;
   }
+
   /// Verificar si está cargando el último ticket
   bool get isLoadingUltimoTicket => ultimoTicketResponse is Loading;
 
@@ -144,4 +166,47 @@ class TicketState extends Equatable {
 
   /// Obtener el precinto sugerido (si existe)
   String? get precintoSugerido => ultimoTicket?.sugerencias.precintoAnteriorSugerido;
+
+  // 🔥 HELPERS PARA DETECCIÓN DE ITINERARIO
+
+  /// Verificar si está detectando itinerario
+  bool get isDetectandoItinerario => deteccionItinerarioResponse is Loading;
+
+  /// Verificar si hay error al detectar itinerario
+  bool get hasDeteccionError => deteccionItinerarioResponse is Error;
+
+  /// Verificar si la detección está completa
+  bool get hasDeteccion => itinerarioDetectado != null;
+
+  /// Verificar si se detectó un itinerario/ruta
+  bool get detectadoExitoso => itinerarioDetectado?.detectado ?? false;
+
+  /// Obtener mensaje de error de la detección
+  String? get deteccionErrorMessage {
+    if (deteccionItinerarioResponse is Error) {
+      return (deteccionItinerarioResponse as Error).message;
+    }
+    return null;
+  }
+
+  /// Obtener el origen de la detección
+  String? get origenDeteccion => itinerarioDetectado?.origen;
+
+  /// Verificar si tiene itinerario detectado
+  bool get tieneItinerarioDetectado => itinerarioDetectado?.tieneItinerario ?? false;
+
+  /// Verificar si tiene ruta detectada
+  bool get tieneRutaDetectada => itinerarioDetectado?.tieneRuta ?? false;
+
+  /// Obtener el ID del itinerario detectado
+  int? get itinerarioDetectadoId => itinerarioDetectado?.itinerario?.id;
+
+  /// Obtener el ID de la ruta detectada
+  int? get rutaDetectadaId => itinerarioDetectado?.ruta?.id;
+
+  /// Obtener mensaje de la detección
+  String? get mensajeDeteccion => itinerarioDetectado?.mensaje;
+
+  /// Verificar si puede modificar la asignación
+  bool get puedeModificarAsignacion => itinerarioDetectado?.puedeModificar ?? true;
 }

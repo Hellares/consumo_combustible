@@ -1,3 +1,4 @@
+import 'package:consumo_combustible/domain/models/itinerario_detectado.dart';
 import 'package:consumo_combustible/domain/models/ultimo_ticket_unidad.dart';
 import 'package:consumo_combustible/domain/models/unidad.dart';
 import 'package:consumo_combustible/domain/use_cases/ticket/ticket_use_cases.dart';
@@ -22,6 +23,8 @@ class TicketBloc extends Bloc<TicketEvent, TicketState> {
     on<ResetUnidades>(_onResetUnidades);
     on<LoadUltimoTicketByUnidad>(_onLoadUltimoTicketByUnidad);
     on<ClearUltimoTicket>(_onClearUltimoTicket);
+    on<DetectarItinerario>(_onDetectarItinerario);
+    on<ClearDeteccionItinerario>(_onClearDeteccionItinerario);
   }
 
   /// Maneja la creación de un ticket de abastecimiento
@@ -157,5 +160,82 @@ class TicketBloc extends Bloc<TicketEvent, TicketState> {
     }
 
     emit(state.copyWith(clearUltimoTicket: true));
+  }
+
+  // 🔥 NUEVOS MÉTODOS PARA DETECCIÓN DE ITINERARIO
+
+  /// Detecta el itinerario/ruta para una unidad
+  Future<void> _onDetectarItinerario(
+    DetectarItinerario event,
+    Emitter<TicketState> emit,
+  ) async {
+    if (kDebugMode) {
+      print('🔍 [TicketBloc] Detectando itinerario para unidad: ${event.unidadId}');
+      if (event.fecha != null) {
+        print('   Fecha: ${event.fecha}');
+      }
+    }
+
+    emit(state.copyWith(
+      deteccionItinerarioResponse: Loading<ItinerarioDetectado>(),
+    ));
+
+    final response = await ticketUseCases.detectarItinerario.run(
+      unidadId: event.unidadId,
+      fecha: event.fecha,
+    );
+
+    if (response is Success<ItinerarioDetectado>) {
+      final deteccion = response.data;
+
+      if (kDebugMode) {
+        print('✅ [TicketBloc] Detección exitosa');
+        print('   Origen: ${deteccion.origen}');
+        print('   Detectado: ${deteccion.detectado}');
+        print('   Mensaje: ${deteccion.mensaje}');
+
+        if (deteccion.tieneItinerario) {
+          print('   📍 Itinerario: ${deteccion.itinerario!.nombre}');
+          print('      Código: ${deteccion.itinerario!.codigo}');
+          print('      Tipo: ${deteccion.itinerario!.tipoItinerario}');
+          print('      Días: ${deteccion.itinerario!.diasOperacion.join(", ")}');
+        }
+
+        if (deteccion.tieneRuta) {
+          print('   🗺️ Ruta: ${deteccion.ruta!.nombre}');
+          print('      ${deteccion.ruta!.origen} → ${deteccion.ruta!.destino}');
+        }
+
+        if (!deteccion.detectado) {
+          print('   ℹ️ No se detectó asignación automática');
+        }
+      }
+
+      emit(state.copyWith(
+        deteccionItinerarioResponse: response,
+        itinerarioDetectado: deteccion,
+      ));
+    } else if (response is Error<ItinerarioDetectado>) {
+      if (kDebugMode) {
+        print('❌ [TicketBloc] Error al detectar itinerario: ${response.message}');
+      }
+
+      emit(state.copyWith(
+        deteccionItinerarioResponse: response,
+        itinerarioDetectado: null,
+      ));
+    }
+  }
+
+  /// Limpia la detección de itinerario
+  Future<void> _onClearDeteccionItinerario(
+    ClearDeteccionItinerario event,
+    Emitter<TicketState> emit,
+  ) async {
+    if (kDebugMode) {
+      print('🔄 [TicketBloc] Limpiando detección de itinerario');
+    }
+
+    emit(state.copyWith(clearDeteccion: true));
   }
 }

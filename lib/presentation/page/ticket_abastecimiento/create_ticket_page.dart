@@ -20,6 +20,7 @@ import 'package:consumo_combustible/injection.dart';
 import 'package:consumo_combustible/presentation/page/ticket_abastecimiento/bloc/ticket_bloc.dart';
 import 'package:consumo_combustible/presentation/page/ticket_abastecimiento/bloc/ticket_event.dart';
 import 'package:consumo_combustible/presentation/page/ticket_abastecimiento/bloc/ticket_state.dart';
+import 'package:consumo_combustible/presentation/page/ticket_abastecimiento/widgets/itinerario_selection_widget.dart';
 import 'package:consumo_combustible/presentation/page/ticket_abastecimiento/widgets/ticket_confirmation_dialog.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -41,7 +42,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
         UserSelectorFieldState
       >(); // NUEVO: Key para controlar el UserSelectorField
   late final TicketBloc _bloc;
-  
+
   // Key para forzar reconstrucción del dropdown de unidades
   Key _unidadDropdownKey = UniqueKey();
 
@@ -65,6 +66,13 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
   int? _currentZonaId; // NUEVO: Para detectar cambios de zona
 
   UserSelection? _selectUser;
+
+  // 🔥 NUEVAS VARIABLES PARA ITINERARIO/RUTA
+  int? _itinerarioSeleccionadoId;
+  int? _rutaSeleccionadaId;
+  String _origenAsignacion = 'NINGUNO';
+  String? _motivoCambioItinerario;
+  int? _itinerarioOriginalDetectadoId;
 
   @override
   void initState() {
@@ -155,123 +163,200 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
         child: Scaffold(
           backgroundColor: Colors.transparent,
           body: Column(
-          children: [
-            Container(
-              height: 25,
-              padding: const EdgeInsets.only(left: 16, right: 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  AppTitle('CREAR TICKET DE ABASTECIMIENTO', fontSize: 10),
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    icon: const Icon(
-                      Icons.refresh,
-                      size: 20,
-                      color: AppColors.blue3,
+            children: [
+              Container(
+                height: 25,
+                padding: const EdgeInsets.only(left: 16, right: 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    AppTitle('CREAR TICKET DE ABASTECIMIENTO', fontSize: 10),
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(
+                        Icons.refresh,
+                        size: 20,
+                        color: AppColors.blue3,
+                      ),
+                      onPressed: _refreshUnidades,
                     ),
-                    onPressed: _refreshUnidades,
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Expanded(
-              child: BlocConsumer<TicketBloc, TicketState>(
-                bloc: _bloc,
-                listener: (context, state) {
-                  // Listener para errores de unidades
-                  if (state.unidadesResponse is Error) {
-                    final error = state.unidadesResponse as Error;
-                    SnackBarHelper.showError(context, error.message);
-                  }
+              Expanded(
+                child: BlocConsumer<TicketBloc, TicketState>(
+                  bloc: _bloc,
+                  listener: (context, state) {
+                    // Listener para errores de unidades
+                    if (state.unidadesResponse is Error) {
+                      final error = state.unidadesResponse as Error;
+                      SnackBarHelper.showError(context, error.message);
+                    }
 
-                  //NUEVO: Listener para cuando se carga el último ticket
-                  if (state.ultimoTicketResponse is Success) {
-                    final kilometrajeSugerido = state.kilometrajeSugerido;
+                    //NUEVO: Listener para cuando se carga el último ticket
+                    if (state.ultimoTicketResponse is Success) {
+                      final kilometrajeSugerido = state.kilometrajeSugerido;
 
-                    if (kilometrajeSugerido != null) {
-                      _kilometrajeAnteriorController.text = kilometrajeSugerido
-                          .toInt()
-                          .toString();
+                      if (kilometrajeSugerido != null) {
+                        _kilometrajeAnteriorController.text =
+                            kilometrajeSugerido.toInt().toString();
 
-                      // Quitar el foco inmediatamente después de actualizar el texto
-                      // para evitar que el teclado aparezca
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (mounted) {
-                          _kilometrajeAnteriorFocus.unfocus();
-                          FocusScope.of(context).unfocus();
+                        // Quitar el foco inmediatamente después de actualizar el texto
+                        // para evitar que el teclado aparezca
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) {
+                            _kilometrajeAnteriorFocus.unfocus();
+                            FocusScope.of(context).unfocus();
+                          }
+                        });
+
+                        if (kDebugMode) {
+                          print(
+                            '✅ Kilometraje anterior cargado: $kilometrajeSugerido',
+                          );
                         }
-                      });
-
-                      if (kDebugMode) {
-                        print(
-                          '✅ Kilometraje anterior cargado: $kilometrajeSugerido',
-                        );
                       }
                     }
-                  }
 
-                  if (state.hasUltimoTicketError) {
-                    // No mostrar error, solo limpiar el campo
-                    _kilometrajeAnteriorController.clear();
+                    if (state.hasUltimoTicketError) {
+                      // No mostrar error, solo limpiar el campo
+                      _kilometrajeAnteriorController.clear();
 
-                    if (kDebugMode) {
-                      print('ℹ️ ${state.ultimoTicketErrorMessage}');
+                      if (kDebugMode) {
+                        print('ℹ️ ${state.ultimoTicketErrorMessage}');
+                      }
                     }
-                  }
 
-                  // Listener para creación de ticket
-                  if (state.createResponse is Success) {
-                    final ticket =
-                        (state.createResponse as Success).data
-                            as TicketAbastecimiento;
-                    _showSuccessDialog(ticket);
-                  } else if (state.createResponse is Error) {
-                    final error = state.createResponse as Error;
-                    SnackBarHelper.showError(context, error.message);
-                  }
-                },
-                builder: (context, state) {
-                  final isLoadingTicket = state.createResponse is Loading;
+                    // Listener para creación de ticket
+                    if (state.createResponse is Success) {
+                      final ticket =
+                          (state.createResponse as Success).data
+                              as TicketAbastecimiento;
+                      _showSuccessDialog(ticket);
+                    } else if (state.createResponse is Error) {
+                      final error = state.createResponse as Error;
+                      SnackBarHelper.showError(context, error.message);
+                    }
 
-                  return Form(
-                    key: _formKey,
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 15),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildLocationCard(),
-                          const SizedBox(height: 15),
+                    if (state.deteccionItinerarioResponse is Success) {
+                      if (state.hasDeteccion && state.detectadoExitoso) {
+                        setState(() {
+                          if (state.tieneItinerarioDetectado) {
+                            _itinerarioSeleccionadoId =
+                                state.itinerarioDetectadoId;
+                            _rutaSeleccionadaId = null;
+                            _origenAsignacion = 'AUTOMATICO';
+                            _motivoCambioItinerario = null;
+                            _itinerarioOriginalDetectadoId = null;
 
-                          //DROPDOWN DINÁMICO
-                          _buildUnidadSelector(state),
+                            if (kDebugMode) {
+                              print(
+                                '✅ Itinerario detectado automáticamente: $_itinerarioSeleccionadoId',
+                              );
+                            }
+                          } else if (state.tieneRutaDetectada) {
+                            _rutaSeleccionadaId = state.rutaDetectadaId;
+                            _itinerarioSeleccionadoId = null;
+                            _origenAsignacion = 'AUTOMATICO';
+                            _motivoCambioItinerario = null;
+                            _itinerarioOriginalDetectadoId = null;
 
-                          const SizedBox(height: 10),
-                          _conductorSelector(),
+                            if (kDebugMode) {
+                              print(
+                                '✅ Ruta detectada automáticamente: $_rutaSeleccionadaId',
+                              );
+                            }
+                          }
+                        });
+                      }
+                    }
 
-                          const SizedBox(height: 10),
-                          _buildTipoCombustibleField(),
-                          
-                          const SizedBox(height: 10),
-                          // _buildKilometrajeField(),
-                          _buildKilometrajesRow(),
+                    //NUEVO: Listener para errores de detección
+                    if (state.deteccionItinerarioResponse is Error) {
+                      if (kDebugMode) {
+                        print('⚠️ ${state.deteccionErrorMessage}');
+                      }
+                    }
+                  },
+                  builder: (context, state) {
+                    final isLoadingTicket = state.createResponse is Loading;
 
-                          const SizedBox(height: 10),
-                          _buildPrecintoField(),
-                          const SizedBox(height: 10),
-                          _buildCantidadField(),
-                          const SizedBox(height: 32),
-                          _buildSubmitButton(isLoadingTicket),
-                        ],
+                    return Form(
+                      key: _formKey,
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLocationCard(),
+                            const SizedBox(height: 15),
+
+                            //DROPDOWN DINÁMICO
+                            _buildUnidadSelector(state),
+
+                            const SizedBox(height: 10),
+
+                            // 🔥 NUEVO: Widget de selección de itinerario/ruta
+                            if (_selectedUnidadId != null) ...[
+                              ItinerarioSelectionWidget(
+                                onSelectionChanged:
+                                    (
+                                      itinerarioId,
+                                      rutaId,
+                                      origen,
+                                      motivo,
+                                      originalId,
+                                    ) {
+                                      setState(() {
+                                        _itinerarioSeleccionadoId =
+                                            itinerarioId;
+                                        _rutaSeleccionadaId = rutaId;
+                                        _origenAsignacion = origen;
+                                        _motivoCambioItinerario = motivo;
+                                        _itinerarioOriginalDetectadoId =
+                                            originalId;
+                                      });
+
+                                      if (kDebugMode) {
+                                        print(
+                                          '📍 Selección de itinerario cambiada:',
+                                        );
+                                        print(
+                                          '   Itinerario ID: $itinerarioId',
+                                        );
+                                        print('   Ruta ID: $rutaId');
+                                        print('   Origen: $origen');
+                                      }
+                                    },
+                              ),
+                            ],
+
+                            const SizedBox(height: 10),
+                            _conductorSelector(),
+
+                            const SizedBox(height: 10),
+                            _buildTipoCombustibleField(),
+
+                            const SizedBox(height: 10),
+                            // _buildKilometrajeField(),
+                            _buildKilometrajesRow(),
+
+                            const SizedBox(height: 10),
+                            _buildPrecintoField(),
+                            const SizedBox(height: 10),
+                            _buildCantidadField(),
+                            const SizedBox(height: 32),
+                            _buildSubmitButton(isLoadingTicket),
+                            const SizedBox(height: 20),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
             ],
           ),
         ),
@@ -295,10 +380,20 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
 
   Widget _buildLocationCard() {
     return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(4)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadiusGeometry.circular(4),
+      ),
       color: Colors.blue.shade50,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14
+        
+        
+        
+        
+        
+        
+        
+        , vertical: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -327,14 +422,15 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                     ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                        color: AppColors.blueGrey,
-                        width: 0.5,
-                      ),
+                      border: Border.all(color: AppColors.blueGrey, width: 0.5),
                     ),
-                    child: AppCaption(items: [CaptionItem(icon: Icons.edit_location, text: 'Cambiar')]),
+                    child: AppCaption(
+                      items: [
+                        CaptionItem(icon: Icons.edit_location, text: 'Cambiar'),
+                      ],
                     ),
                   ),
+                ),
                 // ),
               ],
             ),
@@ -370,7 +466,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     if (isLoading) {
       return const Card(
         child: Padding(
-          padding: EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(14.0),
           child: Row(
             children: [
               SizedBox(
@@ -392,7 +488,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
       return Card(
         color: Colors.red.shade50,
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(14.0),
           child: Row(
             children: [
               Icon(Icons.error_outline, color: Colors.red.shade700),
@@ -418,7 +514,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     if (state.unidadesResponse == null) {
       return const Card(
         child: Padding(
-          padding: EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(14.0),
           child: Row(
             children: [
               SizedBox(
@@ -438,7 +534,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
       return Card(
         color: Colors.orange.shade50,
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(14.0),
           child: Row(
             children: [
               Icon(Icons.warning_amber, color: Colors.orange.shade700),
@@ -466,7 +562,11 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
           value: _selectedUnidadId,
           hintText: 'Selecciona una unidad *',
           borderColor: AppColors.blue3,
-          prefixIcon: const Icon(Icons.local_shipping_outlined, color: AppColors.blue3,size: 20,),
+          prefixIcon: const Icon(
+            Icons.local_shipping_outlined,
+            color: AppColors.blue3,
+            size: 20,
+          ),
           onChanged: (value) {
             setState(() => _selectedUnidadId = value);
 
@@ -491,9 +591,16 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                 // Actualizar el estado local y el tipo de combustible
                 setState(() {
                   _selectUser = conductorUser;
-                  _tipoCombustibleController.text = unidadSeleccionada.tipoCombustible;
+                  _tipoCombustibleController.text =
+                      unidadSeleccionada.tipoCombustible;
                 });
                 //NUEVO: Cargar el último ticket de la unidad
+                _bloc.add(LoadUltimoTicketByUnidad(value));
+
+                // 🔥 Detectar itinerario automáticamente
+                _bloc.add(DetectarItinerario(unidadId: value));
+
+                // ✅ Cargar último ticket
                 _bloc.add(LoadUltimoTicketByUnidad(value));
               }
             } else {
@@ -519,7 +626,11 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                   child: CircularProgressIndicator(strokeWidth: 1),
                 ),
                 SizedBox(width: 8),
-                AppLabelText('Cargando ultimo Kilometraje',font: AppFont.oxygenRegular, fontSize: 9,)
+                AppLabelText(
+                  'Cargando ultimo Kilometraje',
+                  font: AppFont.oxygenRegular,
+                  fontSize: 9,
+                ),
               ],
             ),
           ),
@@ -710,7 +821,10 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
   Widget _buildSubmitButton(bool isLoading) {
     return CustomButton(
       text: 'Crear Ticket',
-      textStyle: TextStyle(fontFamily: AppFonts.getFontFamily(AppFont.pirulentBold),fontSize: 9),
+      textStyle: TextStyle(
+        fontFamily: AppFonts.getFontFamily(AppFont.pirulentBold),
+        fontSize: 9,
+      ),
       width: double.infinity,
       backgroundColor: AppColors.blue3,
       buttonState: isLoading ? ButtonState.loading : ButtonState.idle,
@@ -725,10 +839,10 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
   Future<void> _createTicket() async {
     // Quitar el foco del teclado ANTES de validar
     FocusScope.of(context).unfocus();
-    
+
     // Pequeño delay para asegurar que el teclado se oculte
     await Future.delayed(const Duration(milliseconds: 100));
-    
+
     if (!_formKey.currentState!.validate()) return;
 
     if (_selectedUnidadId == null) {
@@ -754,6 +868,55 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
       return;
     }
 
+    // VALIDAR: Verificar que los campos numéricos no estén vacíos antes de parsear
+    if (_kilometrajeController.text.trim().isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ingrese el kilometraje actual'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_cantidadController.text.trim().isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ingrese la cantidad de combustible'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Parsear valores con manejo de errores
+    final kilometraje = double.tryParse(_kilometrajeController.text.trim());
+    final cantidad = double.tryParse(_cantidadController.text.trim());
+
+    if (kilometraje == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Kilometraje inválido'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (cantidad == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cantidad inválida'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     // Obtener la unidad seleccionada
     final unidadSeleccionada = _bloc.state.unidades.firstWhere(
       (u) => u.id == _selectedUnidadId,
@@ -761,15 +924,15 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
 
     // Mostrar diálogo de confirmación
     if (!mounted) return;
-    
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => TicketConfirmationDialog(
         unidad: unidadSeleccionada,
         location: _location!,
-        kilometraje: double.parse(_kilometrajeController.text),
+        kilometraje: kilometraje,
         precinto: _precintoController.text,
-        cantidad: double.parse(_cantidadController.text),
+        cantidad: cantidad,
         onConfirm: () => Navigator.of(dialogContext).pop(true),
         onCancel: () => Navigator.of(dialogContext).pop(false),
       ),
@@ -797,8 +960,8 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     // USAR: El conductor seleccionado (puede ser diferente al de la unidad)
 
     final kilometrajeAnterior = _kilometrajeAnteriorController.text.isNotEmpty
-      ? double.tryParse(_kilometrajeAnteriorController.text)
-      : null;
+        ? double.tryParse(_kilometrajeAnteriorController.text)
+        : null;
 
     final request = CreateTicketRequest(
       unidadId: _selectedUnidadId!,
@@ -809,6 +972,12 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
       precintoNuevo: _precintoController.text,
       cantidad: double.parse(_cantidadController.text),
       tipoCombustible: _tipoCombustibleController.text,
+      //!!NUEVOS CAMPOS DE ITINERARIO/RUTA
+      rutaId: _rutaSeleccionadaId,
+      itinerarioId: _itinerarioSeleccionadoId,
+      origenAsignacion: _origenAsignacion,
+      motivoCambioItinerario: _motivoCambioItinerario,
+      itinerarioOriginalDetectadoId: _itinerarioOriginalDetectadoId,
     );
 
     _bloc.add(CreateTicket(request));
@@ -817,7 +986,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
   void _showSuccessDialog(TicketAbastecimiento ticket) {
     // Asegurar que el foco esté completamente eliminado
     FocusScope.of(context).unfocus();
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -873,10 +1042,10 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     _precintoFocus.unfocus();
     _cantidadFocus.unfocus();
     _tipoCombustibleFocus.unfocus();
-    
+
     // 2. Quitar el foco general
     FocusScope.of(context).unfocus();
-    
+
     // 3. Limpiar el formulario
     _formKey.currentState?.reset();
     _kilometrajeController.clear();
@@ -888,6 +1057,13 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     // 4. Limpiar el conductor seleccionado
     _conductorSelectorKey.currentState?.clearUser();
 
+    // 🔥 NUEVO: Limpiar detección
+    _itinerarioSeleccionadoId = null;
+    _rutaSeleccionadaId = null;
+    _origenAsignacion = 'NINGUNO';
+    _motivoCambioItinerario = null;
+    _itinerarioOriginalDetectadoId = null;
+
     setState(() {
       _selectedUnidadId = null;
       _selectUser = null;
@@ -895,6 +1071,8 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
       _unidadDropdownKey = UniqueKey();
     });
 
+    // 6. Limpiar el último ticket cargado
+    _bloc.add(const ClearDeteccionItinerario());
     _bloc.add(const ClearUltimoTicket());
 
     if (_location != null) {
@@ -923,14 +1101,19 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
     _cantidadController.dispose();
     _kilometrajeAnteriorController.dispose();
     _tipoCombustibleController.dispose();
-    
+
     // Dispose focus nodes
     _kilometrajeAnteriorFocus.dispose();
     _kilometrajeFocus.dispose();
     _precintoFocus.dispose();
     _cantidadFocus.dispose();
     _tipoCombustibleFocus.dispose();
-    
+
+    // 🔥 NUEVO: Limpiar detección solo si el bloc no está cerrado
+    if (!_bloc.isClosed) {
+      _bloc.add(const ClearDeteccionItinerario());
+    }
+
     super.dispose();
   }
 }

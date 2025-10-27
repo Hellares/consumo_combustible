@@ -22,6 +22,13 @@ class TicketAbastecimiento {
   final DateTime? fechaRechazo;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final ItinerarioTicket? itinerario;
+  final RutaTicket? ruta;
+  final int? ejecucionItinerarioId;
+  final String origenAsignacion; // AUTOMATICO, MANUAL, NINGUNO
+  final String? motivoCambioItinerario;
+  final int? itinerarioOriginalDetectadoId;
+  final ItinerarioTicket? itinerarioOriginalDetectado;
 
   TicketAbastecimiento({
     required this.id,
@@ -45,6 +52,13 @@ class TicketAbastecimiento {
     this.fechaRechazo,
     required this.createdAt,
     required this.updatedAt,
+    this.itinerario,
+    this.ruta,
+    this.ejecucionItinerarioId,
+    required this.origenAsignacion,
+    this.motivoCambioItinerario,
+    this.itinerarioOriginalDetectadoId,
+    this.itinerarioOriginalDetectado,
   });
 
   factory TicketAbastecimiento.fromJson(Map<String, dynamic> json) {
@@ -74,6 +88,20 @@ class TicketAbastecimiento {
           : null,
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
+
+      itinerario: json['itinerario'] != null
+          ? ItinerarioTicket.fromJson(json['itinerario'])
+          : null,
+      ruta: json['ruta'] != null
+          ? RutaTicket.fromJson(json['ruta'])
+          : null,
+      ejecucionItinerarioId: json['ejecucionItinerarioId'],
+      origenAsignacion: json['origenAsignacion'] ?? 'NINGUNO',
+      motivoCambioItinerario: json['motivoCambioItinerario'],
+      itinerarioOriginalDetectadoId: json['itinerarioOriginalDetectadoId'],
+      itinerarioOriginalDetectado: json['itinerarioOriginalDetectado'] != null
+          ? ItinerarioTicket.fromJson(json['itinerarioOriginalDetectado'])
+          : null,
     );
   }
 }
@@ -199,6 +227,67 @@ class SolicitantTicket {
       nombres: json['nombres'],
       apellidos: json['apellidos'],
       codigoEmpleado: json['codigoEmpleado'],
+    );
+  }
+}
+
+// 🔥 NUEVAS CLASES PARA ITINERARIO Y RUTA
+
+class ItinerarioTicket {
+  final int id;
+  final String nombre;
+  final String codigo;
+  final String tipoItinerario;
+  final double? distanciaTotal;
+  final List<String> diasOperacion;
+
+  ItinerarioTicket({
+    required this.id,
+    required this.nombre,
+    required this.codigo,
+    required this.tipoItinerario,
+    this.distanciaTotal,
+    required this.diasOperacion,
+  });
+
+  factory ItinerarioTicket.fromJson(Map<String, dynamic> json) {
+    return ItinerarioTicket(
+      id: json['id'],
+      nombre: json['nombre'],
+      codigo: json['codigo'],
+      tipoItinerario: json['tipoItinerario'],
+      distanciaTotal: json['distanciaTotal'] != null
+          ? (json['distanciaTotal'] as num).toDouble()
+          : null,
+      diasOperacion: json['diasOperacion'] != null
+          ? List<String>.from(json['diasOperacion'])
+          : [],
+    );
+  }
+}
+
+class RutaTicket {
+  final int id;
+  final String nombre;
+  final String? codigo;
+  final String? origen;
+  final String? destino;
+
+  RutaTicket({
+    required this.id,
+    required this.nombre,
+    this.codigo,
+    this.origen,
+    this.destino,
+  });
+
+  factory RutaTicket.fromJson(Map<String, dynamic> json) {
+    return RutaTicket(
+      id: json['id'],
+      nombre: json['nombre'],
+      codigo: json['codigo'],
+      origen: json['origen'],
+      destino: json['destino'],
     );
   }
 }

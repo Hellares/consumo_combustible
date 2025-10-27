@@ -55,3 +55,25 @@ class ClearUltimoTicket extends TicketEvent {
   @override
   List<Object?> get props => [];
 }
+
+/// Evento para detectar itinerario/ruta de una unidad
+class DetectarItinerario extends TicketEvent {
+  final int unidadId;
+  final String? fecha;
+
+  const DetectarItinerario({
+    required this.unidadId,
+    this.fecha,
+  });
+
+  @override
+  List<Object?> get props => [unidadId, fecha];
+}
+
+/// Evento para limpiar la detección de itinerario
+class ClearDeteccionItinerario extends TicketEvent {
+  const ClearDeteccionItinerario();
+
+  @override
+  List<Object?> get props => [];
+}

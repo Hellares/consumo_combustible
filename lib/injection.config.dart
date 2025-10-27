@@ -22,6 +22,8 @@ import 'package:consumo_combustible/data/datasource/remote/service/gps_socket_se
     as _i1024;
 import 'package:consumo_combustible/data/datasource/remote/service/grifo_service.dart'
     as _i440;
+import 'package:consumo_combustible/data/datasource/remote/service/itinerario_service.dart'
+    as _i671;
 import 'package:consumo_combustible/data/datasource/remote/service/licencia_service.dart'
     as _i858;
 import 'package:consumo_combustible/data/datasource/remote/service/location_service.dart'
@@ -30,6 +32,8 @@ import 'package:consumo_combustible/data/datasource/remote/service/reporte_servi
     as _i176;
 import 'package:consumo_combustible/data/datasource/remote/service/rol_service.dart'
     as _i530;
+import 'package:consumo_combustible/data/datasource/remote/service/ruta_service.dart'
+    as _i312;
 import 'package:consumo_combustible/data/datasource/remote/service/sede_service.dart'
     as _i779;
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_aprobacion_service.dart'
@@ -53,6 +57,8 @@ import 'package:consumo_combustible/domain/repository/gps_repository.dart'
     as _i842;
 import 'package:consumo_combustible/domain/repository/grifo_repository.dart'
     as _i658;
+import 'package:consumo_combustible/domain/repository/itinerario_repository.dart'
+    as _i386;
 import 'package:consumo_combustible/domain/repository/licencia_repository.dart'
     as _i1047;
 import 'package:consumo_combustible/domain/repository/location_repository.dart'
@@ -61,6 +67,8 @@ import 'package:consumo_combustible/domain/repository/reporte_repository.dart'
     as _i90;
 import 'package:consumo_combustible/domain/repository/rol_repository.dart'
     as _i859;
+import 'package:consumo_combustible/domain/repository/ruta_repository.dart'
+    as _i104;
 import 'package:consumo_combustible/domain/repository/sede_repository.dart'
     as _i1045;
 import 'package:consumo_combustible/domain/repository/ticket_aprobacion_repository.dart'
@@ -83,6 +91,8 @@ import 'package:consumo_combustible/domain/use_cases/gps/gps_usecases.dart'
     as _i714;
 import 'package:consumo_combustible/domain/use_cases/grifo/grifo_use_cases.dart'
     as _i732;
+import 'package:consumo_combustible/domain/use_cases/itinerario/itinerario_use_cases.dart'
+    as _i26;
 import 'package:consumo_combustible/domain/use_cases/licencia/licencia_use_cases.dart'
     as _i767;
 import 'package:consumo_combustible/domain/use_cases/location/location_use_cases.dart'
@@ -91,6 +101,8 @@ import 'package:consumo_combustible/domain/use_cases/reporte/reporte_use_cases.d
     as _i605;
 import 'package:consumo_combustible/domain/use_cases/rol/rol_use_cases.dart'
     as _i10;
+import 'package:consumo_combustible/domain/use_cases/ruta/ruta_use_cases.dart'
+    as _i242;
 import 'package:consumo_combustible/domain/use_cases/sedes/sede_use_cases.dart'
     as _i120;
 import 'package:consumo_combustible/domain/use_cases/ticket/ticket_use_cases.dart'
@@ -122,6 +134,12 @@ extension GetItInjectableX on _i174.GetIt {
       () => appModule.fastStorageService(),
     );
     gh.singleton<_i1024.GpsSocketService>(() => appModule.gpsSocketService());
+    gh.lazySingleton<_i671.ItinerarioService>(
+      () => appModule.itinerarioService(gh<_i361.Dio>()),
+    );
+    gh.lazySingleton<_i312.RutaService>(
+      () => appModule.rutaService(gh<_i361.Dio>()),
+    );
     gh.factory<_i14.AuthService>(() => appModule.authService(gh<_i361.Dio>()));
     gh.factory<_i200.LocationService>(
       () => appModule.locationService(gh<_i361.Dio>()),
@@ -166,6 +184,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i200.LocationService>(),
         gh<_i782.FastStorageService>(),
       ),
+    );
+    gh.lazySingleton<_i386.ItinerarioRepository>(
+      () => appModule.itinerarioRepository(gh<_i671.ItinerarioService>()),
+    );
+    gh.lazySingleton<_i104.RutaRepository>(
+      () => appModule.rutaRepository(gh<_i312.RutaService>()),
     );
     gh.singleton<_i607.UserRepository>(
       () => appModule.userRepository(gh<_i148.UserService>()),
@@ -223,6 +247,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i911.UnidadUseCases>(
       () => appModule.unidadUseCases(gh<_i41.UnidadRepository>()),
     );
+    gh.lazySingleton<_i242.RutaUseCases>(
+      () => appModule.rutaUseCases(gh<_i104.RutaRepository>()),
+    );
     gh.singleton<_i714.GpsUseCases>(
       () => appModule.gpsUseCases(gh<_i842.GpsRepository>()),
     );
@@ -231,6 +258,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.singleton<_i636.LocationUseCases>(
       () => appModule.locationUseCases(gh<_i611.LocationRepository>()),
+    );
+    gh.lazySingleton<_i26.ItinerarioUseCases>(
+      () => appModule.itinerarioUseCases(gh<_i386.ItinerarioRepository>()),
     );
     gh.singleton<_i90.ReporteRepository>(
       () => appModule.reporteRepository(gh<_i176.ReporteService>()),

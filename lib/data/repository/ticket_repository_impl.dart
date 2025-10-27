@@ -1,5 +1,6 @@
 import 'package:consumo_combustible/data/datasource/remote/service/ticket_service.dart';
 import 'package:consumo_combustible/domain/models/create_ticket_request.dart';
+import 'package:consumo_combustible/domain/models/itinerario_detectado.dart';
 import 'package:consumo_combustible/domain/models/ticket_abastecimiento.dart';
 import 'package:consumo_combustible/domain/models/ultimo_ticket_unidad.dart';
 import 'package:consumo_combustible/domain/repository/ticket_repository.dart';
@@ -17,5 +18,16 @@ class TicketRepositoryImpl implements TicketRepository {
   @override
   Future<Resource<UltimoTicketUnidad>> getUltimoTicketByUnidad(int unidadId) {
     return service.getUltimoTicketByUnidad(unidadId);
+  }
+
+  @override
+  Future<Resource<ItinerarioDetectado>> detectarItinerario({
+    required int unidadId,
+    String? fecha,
+  }) {
+    return service.detectarItinerario(
+      unidadId: unidadId,
+      fecha: fecha,
+    );
   }
 }
