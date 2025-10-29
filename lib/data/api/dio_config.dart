@@ -62,11 +62,12 @@ class DioConfig {
   }
 }
 
-// ✅ Interceptor de autenticación ULTRA OPTIMIZADO
+// ✅ Interceptor de autenticación con REFRESH TOKEN AUTOMÁTICO
 class OptimizedAuthInterceptor extends Interceptor {
   String? _cachedToken;
   DateTime? _tokenCacheTime;
   static const Duration _cacheValidDuration = Duration(minutes: 5);
+  bool _isRefreshing = false;
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
@@ -80,25 +81,119 @@ class OptimizedAuthInterceptor extends Interceptor {
   }
 
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
-    if (err.response?.statusCode == 401) {
-      _clearTokenCache();
+  void onError(DioException err, ErrorInterceptorHandler handler) async {
+    // Si es error 401 y no es un endpoint de auth, intentar refresh
+    if (err.response?.statusCode == 401 &&
+        !_isAuthEndpoint(err.requestOptions.path) &&
+        !err.requestOptions.path.contains('/refresh')) {
+      
+      if (kDebugMode) print('🔄 Token expirado, intentando renovar...');
+      
+      // Evitar múltiples refreshes simultáneos
+      if (_isRefreshing) {
+        if (kDebugMode) print('⏳ Ya hay un refresh en progreso, esperando...');
+        handler.next(err);
+        return;
+      }
+      
+      _isRefreshing = true;
+      
+      try {
+        final fastStorage = GetIt.instance<FastStorageService>();
+        final refreshToken = await fastStorage.read('refresh_token');
+        
+        if (refreshToken == null || refreshToken.isEmpty) {
+          if (kDebugMode) print('❌ No hay refresh token disponible');
+          _clearTokenCache();
+          _isRefreshing = false;
+          handler.next(err);
+          return;
+        }
+        
+        // Intentar renovar el token
+        final dio = DioConfig.instance;
+        final response = await dio.post(
+          '/api/auth/refresh',
+          data: {'refreshToken': refreshToken},
+          options: Options(
+            headers: {'skipAuthInterceptor': true}, // Evitar loop
+          ),
+        );
+        
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          final authResponse = AuthResponse.fromJson(response.data);
+          
+          // Guardar nuevos tokens
+          final newAccessToken = authResponse.data?.accessToken;
+          final newRefreshToken = authResponse.data?.refreshToken;
+          
+          if (newAccessToken != null && newRefreshToken != null) {
+            await fastStorage.write('access_token', newAccessToken);
+            await fastStorage.write('refresh_token', newRefreshToken);
+            await fastStorage.write('token', newAccessToken); // Compatibilidad
+            
+            // Actualizar user data completo
+            final userData = await fastStorage.read('user');
+            if (userData != null) {
+              final updatedUserData = Map<String, dynamic>.from(userData);
+              updatedUserData['data']['accessToken'] = newAccessToken;
+              updatedUserData['data']['refreshToken'] = newRefreshToken;
+              await fastStorage.write('user', updatedUserData);
+            }
+            
+            _clearTokenCache();
+            
+            if (kDebugMode) print('✅ Tokens renovados exitosamente');
+            
+            // Reintentar la petición original con el nuevo token
+            err.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
+            
+            _isRefreshing = false;
+            
+            try {
+              final retryResponse = await dio.fetch(err.requestOptions);
+              handler.resolve(retryResponse);
+              return;
+            } catch (retryError) {
+              if (kDebugMode) print('❌ Error al reintentar petición: $retryError');
+              handler.next(err);
+              return;
+            }
+          }
+        }
+        
+        if (kDebugMode) print('❌ No se pudo renovar el token');
+        _clearTokenCache();
+        _isRefreshing = false;
+        handler.next(err);
+        
+      } catch (e) {
+        if (kDebugMode) print('❌ Error en refresh token: $e');
+        _clearTokenCache();
+        _isRefreshing = false;
+        handler.next(err);
+      }
+    } else {
+      if (err.response?.statusCode == 401) {
+        _clearTokenCache();
+      }
+      handler.next(err);
     }
-    handler.next(err);
   }
 
   bool _isAuthEndpoint(String path) {
-    return path.contains('/login') || 
-           path.contains('/register') || 
-           path.contains('/auth/login') || 
-           path.contains('/auth/register');
+    return path.contains('/login') ||
+           path.contains('/register') ||
+           path.contains('/auth/login') ||
+           path.contains('/auth/register') ||
+           path.contains('/auth/refresh');
   }
 
-  // ✅ SÚPER OPTIMIZADO: Extraer token del objeto user almacenado
+  // ✅ SÚPER OPTIMIZADO: Extraer access token del almacenamiento
   Future<String?> _getTokenOptimized() async {
     // 1. Cache del token en memoria - súper rápido
-    if (_cachedToken != null && 
-        _tokenCacheTime != null && 
+    if (_cachedToken != null &&
+        _tokenCacheTime != null &&
         DateTime.now().difference(_tokenCacheTime!) < _cacheValidDuration) {
       return _cachedToken;
     }
@@ -106,22 +201,38 @@ class OptimizedAuthInterceptor extends Interceptor {
     try {
       // 2. Usar FastStorageService que ya tiene cache en memoria
       final fastStorage = GetIt.instance<FastStorageService>();
-      final userData = await fastStorage.read('user');
       
+      // Primero intentar con access_token
+      final accessToken = await fastStorage.read('access_token');
+      if (accessToken != null && accessToken is String && accessToken.isNotEmpty) {
+        _cachedToken = accessToken;
+        _tokenCacheTime = DateTime.now();
+        return _cachedToken;
+      }
+      
+      // Compatibilidad: intentar con 'token'
+      final token = await fastStorage.read('token');
+      if (token != null && token is String && token.isNotEmpty) {
+        _cachedToken = token;
+        _tokenCacheTime = DateTime.now();
+        return _cachedToken;
+      }
+      
+      // Si no está, extraer del objeto user
+      final userData = await fastStorage.read('user');
       if (userData != null) {
-        // 3. Extraer token del objeto AuthEmpresaResponse
         final authResponse = AuthResponse.fromJson(userData);
-        final token = authResponse.data?.token;
+        final userToken = authResponse.data?.accessToken;
         
-        if (token != null && token.isNotEmpty) {
-          _cachedToken = token;
+        if (userToken != null && userToken.isNotEmpty) {
+          _cachedToken = userToken;
           _tokenCacheTime = DateTime.now();
           return _cachedToken;
         }
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Error obteniendo token: $e');
+        debugPrint('❌ Error obteniendo token: $e');
       }
     }
     

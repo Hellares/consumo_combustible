@@ -102,54 +102,56 @@ class AuthService {
     }
   }
 
-  // Future<Resource<AuthResponseRegisterNew>> register(UserRegisterNew user) async {
-  //   Stopwatch? stopwatch;
-  //   if (kDebugMode) {
-  //     stopwatch = Stopwatch()..start();
-  //   }
+  // REFRESH TOKEN - Renovar tokens usando refresh token
+  Future<Resource<AuthResponse>> refreshToken(String refreshToken) async {
+    Stopwatch? stopwatch;
+    if (kDebugMode) {
+      stopwatch = Stopwatch()..start();
+      print('🔄 AuthService: Renovando tokens...');
+    }
     
-  //   try {
-  //     if (kDebugMode) print('🔐 AuthService: Iniciando registro...');
+    try {
+      final response = await _dio.post(
+        '/api/auth/refresh',
+        data: {'refreshToken': refreshToken},
+        options: Options(
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
+      );
       
-  //     final response = await _dio.post(
-  //       '/api/auth/register',
-  //       data: user.toJson(),
-  //       options: Options(
-  //         // ✅ USAR TIMEOUTS NORMALES PARA REGISTRO
-  //         sendTimeout: ApiConfig.sendTimeout,
-  //         receiveTimeout: ApiConfig.receiveTimeout,
-  //       ),
-  //     );
+      if (kDebugMode) {
+        stopwatch?.stop();
+        print('✅ Tokens renovados en ${stopwatch?.elapsedMilliseconds}ms - Status: ${response.statusCode}');
+      }
 
-  //     if (kDebugMode) {
-  //       stopwatch?.stop();
-  //       print('🔥 Registro completado en ${stopwatch?.elapsedMilliseconds}ms - Status: ${response.statusCode}');
-  //     }
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final authResponse = AuthResponse.fromJson(response.data);
+        return Success(authResponse);
+      } else {
+        if (kDebugMode) {
+          print('❌ Refresh falló - Status: ${response.statusCode}');
+        }
+        return Error(_extractErrorMessage(response.data));
+      }
       
-  //     if (response.statusCode == 200 || response.statusCode == 201) {
-  //       final authResponse = AuthResponseRegisterNew.fromJson(response.data);
-  //       return Success(authResponse);
-  //     } else {
-  //       return Error(_extractErrorMessage(response.data));
-  //     }
-      
-  //   } on DioException catch (e) {
-  //     if (kDebugMode) {
-  //       stopwatch?.stop();
-  //       print('💥 Error registro en ${stopwatch?.elapsedMilliseconds}ms: ${e.type}');
-  //     }
-  //     return Error(_handleDioError(e));
-  //   } catch (e) {
-  //     if (kDebugMode) {
-  //       stopwatch?.stop();
-  //       print('💥 Error inesperado registro en ${stopwatch?.elapsedMilliseconds}ms: $e');
-  //     }
-  //     return Error('Error inesperado: ${e.toString()}');
-  //   }
-  // }
+    } on DioException catch (e) {
+      if (kDebugMode) {
+        stopwatch?.stop();
+        print('💥 Error refresh en ${stopwatch?.elapsedMilliseconds}ms: ${e.type} - ${e.message}');
+      }
+      return Error(_handleDioError(e));
+    } catch (e) {
+      if (kDebugMode) {
+        stopwatch?.stop();
+        print('💥 Error inesperado refresh en ${stopwatch?.elapsedMilliseconds}ms: $e');
+      }
+      return Error('Error inesperado: ${e.toString()}');
+    }
+  }
 
-  // LOGOUT OPTIMIZADO - Sin esperar respuesta si es posible
-  Future<Resource<bool>> logout() async {
+  // LOGOUT OPTIMIZADO - Envía refresh token al backend
+  Future<Resource<bool>> logout(String? refreshToken) async {
   Stopwatch? stopwatch;
   if (kDebugMode) {
     stopwatch = Stopwatch()..start();
@@ -157,12 +159,13 @@ class AuthService {
   }
   
   try {
-    // ✅ CORREGIDO: Esperar la respuesta con await
+    // ✅ Enviar refresh token al backend para revocarlo
     final response = await _dio.post(
       '/api/auth/logout',
+      data: refreshToken != null ? {'refreshToken': refreshToken} : null,
       options: Options(
-        sendTimeout: const Duration(seconds: 5),    // ✅ Tiempo más realista
-        receiveTimeout: const Duration(seconds: 8),  // ✅ Tiempo más realista
+        sendTimeout: const Duration(seconds: 5),
+        receiveTimeout: const Duration(seconds: 8),
       ),
     );
     
@@ -209,6 +212,61 @@ class AuthService {
     return Success(true);
   }
 }
+
+  // LOGOUT ALL - Cerrar todas las sesiones del usuario
+  Future<Resource<bool>> logoutAll() async {
+    Stopwatch? stopwatch;
+    if (kDebugMode) {
+      stopwatch = Stopwatch()..start();
+      print('🚪 AuthService: Cerrando todas las sesiones...');
+    }
+    
+    try {
+      final response = await _dio.post(
+        '/api/auth/logout-all',
+        options: Options(
+          sendTimeout: const Duration(seconds: 5),
+          receiveTimeout: const Duration(seconds: 8),
+        ),
+      );
+      
+      if (kDebugMode) {
+        stopwatch?.stop();
+        print('✅ Logout-all exitoso en ${stopwatch?.elapsedMilliseconds}ms - Status: ${response.statusCode}');
+      }
+      
+      if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 204) {
+        return Success(true);
+      } else {
+        if (kDebugMode) print('⚠️ Logout-all parcial - Status: ${response.statusCode}');
+        return Success(true); // Aún así considerar exitoso para limpiar local
+      }
+      
+    } on DioException catch (e) {
+      if (kDebugMode) {
+        stopwatch?.stop();
+        print('💥 Error Dio logout-all en ${stopwatch?.elapsedMilliseconds}ms: ${e.type} - ${e.message}');
+      }
+      
+      // Continuar con logout local aunque falle el servidor
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        if (kDebugMode) print('🔄 Red no disponible, continuando logout local...');
+        return Success(true);
+      } else {
+        if (kDebugMode) print('⚠️ Error servidor, continuando logout local...');
+        return Success(true);
+      }
+      
+    } catch (e) {
+      if (kDebugMode) {
+        stopwatch?.stop();
+        print('💥 Error inesperado logout-all en ${stopwatch?.elapsedMilliseconds}ms: $e');
+      }
+      return Success(true);
+    }
+  }
 
   // HELPER: Extraer mensajes de error optimizado
   String _extractErrorMessage(dynamic data) {

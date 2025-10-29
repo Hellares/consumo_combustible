@@ -7,12 +7,15 @@ import 'package:consumo_combustible/core/widgets/custom_date_textfiels_container
 import 'package:consumo_combustible/core/widgets/cutom_button/custom_button.dart';
 import 'package:consumo_combustible/core/widgets/snack.dart';
 import 'package:consumo_combustible/domain/models/detalle_abastecimiento.dart';
+import 'package:consumo_combustible/domain/models/tipo_visualizacion_ruta.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart';
 import 'package:consumo_combustible/domain/utils/resource.dart';
 import 'package:consumo_combustible/injection.dart';
 import 'package:consumo_combustible/presentation/page/detalle_abastecimiento/bloc/detalle_abastecimiento_bloc.dart';
 import 'package:consumo_combustible/presentation/page/detalle_abastecimiento/bloc/detalle_abastecimiento_event.dart';
 import 'package:consumo_combustible/presentation/page/detalle_abastecimiento/bloc/detalle_abastecimiento_state.dart';
+import 'package:consumo_combustible/presentation/page/detalle_abastecimiento/widgets/ruta_info_card.dart';
+import 'package:consumo_combustible/presentation/page/ruta_map/ruta_map_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -68,7 +71,9 @@ class _DetalleDetailPageState extends State<DetalleDetailPage> {
 
   void _initializeControllers() {
     _cantidadAbastecidaController = TextEditingController(
-      text: (widget.detalle.cantidadAbastecida == null || widget.detalle.cantidadAbastecida == 0)
+      text:
+          (widget.detalle.cantidadAbastecida == null ||
+              widget.detalle.cantidadAbastecida == 0)
           ? widget.detalle.ticket.cantidad.toString()
           : widget.detalle.cantidadAbastecida.toString(),
     );
@@ -121,29 +126,29 @@ class _DetalleDetailPageState extends State<DetalleDetailPage> {
   }
 
   void _updateTotalCost() {
-  final qtyText = _cantidadAbastecidaController.text;
-  final unitText = _costoPorUnidadController.text;
+    final qtyText = _cantidadAbastecidaController.text;
+    final unitText = _costoPorUnidadController.text;
 
-  // Si algún campo está vacío, no calcular
-  if (qtyText.isEmpty || unitText.isEmpty) {
-    _costoTotalController.text = '';
-    return;
+    // Si algún campo está vacío, no calcular
+    if (qtyText.isEmpty || unitText.isEmpty) {
+      _costoTotalController.text = '';
+      return;
+    }
+
+    // Parsear valores
+    final qty = double.tryParse(qtyText);
+    final unit = double.tryParse(unitText);
+
+    // Si no se pueden parsear, no calcular
+    if (qty == null || unit == null) {
+      _costoTotalController.text = '';
+      return;
+    }
+
+    // Calcular y formatear total (2 decimales)
+    final total = qty * unit;
+    _costoTotalController.text = total.toStringAsFixed(2);
   }
-
-  // Parsear valores
-  final qty = double.tryParse(qtyText);
-  final unit = double.tryParse(unitText);
-
-  // Si no se pueden parsear, no calcular
-  if (qty == null || unit == null) {
-    _costoTotalController.text = '';
-    return;
-  }
-
-  // Calcular y formatear total (2 decimales)
-  final total = qty * unit;
-  _costoTotalController.text = total.toStringAsFixed(2);
-}
 
   @override
   void dispose() {
@@ -178,8 +183,8 @@ class _DetalleDetailPageState extends State<DetalleDetailPage> {
     setState(() => _isEditing = !_isEditing);
 
     if (_isEditing) {
-    _updateTotalCost();
-  }
+      _updateTotalCost();
+    }
   }
 
   void _guardarCambios() {
@@ -363,6 +368,11 @@ class _DetalleDetailPageState extends State<DetalleDetailPage> {
                                 const SizedBox(height: 12),
                                 _buildTicketInfoCard(),
                                 const SizedBox(height: 12),
+                                RutaInfoCard(
+                                  ticket: widget.detalle.ticket,
+                                  onVerRutaPressed: _navigateToRutaMap,
+                                ),
+                                const SizedBox(height: 12),
                                 _buildMedicionesCard(),
                                 const SizedBox(height: 12),
                                 _buildCostosCard(),
@@ -385,6 +395,37 @@ class _DetalleDetailPageState extends State<DetalleDetailPage> {
                   );
                 },
               ),
+        ),
+      ),
+    );
+  }
+
+  void _navigateToRutaMap() {
+    final ticket = widget.detalle.ticket; // ✅ Obtener ticket
+
+    // Determinar qué tipo de visualización mostrar
+    final tieneItinerario = ticket.itinerario != null;
+    final tieneRuta = ticket.ruta != null;
+
+    if (!tieneItinerario && !tieneRuta) {
+      SnackBarHelper.showError(
+        context,
+        'Este ticket no tiene ruta o itinerario asignado',
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RutaMapPage(
+          ticketId: widget.detalle.ticketId,
+          itinerarioId: tieneItinerario ? ticket.itinerario!.id : null,
+          rutaId: tieneRuta ? ticket.ruta!.id : null,
+          placaUnidad: ticket.placaUnidad,
+          tipoVisualizacion: tieneItinerario
+              ? TipoVisualizacionRuta.itinerario
+              : TipoVisualizacionRuta.rutaSimple,
         ),
       ),
     );
@@ -757,8 +798,8 @@ class _DetalleDetailPageState extends State<DetalleDetailPage> {
                   validator: (value) => FieldValidators.validateCurrency(
                     value,
                     minAmount: 0.00,
-                    maxAmount: 10000.00
-                    ),
+                    maxAmount: 10000.00,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -775,9 +816,9 @@ class _DetalleDetailPageState extends State<DetalleDetailPage> {
                     size: 16,
                   ),
                   enableRealTimeValidation: false,
-                  borderColor: AppColors.green,                  
+                  borderColor: AppColors.green,
                 ),
-              )
+              ),
             ],
           ),
         ],
@@ -863,10 +904,10 @@ class _DetalleDetailPageState extends State<DetalleDetailPage> {
                   validator: (value) => FieldValidators.validateCurrency(
                     value,
                     minAmount: 0.00,
-                    maxAmount: 1000000.00
-                    ),
+                    maxAmount: 1000000.00,
+                  ),
                 ),
-              )
+              ),
             ],
           ),
           const SizedBox(height: 10),

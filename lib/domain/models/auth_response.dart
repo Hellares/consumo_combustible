@@ -28,21 +28,33 @@ class AuthResponse {
 
 class Data {
     User user;
-    String token;
+    String accessToken;
+    String refreshToken;
+    int expiresIn;
+    String tokenType;
 
     Data({
         required this.user,
-        required this.token,
+        required this.accessToken,
+        required this.refreshToken,
+        required this.expiresIn,
+        this.tokenType = 'Bearer',
     });
 
     factory Data.fromJson(Map<String, dynamic> json) => Data(
         user: User.fromJson(json["user"]),
-        token: json["token"],
+        accessToken: json["accessToken"] ?? '',
+        refreshToken: json["refreshToken"] ?? '',
+        expiresIn: json["expiresIn"] ?? 900, // 15 minutos por defecto
+        tokenType: json["tokenType"] ?? 'Bearer',
     );
 
     Map<String, dynamic> toJson() => {
         "user": user.toJson(),
-        "token": token,
+        "accessToken": accessToken,
+        "refreshToken": refreshToken,
+        "expiresIn": expiresIn,
+        "tokenType": tokenType,
     };
 }
 

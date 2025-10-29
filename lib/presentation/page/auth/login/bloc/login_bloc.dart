@@ -37,6 +37,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     on<ClearError>(_onClearError);
     on<LoginFormReset>(_onFormReset);
     on<LogoutRequested>(_onLogoutRequested);
+    on<LogoutAllRequested>(_onLogoutAllRequested);
   }
 
   final formKey = GlobalKey<FormState>();
@@ -319,6 +320,70 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
       emit(state.copyWith(
         response: Error('Error al cerrar sesión: ${e.toString()}'),
+        formKey: formKey,
+      ));
+    }
+  }
+
+  /*
+    ***************************************************************************************
+    Metodo: logoutAllRequested
+    Fecha: 29-10-2025
+    Descripcion: Cierra todas las sesiones del usuario en todos los dispositivos
+    Autor: James Torres
+    ***************************************************************************************
+  */
+
+  Future<void> _onLogoutAllRequested(
+    LogoutAllRequested event,
+    Emitter<LoginState> emit,
+  ) async {
+    Stopwatch? stopwatch;
+    if (kDebugMode) {
+      stopwatch = Stopwatch()..start();
+      print('🚪 Procesando logout-all en BLoC...');
+    }
+
+    try {
+      // Loading inmediato
+      emit(state.copyWith(response: Loading<dynamic>(), formKey: formKey));
+
+      // Ejecutar logout-all a través del use case
+      final logoutSuccess = await authUseCases.logoutAll.run();
+
+      if (kDebugMode) {
+        stopwatch?.stop();
+        print('✅ Logout-all BLoC completado en ${stopwatch?.elapsedMilliseconds}ms - Success: $logoutSuccess');
+      }
+
+      if (logoutSuccess) {
+        // Reset completo del estado tras logout exitoso
+        _clearValidationCache();
+        _cancelPendingValidation();
+        
+        // Estado limpio que indica logout exitoso
+        emit(const LoginState().copyWith(
+          response: Success('Todas las sesiones han sido cerradas exitosamente'),
+          formKey: formKey,
+        ));
+        
+        if (kDebugMode) print('🔄 Estado del BLoC reseteado (logout-all)');
+      } else {
+        // Error en logout-all
+        emit(state.copyWith(
+          response: Error('Error al cerrar todas las sesiones. Intenta nuevamente.'),
+          formKey: formKey,
+        ));
+      }
+
+    } catch (e) {
+      if (kDebugMode) {
+        stopwatch?.stop();
+        print('💥 Error en logout-all BLoC (${stopwatch?.elapsedMilliseconds}ms): $e');
+      }
+
+      emit(state.copyWith(
+        response: Error('Error al cerrar todas las sesiones: ${e.toString()}'),
         formKey: formKey,
       ));
     }

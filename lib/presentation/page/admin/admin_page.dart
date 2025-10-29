@@ -1,5 +1,6 @@
 import 'package:consumo_combustible/core/fonts/app_text_widgets.dart';
 import 'package:consumo_combustible/core/theme/app_colors.dart';
+import 'package:consumo_combustible/core/widgets/logout/logout_button.dart';
 import 'package:consumo_combustible/presentation/page/licencias/licencias_page.dart';
 import 'package:flutter/material.dart';
 
@@ -226,6 +227,45 @@ class _AdminPageState extends State<AdminPage> {
             onTap: () =>
                 _navigateToPage(const ConfiguracionPage(), 'Configuración'),
           ),
+          
+          const Divider(),
+          
+          // 🔐 SECCIÓN DE SEGURIDAD
+          _buildDrawerSection('Seguridad'),
+          
+          // Botón de cerrar todas las sesiones
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: LogoutButton.logoutAll(
+              text: 'Cerrar Todas las Sesiones',
+              icon: Icons.devices_other,
+              onLogoutSuccess: () {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  'login',
+                  (route) => false,
+                );
+              },
+            ),
+          ),
+          
+          const SizedBox(height: 8),
+          
+          // Texto explicativo
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              'Cierra tu sesión en todos los dispositivos donde hayas iniciado sesión',
+              style: TextStyle(
+                fontSize: 9,
+                color: Colors.grey.shade600,
+                fontStyle: FontStyle.italic,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          
+          const SizedBox(height: 16),
         ],
       ),
     );

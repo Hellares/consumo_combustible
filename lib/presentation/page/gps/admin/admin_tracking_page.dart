@@ -49,7 +49,7 @@ class _AdminTrackingPageState extends State<AdminTrackingPage> {
     final authUseCases = locator<AuthUseCases>();
     final session = await authUseCases.getUserSession.run();
 
-    if (session?.data?.token == null) {
+    if (session?.data?.accessToken == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -60,7 +60,7 @@ class _AdminTrackingPageState extends State<AdminTrackingPage> {
       return;
     }
 
-    _authToken = session!.data!.token;
+    _authToken = session!.data!.accessToken;
     if (!mounted) return;
 
     // ✅ CORRECCIÓN: Primero cargar ubicaciones REST

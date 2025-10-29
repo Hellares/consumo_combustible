@@ -14,6 +14,9 @@ class ItinerarioBloc extends Bloc<ItinerarioEvent, ItinerarioState> {
   ItinerarioBloc(this.itinerarioUseCases) : super(const ItinerarioState()) {
     on<LoadItinerariosActivos>(_onLoadItinerariosActivos);
     on<ClearItinerarios>(_onClearItinerarios);
+    on<LoadItinerarioById>(_onLoadItinerarioById);
+    on<LoadItinerarioByCodigo>(_onLoadItinerarioByCodigo);
+    on<ClearItinerarioDetalle>(_onClearItinerarioDetalle);
   }
 
   Future<void> _onLoadItinerariosActivos(
@@ -61,5 +64,111 @@ class ItinerarioBloc extends Bloc<ItinerarioEvent, ItinerarioState> {
     }
 
     emit(const ItinerarioState());
+  }
+
+  // ========================================
+  // 🔥 NUEVOS HANDLERS
+  // ========================================
+
+  /// Handler: Cargar itinerario por ID (con tramos completos)
+  Future<void> _onLoadItinerarioById(
+    LoadItinerarioById event,
+    Emitter<ItinerarioState> emit,
+  ) async {
+    if (kDebugMode) {
+      print('🗺️ [ItinerarioBloc] Cargando itinerario ID: ${event.itinerarioId}...');
+    }
+
+    emit(state.copyWith(
+      itinerarioDetalleResponse: Loading<Itinerario>(),
+    ));
+
+    final response = await itinerarioUseCases.getItinerarioById.run(event.itinerarioId);
+
+    if (response is Success<Itinerario>) {
+      final itinerario = response.data;
+
+      if (kDebugMode) {
+        print('✅ [ItinerarioBloc] Itinerario cargado: ${itinerario.nombre}');
+        print('   Código: ${itinerario.codigo}');
+        print('   Tipo: ${itinerario.tipoItinerario}');
+        print('   Distancia total: ${itinerario.distanciaTotal} km');
+        print('   Tramos: ${itinerario.tramos?.length}');
+        
+        for (var tramo in itinerario.tramos ?? []) {
+          print('   ${tramo.orden}. ${tramo.ciudadOrigen} → ${tramo.ciudadDestino}');
+          print('      Distancia: ${tramo.ruta.distanciaKm} km');
+          print('      Tiempo: ${tramo.ruta.tiempoEstimadoMinutos} min');
+          if (tramo.requiereAbastecimiento) {
+            print('      ⛽ Requiere abastecimiento');
+          }
+        }
+      }
+
+      emit(state.copyWith(
+        itinerarioDetalleResponse: response,
+        itinerarioDetalle: itinerario,
+      ));
+    } else if (response is Error<Itinerario>) {
+      if (kDebugMode) {
+        print('❌ [ItinerarioBloc] Error al cargar itinerario: ${response.message}');
+      }
+
+      emit(state.copyWith(
+        itinerarioDetalleResponse: response,
+        itinerarioDetalle: null,
+      ));
+    }
+  }
+
+  /// Handler: Cargar itinerario por código
+  Future<void> _onLoadItinerarioByCodigo(
+    LoadItinerarioByCodigo event,
+    Emitter<ItinerarioState> emit,
+  ) async {
+    if (kDebugMode) {
+      print('🗺️ [ItinerarioBloc] Cargando itinerario código: ${event.codigo}...');
+    }
+
+    emit(state.copyWith(
+      itinerarioDetalleResponse: Loading<Itinerario>(),
+    ));
+
+    final response = await itinerarioUseCases.getItinerarioByCodigo.run(event.codigo);
+
+    if (response is Success<Itinerario>) {
+      final itinerario = response.data;
+
+      if (kDebugMode) {
+        print('✅ [ItinerarioBloc] Itinerario cargado: ${itinerario.nombre}');
+        print('   Tramos: ${itinerario.tramos?.length}');
+      }
+
+      emit(state.copyWith(
+        itinerarioDetalleResponse: response,
+        itinerarioDetalle: itinerario,
+      ));
+    } else if (response is Error<Itinerario>) {
+      if (kDebugMode) {
+        print('❌ [ItinerarioBloc] Error: ${response.message}');
+      }
+
+      emit(state.copyWith(
+        itinerarioDetalleResponse: response,
+        itinerarioDetalle: null,
+      ));
+    }
+  }
+
+  /// Handler: Limpiar el itinerario detallado
+  Future<void> _onClearItinerarioDetalle(
+    ClearItinerarioDetalle event,
+    Emitter<ItinerarioState> emit,
+  ) async {
+    if (kDebugMode) {
+      print('🔄 [ItinerarioBloc] Limpiando itinerario detalle');
+    }
+
+    emit(state.copyWith(clearItinerarioDetalle: true));
   }
 }

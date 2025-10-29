@@ -21,3 +21,31 @@ class ClearRutas extends RutaEvent {
   @override
   List<Object?> get props => [];
 }
+
+/// 🔥 NUEVO: Evento para cargar una ruta por ID
+class LoadRutaById extends RutaEvent {
+  final int rutaId;
+
+  const LoadRutaById(this.rutaId);
+
+  @override
+  List<Object?> get props => [rutaId];
+}
+
+/// 🔥 NUEVO: Evento para cargar una ruta por código
+class LoadRutaByCodigo extends RutaEvent {
+  final String codigo;
+
+  const LoadRutaByCodigo(this.codigo);
+
+  @override
+  List<Object?> get props => [codigo];
+}
+
+/// 🔥 NUEVO: Evento para limpiar el detalle de ruta
+class ClearRutaDetalle extends RutaEvent {
+  const ClearRutaDetalle();
+
+  @override
+  List<Object?> get props => [];
+}

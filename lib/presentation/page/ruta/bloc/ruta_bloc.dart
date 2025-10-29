@@ -14,6 +14,9 @@ class RutaBloc extends Bloc<RutaEvent, RutaState> {
   RutaBloc(this.rutaUseCases) : super(const RutaState()) {
     on<LoadRutasActivas>(_onLoadRutasActivas);
     on<ClearRutas>(_onClearRutas);
+    on<LoadRutaById>(_onLoadRutaById);
+    on<LoadRutaByCodigo>(_onLoadRutaByCodigo);
+    on<ClearRutaDetalle>(_onClearRutaDetalle);
   }
 
   Future<void> _onLoadRutasActivas(
@@ -61,5 +64,97 @@ class RutaBloc extends Bloc<RutaEvent, RutaState> {
     }
 
     emit(const RutaState());
+  }
+
+  // ========================================
+  // 🔥 NUEVOS HANDLERS
+  // ========================================
+
+  Future<void> _onLoadRutaById(
+    LoadRutaById event,
+    Emitter<RutaState> emit,
+  ) async {
+    if (kDebugMode) {
+      print('🛣️ [RutaBloc] Cargando ruta ID: ${event.rutaId}...');
+    }
+
+    emit(state.copyWith(
+      rutaDetalleResponse: Loading<Ruta>(),
+    ));
+
+    final response = await rutaUseCases.getRutaById.run(event.rutaId);
+
+    if (response is Success<Ruta>) {
+      final ruta = response.data;
+
+      if (kDebugMode) {
+        print('✅ [RutaBloc] Ruta cargada: ${ruta.nombre}');
+        print('   Código: ${ruta.codigo}');
+        print('   Trayecto: ${ruta.trayecto}');
+        print('   Distancia: ${ruta.distanciaKm} km');
+            }
+
+      emit(state.copyWith(
+        rutaDetalleResponse: response,
+        rutaDetalle: ruta,
+      ));
+    } else if (response is Error<Ruta>) {
+      if (kDebugMode) {
+        print('❌ [RutaBloc] Error: ${response.message}');
+      }
+
+      emit(state.copyWith(
+        rutaDetalleResponse: response,
+        rutaDetalle: null,
+      ));
+    }
+  }
+
+  Future<void> _onLoadRutaByCodigo(
+    LoadRutaByCodigo event,
+    Emitter<RutaState> emit,
+  ) async {
+    if (kDebugMode) {
+      print('🛣️ [RutaBloc] Cargando ruta código: ${event.codigo}...');
+    }
+
+    emit(state.copyWith(
+      rutaDetalleResponse: Loading<Ruta>(),
+    ));
+
+    final response = await rutaUseCases.getRutaByCodigo.run(event.codigo);
+
+    if (response is Success<Ruta>) {
+      final ruta = response.data;
+
+      if (kDebugMode) {
+        print('✅ [RutaBloc] Ruta cargada: ${ruta.nombre}');
+      }
+
+      emit(state.copyWith(
+        rutaDetalleResponse: response,
+        rutaDetalle: ruta,
+      ));
+    } else if (response is Error<Ruta>) {
+      if (kDebugMode) {
+        print('❌ [RutaBloc] Error: ${response.message}');
+      }
+
+      emit(state.copyWith(
+        rutaDetalleResponse: response,
+        rutaDetalle: null,
+      ));
+    }
+  }
+
+  Future<void> _onClearRutaDetalle(
+    ClearRutaDetalle event,
+    Emitter<RutaState> emit,
+  ) async {
+    if (kDebugMode) {
+      print('🔄 [RutaBloc] Limpiando ruta detalle');
+    }
+
+    emit(state.copyWith(clearRutaDetalle: true));
   }
 }

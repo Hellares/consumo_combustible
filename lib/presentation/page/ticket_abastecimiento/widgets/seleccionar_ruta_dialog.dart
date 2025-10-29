@@ -115,13 +115,13 @@ class _SeleccionarRutaDialogState extends State<SeleccionarRutaDialog> {
             Expanded(
               child: BlocBuilder<RutaBloc, RutaState>(
                 builder: (context, state) {
-                  if (state.isLoading) {
+                  if (state.isLoadingRutas) {
                     return const Center(
                       child: CircularProgressIndicator(),
                     );
                   }
 
-                  if (state.hasError) {
+                  if (state.hasRutasError) {
                     return Center(
                       child: Padding(
                         padding: const EdgeInsets.all(20),
@@ -141,7 +141,7 @@ class _SeleccionarRutaDialogState extends State<SeleccionarRutaDialog> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              state.errorMessage ?? 'Error desconocido',
+                              state.rutasErrorMessage ?? 'Error desconocido',
                               textAlign: TextAlign.center,
                               style: TextStyle(color: Colors.grey[600]),
                             ),

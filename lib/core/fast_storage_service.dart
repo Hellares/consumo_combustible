@@ -204,7 +204,7 @@ class FastStorageService {
     }
   }
   
-  /// ✅ LIMPIAR 
+  /// ✅ LIMPIAR TODO
   Future<void> clear() async {
     _memoryCache.clear();
     
@@ -215,15 +215,21 @@ class FastStorageService {
       
       futures.add(_getPrefs().then((prefs) => prefs.clear()).catchError((e) {
         if (kDebugMode) debugPrint('⚠️ Error limpiando SharedPrefs: $e');
-        return false; // Devolver un valor del tipo esperado
+        return false;
       }));
       
       await Future.wait(futures);
       
-      if (kDebugMode) debugPrint('🧹 Todo limpiado');
+      if (kDebugMode) debugPrint('🧹 Todo limpiado (cache + storage)');
     } catch (e) {
       if (kDebugMode) debugPrint('❌ Error clearing: $e');
     }
+  }
+  
+  /// ✅ LIMPIAR CACHE EN MEMORIA (útil para forzar recarga)
+  void clearMemoryCache() {
+    _memoryCache.clear();
+    if (kDebugMode) debugPrint('🧹 Cache en memoria limpiado');
   }
   
   /// ✅ WARM UP - Ya no es crítico llamarlo

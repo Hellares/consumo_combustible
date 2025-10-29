@@ -148,6 +148,9 @@ class TicketDetalle {
   final double cantidad; // Cantidad de combustible solicitada
   final String estadoTicket;
   final String estadoColor;
+  final ItinerarioDetalle? itinerario;
+  final RutaDetalle? ruta;
+  final String origenAsignacion;
 
   TicketDetalle({
     required this.id,
@@ -161,9 +164,18 @@ class TicketDetalle {
     required this.cantidad,
     required this.estadoTicket,
     required this.estadoColor,
+    this.itinerario,
+    this.ruta,
+    required this.origenAsignacion,
   });
 
   factory TicketDetalle.fromJson(Map<String, dynamic> json) {
+    // 🔍 DEBUG: Verificar si vienen los datos de itinerario/ruta
+    print('🔍 [TicketDetalle] Parseando ticket: ${json['numeroTicket']}');
+    print('   - itinerario: ${json['itinerario'] != null ? "✅ SÍ" : "❌ NO"}');
+    print('   - ruta: ${json['ruta'] != null ? "✅ SÍ" : "❌ NO"}');
+    print('   - origenAsignacion: ${json['origenAsignacion'] ?? "NO DEFINIDO"}');
+    
     return TicketDetalle(
       id: json['id'],
       numeroTicket: json['numeroTicket'],
@@ -176,11 +188,80 @@ class TicketDetalle {
       cantidad: _parseToDouble(json['cantidad']) ?? 0.0,
       estadoTicket: json['estadoTicket'],
       estadoColor: json['estadoColor'],
+      itinerario: json['itinerario'] != null
+          ? ItinerarioDetalle.fromJson(json['itinerario'])
+          : null,
+      ruta: json['ruta'] != null
+          ? RutaDetalle.fromJson(json['ruta'])
+          : null,
+      origenAsignacion: json['origenAsignacion'] ?? 'NINGUNO',
     );
   }
 
   Color get estadoColorValue {
     return Color(int.parse(estadoColor.replaceFirst('#', '0xFF')));
+  }
+}
+
+/// Modelo de Itinerario para TicketDetalle
+class ItinerarioDetalle {
+  final int id;
+  final String nombre;
+  final String codigo;
+  final String tipoItinerario;
+  final double? distanciaTotal;
+  final List<String> diasOperacion;
+
+  ItinerarioDetalle({
+    required this.id,
+    required this.nombre,
+    required this.codigo,
+    required this.tipoItinerario,
+    this.distanciaTotal,
+    required this.diasOperacion,
+  });
+
+  factory ItinerarioDetalle.fromJson(Map<String, dynamic> json) {
+    return ItinerarioDetalle(
+      id: json['id'],
+      nombre: json['nombre'],
+      codigo: json['codigo'],
+      tipoItinerario: json['tipoItinerario'],
+      distanciaTotal: _parseToDouble(json['distanciaTotal']),
+      diasOperacion: json['diasOperacion'] != null
+          ? List<String>.from(json['diasOperacion'])
+          : [],
+    );
+  }
+}
+
+/// Modelo de Ruta para TicketDetalle
+class RutaDetalle {
+  final int id;
+  final String nombre;
+  final String? codigo;
+  final String? origen;
+  final String? destino;
+  final String? distanciaKm;
+
+  RutaDetalle({
+    required this.id,
+    required this.nombre,
+    this.codigo,
+    this.origen,
+    this.destino,
+    this.distanciaKm,
+  });
+
+  factory RutaDetalle.fromJson(Map<String, dynamic> json) {
+    return RutaDetalle(
+      id: json['id'],
+      nombre: json['nombre'],
+      codigo: json['codigo'],
+      origen: json['origen'],
+      destino: json['destino'],
+      distanciaKm: json['distanciaKm'],
+    );
   }
 }
 

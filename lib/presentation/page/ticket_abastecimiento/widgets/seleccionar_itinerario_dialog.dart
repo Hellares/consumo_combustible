@@ -135,13 +135,13 @@ class _SeleccionarItinerarioDialogState
             Expanded(
               child: BlocBuilder<ItinerarioBloc, ItinerarioState>(
                 builder: (context, state) {
-                  if (state.isLoading) {
+                  if (state.isLoadingItinerarios) {
                     return const Center(
                       child: CircularProgressIndicator(),
                     );
                   }
 
-                  if (state.hasError) {
+                  if (state.hasItinerariosError) {
                     return Center(
                       child: Padding(
                         padding: const EdgeInsets.all(20),
@@ -161,7 +161,7 @@ class _SeleccionarItinerarioDialogState
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              state.errorMessage ?? 'Error desconocido',
+                              state.itinerariosErrorMessage ?? 'Error desconocido',
                               textAlign: TextAlign.center,
                               style: TextStyle(color: Colors.grey[600]),
                             ),

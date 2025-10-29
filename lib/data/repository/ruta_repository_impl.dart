@@ -14,4 +14,14 @@ class RutaRepositoryImpl implements RutaRepository {
   Future<Resource<List<Ruta>>> getRutasActivas() {
     return service.getRutasActivas();
   }
+
+  @override
+  Future<Resource<Ruta>> getRutaById(int id) {
+    return service.getRutaById(id);
+  }
+
+  @override
+  Future<Resource<Ruta>> getRutaByCodigo(String codigo) {
+    return service.getRutaByCodigo(codigo);
+  }
 }

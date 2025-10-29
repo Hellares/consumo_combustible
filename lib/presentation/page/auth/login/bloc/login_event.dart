@@ -52,3 +52,7 @@ class LogoutRequested extends LoginEvent {
   const LogoutRequested();
 }
 
+class LogoutAllRequested extends LoginEvent {
+  const LogoutAllRequested();
+}
+

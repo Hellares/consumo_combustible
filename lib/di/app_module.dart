@@ -56,10 +56,13 @@ import 'package:consumo_combustible/domain/use_cases/archivo/get_archivos_bytick
 import 'package:consumo_combustible/domain/use_cases/archivo/get_tipos_archivos_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/archivo/upload_archivos_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/auth_use_cases.dart';
+import 'package:consumo_combustible/domain/use_cases/auth/get_refresh_token_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/get_selected_role_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/get_user_session_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/login_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/auth/logout_all_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/logout_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/auth/refresh_token_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/save_selected_role_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/auth/save_user_session_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/gps/get_current_locations_use_case.dart';
@@ -74,6 +77,8 @@ import 'package:consumo_combustible/domain/use_cases/grifo/get_grifos_usecase.da
 import 'package:consumo_combustible/domain/use_cases/grifo/get_grifosgrifos_by_sede_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/grifo/grifo_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/grifo/update_grifo_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/itinerario/get_itinerario_by_codigo_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/itinerario/get_itinerario_by_id_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/itinerario/get_itinerarios_activos_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/itinerario/itinerario_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/licencia/create_licencia_use_case.dart';
@@ -97,6 +102,8 @@ import 'package:consumo_combustible/domain/use_cases/rol/get_rol_by_id_use_case.
 import 'package:consumo_combustible/domain/use_cases/rol/get_roles_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/rol/rol_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/rol/update_rol_use_case.dart';
+import 'package:consumo_combustible/domain/use_cases/ruta/get_ruta_by_codigo_usecase.dart';
+import 'package:consumo_combustible/domain/use_cases/ruta/get_ruta_by_id_usecase.dart';
 import 'package:consumo_combustible/domain/use_cases/ruta/get_rutas_activas_use_case.dart';
 import 'package:consumo_combustible/domain/use_cases/ruta/ruta_use_cases.dart';
 import 'package:consumo_combustible/domain/use_cases/sedes/create_sede_usecase.dart';
@@ -391,12 +398,14 @@ abstract class AppModule {
     
     return AuthUseCases(
       login: LoginUseCase(authRepository),
-      // register: RegisterUseCase(authRepository),
       saveUserSession: SaveUserSessionUseCase(authRepository),
       getUserSession: GetUserSessionUseCase(authRepository),
+      logout: LogoutUseCase(authRepository),
+      logoutAll: LogoutAllUseCase(authRepository),
+      refreshToken: RefreshTokenUseCase(authRepository),
+      getRefreshToken: GetRefreshTokenUseCase(authRepository),
       saveSelectedRole: SaveSelectedRoleUseCase(authRepository),
       getSelectedRole: GetSelectedRoleUseCase(authRepository),
-      logout: LogoutUseCase(authRepository),
     );
   }
 
@@ -574,6 +583,8 @@ abstract class AppModule {
   ItinerarioUseCases itinerarioUseCases(ItinerarioRepository repository) {
     return ItinerarioUseCases(
       getItinerariosActivos: GetItinerariosActivosUseCase(repository),
+      getItinerarioByCodigo: GetItinerarioByCodigoUseCase(repository),
+      getItinerarioById: GetItinerarioByIdUseCase(repository),
     );
   }
 
@@ -581,6 +592,8 @@ abstract class AppModule {
   RutaUseCases rutaUseCases(RutaRepository repository) {
     return RutaUseCases(
       getRutasActivas: GetRutasActivasUseCase(repository),
+      getRutaByCodigo: GetRutaByCodigoUseCase(repository),
+      getRutaById: GetRutaByIdUseCase(repository),
     );
   }
 }

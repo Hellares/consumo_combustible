@@ -14,4 +14,14 @@ class ItinerarioRepositoryImpl implements ItinerarioRepository {
   Future<Resource<List<Itinerario>>> getItinerariosActivos() {
     return service.getItinerariosActivos();
   }
+  
+  @override
+  Future<Resource<Itinerario>> getItinerarioByCodigo(String codigo) {
+    return service.getItinerarioByCodigo(codigo);
+  }
+  
+  @override
+  Future<Resource<Itinerario>> getItinerarioById(int id) {
+    return service.getItinerarioById(id);
+  }
 }

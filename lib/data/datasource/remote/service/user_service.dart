@@ -179,9 +179,10 @@ class UserService {
                 responseData['message'] ?? 'Usuario registrado exitosamente',
             data: Data(
               user: user,
-              token:
-                  token ??
-                  '', // Si no hay token, cadena vacía (ajusta si es necesario)
+              accessToken: token ?? '', // Token de acceso
+              refreshToken: '', // No hay refresh token en registro
+              expiresIn: 900, // 15 minutos por defecto
+              tokenType: 'Bearer',
             ),
           );
 

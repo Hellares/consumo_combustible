@@ -36,27 +36,41 @@ class AuthRepositoryImpl implements AuthRepository {
   }
   
   @override
-    Future<void> saveUserSession(AuthResponse authResponse) async {
+  Future<void> saveUserSession(AuthResponse authResponse) async {
     try {
       // ✅ CRÍTICO: Guardar user data completo en SharedPreferences
-      // El token dentro del objeto se extrae cuando se necesita
       final userJson = authResponse.toJson();
       
-      // Guardar usando FastStorage que usará SharedPreferences para 'user'
+      // Guardar usando FastStorage
       await fastStorage.write('user', userJson);
       
-      // Opcionalmente guardar solo el token en SecureStorage para máxima seguridad
-      final token = authResponse.data?.token;
-      if (token != null && token.isNotEmpty) {
-        await fastStorage.write('token', token);
+      // Guardar tokens por separado para acceso rápido
+      final accessToken = authResponse.data?.accessToken;
+      final refreshToken = authResponse.data?.refreshToken;
+      
+      if (accessToken != null && accessToken.isNotEmpty) {
+        await fastStorage.write('access_token', accessToken);
+      }
+      
+      if (refreshToken != null && refreshToken.isNotEmpty) {
+        await fastStorage.write('refresh_token', refreshToken);
+      }
+      
+      // Mantener compatibilidad con código existente
+      if (accessToken != null && accessToken.isNotEmpty) {
+        await fastStorage.write('token', accessToken);
       }
       
       // Forzar actualización del token en el interceptor de Dio
       _forceAuthInterceptorRefresh();
       
-      if (kDebugMode) print('Sesión guardada exitosamente');
+      if (kDebugMode) {
+        print('✅ Sesión guardada exitosamente');
+        print('   - Access Token: ${accessToken?.substring(0, 20)}...');
+        print('   - Refresh Token: ${refreshToken?.substring(0, 20)}...');
+      }
     } catch (e) {
-      if (kDebugMode) print('Error guardando sesión: $e');
+      if (kDebugMode) print('❌ Error guardando sesión: $e');
       rethrow;
     }
   }
@@ -91,50 +105,157 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-Future<bool> logout() async {
-  Stopwatch? stopwatch;
-  if (kDebugMode) {
-    stopwatch = Stopwatch()..start();
-    print('🚪 Iniciando logout...');
-  }
-  
-  try {
-    // ✅ LIMPIAR EL ALMACENAMIENTO LOCAL
-    await _clearLocalSession();
-    
-    // ✅ LIMPIAR CACHE DEL INTERCEPTOR
-    _forceAuthInterceptorRefresh();
-    
+  Future<bool> logout() async {
+    Stopwatch? stopwatch;
     if (kDebugMode) {
-      stopwatch?.stop();
-      print('✅ Logout completado en ${stopwatch?.elapsedMilliseconds}ms');
+      stopwatch = Stopwatch()..start();
+      print('🚪 Iniciando logout...');
     }
     
-    return true;
-    
-  } catch (e) {
-    if (kDebugMode) {
-      stopwatch?.stop();
-      print('❌ Error en logout (${stopwatch?.elapsedMilliseconds}ms): $e');
-    }
-    
-    // ✅ Intentar limpiar local al menos
     try {
-      await _clearLocalSession();
-      _forceAuthInterceptorRefresh();
+      // Obtener refresh token antes de limpiar
+      final refreshToken = await getRefreshToken();
       
-      if (kDebugMode) {
-        print('⚠️ Logout local completado a pesar del error');
+      // Llamar al servicio de logout con el refresh token
+      final result = await authService.logout(refreshToken);
+      
+      if (result is Success) {
+        // Limpiar almacenamiento local
+        await _clearLocalSession();
+        _forceAuthInterceptorRefresh();
+        
+        if (kDebugMode) {
+          stopwatch?.stop();
+          print('✅ Logout completado en ${stopwatch?.elapsedMilliseconds}ms');
+        }
+        return true;
+      } else {
+        // Aunque falle el servidor, limpiar local
+        await _clearLocalSession();
+        _forceAuthInterceptorRefresh();
+        
+        if (kDebugMode) {
+          stopwatch?.stop();
+          print('⚠️ Logout local completado (servidor falló) en ${stopwatch?.elapsedMilliseconds}ms');
+        }
+        return true;
       }
-      return true;
-    } catch (localError) {
+      
+    } catch (e) {
       if (kDebugMode) {
-        print('💥 Error crítico en logout: $localError');
+        stopwatch?.stop();
+        print('❌ Error en logout (${stopwatch?.elapsedMilliseconds}ms): $e');
       }
-      return false;
+      
+      // Intentar limpiar local al menos
+      try {
+        await _clearLocalSession();
+        _forceAuthInterceptorRefresh();
+        return true;
+      } catch (localError) {
+        if (kDebugMode) print('💥 Error crítico en logout: $localError');
+        return false;
+      }
     }
   }
-}
+
+  @override
+  Future<bool> logoutAll() async {
+    Stopwatch? stopwatch;
+    if (kDebugMode) {
+      stopwatch = Stopwatch()..start();
+      print('🚪 Iniciando logout de todas las sesiones...');
+    }
+    
+    try {
+      // Llamar al servicio de logout-all
+      final result = await authService.logoutAll();
+      
+      if (result is Success) {
+        // Limpiar almacenamiento local
+        await _clearLocalSession();
+        _forceAuthInterceptorRefresh();
+        
+        if (kDebugMode) {
+          stopwatch?.stop();
+          print('✅ Logout-all completado en ${stopwatch?.elapsedMilliseconds}ms');
+        }
+        return true;
+      } else {
+        // Aunque falle el servidor, limpiar local
+        await _clearLocalSession();
+        _forceAuthInterceptorRefresh();
+        
+        if (kDebugMode) {
+          stopwatch?.stop();
+          print('⚠️ Logout-all local completado (servidor falló) en ${stopwatch?.elapsedMilliseconds}ms');
+        }
+        return true;
+      }
+      
+    } catch (e) {
+      if (kDebugMode) {
+        stopwatch?.stop();
+        print('❌ Error en logout-all (${stopwatch?.elapsedMilliseconds}ms): $e');
+      }
+      
+      // Intentar limpiar local al menos
+      try {
+        await _clearLocalSession();
+        _forceAuthInterceptorRefresh();
+        return true;
+      } catch (localError) {
+        if (kDebugMode) print('💥 Error crítico en logout-all: $localError');
+        return false;
+      }
+    }
+  }
+
+  @override
+  Future<Resource<AuthResponse>> refreshToken(String refreshToken) async {
+    try {
+      if (kDebugMode) print('🔄 Renovando tokens...');
+      
+      final result = await authService.refreshToken(refreshToken);
+      
+      if (result is Success<AuthResponse>) {
+        // Guardar los nuevos tokens
+        await saveUserSession(result.data);
+        
+        if (kDebugMode) print('✅ Tokens renovados y guardados');
+        return result;
+      } else {
+        if (kDebugMode) print('❌ Error renovando tokens');
+        return result;
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ Error en refreshToken: $e');
+      return Error('Error renovando tokens: $e');
+    }
+  }
+
+  @override
+  Future<String?> getRefreshToken() async {
+    try {
+      // Primero intentar desde cache directo del refresh token
+      final refreshToken = await fastStorage.read('refresh_token');
+      if (refreshToken != null && refreshToken is String && refreshToken.isNotEmpty) {
+        return refreshToken;
+      }
+      
+      // Si no está, extraer del objeto user
+      final userData = await fastStorage.read('user');
+      if (userData != null) {
+        final authResponse = AuthResponse.fromJson(userData);
+        return authResponse.data?.refreshToken;
+      }
+      
+      return null;
+    } catch (e) {
+      if (kDebugMode) print('❌ Error obteniendo refresh token: $e');
+      return null;
+    }
+  }
 
 /// ✅ MÉTODO PRIVADO: Limpiar sesión local
 Future<void> _clearLocalSession() async {
@@ -143,10 +264,12 @@ Future<void> _clearLocalSession() async {
     
     // Limpiar en paralelo para mayor velocidad
     await Future.wait([
-      fastStorage.delete('user'),           // Usuario
-      fastStorage.delete('token'),          // Token
-      fastStorage.delete('selected_role'), 
-      fastStorage.delete('selected_location'), // Rol seleccionado
+      fastStorage.delete('user'),              // Usuario
+      fastStorage.delete('token'),             // Token (compatibilidad)
+      fastStorage.delete('access_token'),      // Access Token
+      fastStorage.delete('refresh_token'),     // Refresh Token
+      fastStorage.delete('selected_role'),     // Rol seleccionado
+      fastStorage.delete('selected_location'), // Ubicación seleccionada
       // fastStorage.delete('user_preferences'), // Preferencias (opcional)
       // fastStorage.delete('app_settings'),     // Configuraciones (opcional)
     ]);
@@ -155,6 +278,8 @@ Future<void> _clearLocalSession() async {
       print('✅ Almacenamiento local limpiado');
       print('   - user: eliminado');
       print('   - token: eliminado');
+      print('   - access_token: eliminado');
+      print('   - refresh_token: eliminado');
       print('   - selected_role: eliminado');
       print('   - selected_location: eliminado');
     }
@@ -196,7 +321,7 @@ Future<void> _clearLocalSession() async {
           'user_dni': authResponse.data?.user.dni,
           // 'empresas_count': authResponse.data?.empresas.length ?? 0,
           // 'needs_empresa_selection': authResponse.data?.needsEmpresaSelection ?? false,
-          'token_exists': authResponse.data?.token.isNotEmpty ?? false,
+          'token_exists': authResponse.data?.accessToken.isNotEmpty ?? false,
         };
       }
       return null;
@@ -219,7 +344,13 @@ Future<void> _clearLocalSession() async {
 
   Future<String?> getUserToken() async {
     try {
-      // Primero intentar desde cache directo del token
+      // Primero intentar desde cache directo del access token
+      final accessToken = await fastStorage.read('access_token');
+      if (accessToken != null && accessToken is String && accessToken.isNotEmpty) {
+        return accessToken;
+      }
+      
+      // Compatibilidad: intentar con 'token'
       final token = await fastStorage.read('token');
       if (token != null && token is String && token.isNotEmpty) {
         return token;
@@ -229,12 +360,12 @@ Future<void> _clearLocalSession() async {
       final userData = await fastStorage.read('user');
       if (userData != null) {
         final authResponse = AuthResponse.fromJson(userData);
-        return authResponse.data?.token;
+        return authResponse.data?.accessToken;
       }
       
       return null;
     } catch (e) {
-      if (kDebugMode) print('Error obteniendo token: $e');
+      if (kDebugMode) print('❌ Error obteniendo token: $e');
       return null;
     }
   }

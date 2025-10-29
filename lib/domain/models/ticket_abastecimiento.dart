@@ -272,6 +272,7 @@ class RutaTicket {
   final String? codigo;
   final String? origen;
   final String? destino;
+  final String? distanciaKm;
 
   RutaTicket({
     required this.id,
@@ -279,6 +280,7 @@ class RutaTicket {
     this.codigo,
     this.origen,
     this.destino,
+    this.distanciaKm,
   });
 
   factory RutaTicket.fromJson(Map<String, dynamic> json) {
@@ -288,6 +290,7 @@ class RutaTicket {
       codigo: json['codigo'],
       origen: json['origen'],
       destino: json['destino'],
+      distanciaKm: json['distanciaKm']
     );
   }
 }

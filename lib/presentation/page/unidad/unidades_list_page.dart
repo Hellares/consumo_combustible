@@ -524,7 +524,7 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
       final session = await authUseCases.getUserSession.run();
 
       // Validar que haya sesión
-      if (session?.data?.token == null) {
+      if (session?.data?.accessToken == null) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -535,7 +535,7 @@ class _UnidadesListPageState extends State<UnidadesListPage> {
         return;
       }
 
-      final token = session!.data!.token;
+      final token = session!.data!.accessToken;
 
       if (!mounted) return;
 

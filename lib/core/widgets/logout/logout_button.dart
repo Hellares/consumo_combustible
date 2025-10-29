@@ -32,6 +32,7 @@ class LogoutButton extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final double? borderRadius;
   final bool? showIconOnly;
+  final bool logoutAll; // ✅ NUEVO: Para cerrar todas las sesiones
 
   const LogoutButton({
     super.key,
@@ -48,7 +49,8 @@ class LogoutButton extends StatelessWidget {
     this.fontSize,
     this.padding,
     this.borderRadius,
-    this.showIconOnly
+    this.showIconOnly,
+    this.logoutAll = false, // ✅ Por defecto logout normal
   });
 
   // Factory para botón de AppBar
@@ -87,6 +89,7 @@ class LogoutButton extends StatelessWidget {
   factory LogoutButton.profile({
     String? text = 'Cerrar Sesión',
     VoidCallback? onLogoutSuccess,
+    bool logoutAll = false,
   }) {
     return LogoutButton(
       style: LogoutButtonStyle.textOnly,
@@ -96,6 +99,28 @@ class LogoutButton extends StatelessWidget {
       textColor: Colors.white,
       borderRadius: 28,
       fontSize: 10,
+      logoutAll: logoutAll,
+    );
+  }
+
+  // ✅ NUEVO: Factory para cerrar todas las sesiones
+  factory LogoutButton.logoutAll({
+    String? text = 'Cerrar Todas las Sesiones',
+    IconData? icon = Icons.logout_outlined,
+    VoidCallback? onLogoutSuccess,
+    LogoutButtonStyle style = LogoutButtonStyle.iconWithText,
+  }) {
+    return LogoutButton(
+      style: style,
+      text: text,
+      icon: icon,
+      onLogoutSuccess: onLogoutSuccess,
+      backgroundColor: Colors.red.shade50,
+      textColor: Colors.red.shade700,
+      iconColor: Colors.red.shade700,
+      fontSize: 8,
+      logoutAll: true, // ✅ Activar logout de todas las sesiones
+      showConfirmDialog: true,
     );
   }
 
@@ -300,33 +325,40 @@ class LogoutButton extends StatelessWidget {
     context: context,
     builder: (dialogContext) => ConstrainedBox(
       constraints: const BoxConstraints(
-        maxWidth: 300,  // Ancho máximo para hacerlo más compacto (ajusta según tu diseño)
-        maxHeight: 250, // Altura máxima opcional para controlarlo mejor
+        maxWidth: 300,
+        maxHeight: 280,
       ),
       child: AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12), // Bordes redondeados (ajusta el radio)
+          borderRadius: BorderRadius.circular(12),
           side: BorderSide(
-            color: Colors.grey.shade300, // Borde sutil (opcional, quítalo si no lo quieres)
+            color: Colors.grey.shade300,
             width: 1,
           ),
         ),
-        icon: const Icon(Icons.logout, color: AppColors.red, size: 25),
-        title: const AppSubtitle(
-          'Confirmar Cierre de Sesión',
+        icon: Icon(
+          logoutAll ? Icons.logout_outlined : Icons.logout,
+          color: AppColors.red,
+          size: 25,
+        ),
+        title: AppSubtitle(
+          logoutAll ? 'Cerrar Todas las Sesiones' : 'Confirmar Cierre de Sesión',
           fontSize: 14,
         ),
-        contentPadding: const EdgeInsets.all(16), // Reduce el padding interno para compactar
-        content: const Text(
-          '¿Estás seguro que deseas cerrar sesión?\n\n'
-          'Tendrás que iniciar sesión nuevamente.',
-          style: TextStyle(fontSize: 12),
+        contentPadding: const EdgeInsets.all(16),
+        content: Text(
+          logoutAll
+              ? '¿Estás seguro que deseas cerrar sesión en TODOS los dispositivos?\n\n'
+                'Esto cerrará tu sesión en todos los lugares donde hayas iniciado sesión.'
+              : '¿Estás seguro que deseas cerrar sesión?\n\n'
+                'Tendrás que iniciar sesión nuevamente.',
+          style: const TextStyle(fontSize: 12),
         ),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16), // Padding en acciones para ajustar
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancelar',style: TextStyle(fontSize: 12),),
+            child: const Text('Cancelar', style: TextStyle(fontSize: 12)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -334,12 +366,15 @@ class LogoutButton extends StatelessWidget {
               _executeLogout(context);
             },
             style: ElevatedButton.styleFrom(
-              maximumSize: const Size(110, 35), // Tamaño máximo para el botón
-              minimumSize: const Size(100, 35), // Tamaño mínimo para el botón
-              backgroundColor: AppColors.blue3,
+              maximumSize: const Size(110, 35),
+              minimumSize: const Size(100, 35),
+              backgroundColor: logoutAll ? Colors.red : AppColors.blue3,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Cerrar Sesión',style: TextStyle(fontSize: 10),),
+            child: Text(
+              logoutAll ? 'Cerrar Todas' : 'Cerrar Sesión',
+              style: const TextStyle(fontSize: 10),
+            ),
           ),
         ],
       ),
@@ -351,7 +386,12 @@ class LogoutButton extends StatelessWidget {
     if (onPressed != null) {
       onPressed!();
     } else {
-      context.read<LoginBloc>().add(const LogoutRequested());
+      // ✅ Enviar evento según el tipo de logout
+      if (logoutAll) {
+        context.read<LoginBloc>().add(const LogoutAllRequested());
+      } else {
+        context.read<LoginBloc>().add(const LogoutRequested());
+      }
     }
   }
 
