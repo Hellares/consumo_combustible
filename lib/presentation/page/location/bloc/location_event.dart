@@ -65,3 +65,10 @@ class ClearLocation extends LocationEvent {
   @override
   List<Object?> get props => [];
 }
+
+/// ✅ NUEVO: Resetear completamente el estado del BLoC (para logout)
+class ResetLocationState extends LocationEvent {
+  const ResetLocationState();
+  @override
+  List<Object?> get props => [];
+}

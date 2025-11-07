@@ -563,7 +563,7 @@ class _SmartAppBarState extends State<SmartAppBar> {
                           ),
                           const SizedBox(height: 5),
 
-                          UserRoleChips(user: userSession!.data!.user ),  // !Reemplazado por UserRoleChips para mejor estilo
+                          UserRoleChips(user: userSession!.data!.user! ),  // !Reemplazado por UserRoleChips para mejor estilo
                         ],
                       ),
                     ),

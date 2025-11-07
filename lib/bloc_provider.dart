@@ -41,6 +41,7 @@ List<BlocProvider> blocProviders = [
   BlocProvider<LoginBloc>(create: (context) => LoginBloc(locator<AuthUseCases>())),
   // InitEvent() solo se dispara cuando se muestra MainLoginPage
   BlocProvider<LocationBloc>(create: (context) => LocationBloc(locator<LocationUseCases>())),
+  // BlocProvider<LocationBloc>(create: (context) => LocationBloc(locator<LocationUseCases>()),),
 
   BlocProvider<TicketBloc>(create: (context) => TicketBloc(locator<TicketUseCases>(), locator<UnidadUseCases>())),
 

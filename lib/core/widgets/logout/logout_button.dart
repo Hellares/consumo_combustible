@@ -7,6 +7,8 @@ import 'package:consumo_combustible/domain/utils/resource.dart';
 import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_bloc.dart';
 import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_event.dart';
 import 'package:consumo_combustible/presentation/page/auth/login/bloc/login_state.dart';
+import 'package:consumo_combustible/presentation/page/location/bloc/location_bloc.dart';
+import 'package:consumo_combustible/presentation/page/location/bloc/location_event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -386,6 +388,13 @@ class LogoutButton extends StatelessWidget {
     if (onPressed != null) {
       onPressed!();
     } else {
+      // ✅ CRÍTICO: Resetear LocationBloc ANTES del logout
+      try {
+        context.read<LocationBloc>().add(const ResetLocationState());
+      } catch (e) {
+        // LocationBloc podría no estar disponible en este contexto
+      }
+      
       // ✅ Enviar evento según el tipo de logout
       if (logoutAll) {
         context.read<LoginBloc>().add(const LogoutAllRequested());

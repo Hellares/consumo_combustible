@@ -19,6 +19,7 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
     on<SaveLocation>(_onSaveLocation);
     on<LoadSavedLocation>(_onLoadSavedLocation);
     on<ClearLocation>(_onClearLocation);
+    on<ResetLocationState>(_onResetLocationState); // ✅ NUEVO
   }
 
   Future<void> _onLoadZonas(LoadZonas event, Emitter emit) async {
@@ -133,6 +134,23 @@ class LocationBloc extends Bloc<LocationEvent, LocationState> {
     } catch (e) {
       if (kDebugMode) print('❌ Error limpiando ubicación: $e');
       emit(state.copyWith(saveResponse: Error(e.toString())));
+    }
+  }
+
+  /// ✅ NUEVO: Resetear completamente el estado del BLoC (para logout)
+  Future<void> _onResetLocationState(ResetLocationState event, Emitter emit) async {
+    try {
+      // Limpiar almacenamiento
+      await locationUseCases.clearSelectedLocation.run();
+      
+      // Resetear estado a inicial
+      emit(const LocationState());
+      
+      if (kDebugMode) print('🔄 LocationBloc reseteado completamente');
+    } catch (e) {
+      if (kDebugMode) print('❌ Error reseteando LocationBloc: $e');
+      // Aún así resetear el estado
+      emit(const LocationState());
     }
   }
 }

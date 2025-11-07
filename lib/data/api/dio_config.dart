@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:consumo_combustible/core/fast_storage_service.dart';
 import 'package:consumo_combustible/data/api/api_config.dart';
 import 'package:consumo_combustible/domain/models/auth_response.dart';
@@ -29,7 +30,8 @@ class DioConfig {
       persistentConnection: true,
       followRedirects: false,
       maxRedirects: 0,
-      validateStatus: (status) => status != null && status < 500,
+      // ✅ CRÍTICO: 401 debe ir a onError para que funcione el refresh automático
+      validateStatus: (status) => status != null && status < 500 && status != 401,
     ));
 
     // Interceptores según entorno
@@ -68,6 +70,7 @@ class OptimizedAuthInterceptor extends Interceptor {
   DateTime? _tokenCacheTime;
   static const Duration _cacheValidDuration = Duration(minutes: 5);
   bool _isRefreshing = false;
+  final List<Function()> _retryQueue = [];
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
@@ -84,18 +87,42 @@ class OptimizedAuthInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     // Si es error 401 y no es un endpoint de auth, intentar refresh
     if (err.response?.statusCode == 401 &&
-        !_isAuthEndpoint(err.requestOptions.path) &&
-        !err.requestOptions.path.contains('/refresh')) {
-      
+        !_isAuthEndpoint(err.requestOptions.path)) {
+
       if (kDebugMode) print('🔄 Token expirado, intentando renovar...');
-      
-      // Evitar múltiples refreshes simultáneos
+
+      // Si ya hay un refresh en progreso, agregar la petición a la cola
       if (_isRefreshing) {
-        if (kDebugMode) print('⏳ Ya hay un refresh en progreso, esperando...');
-        handler.next(err);
-        return;
+        if (kDebugMode) print('⏳ Ya hay un refresh en progreso, encolando petición...');
+
+        // Agregar la petición a la cola para reintentarla cuando el refresh termine
+        final completer = Completer<Response>();
+        _retryQueue.add(() async {
+          try {
+            final newToken = await _getTokenOptimized();
+            if (newToken != null) {
+              err.requestOptions.headers['Authorization'] = 'Bearer $newToken';
+            }
+            final retryResponse = await DioConfig.instance.fetch(err.requestOptions);
+            completer.complete(retryResponse);
+          } catch (e) {
+            completer.completeError(err);
+          }
+        });
+
+        // Esperar a que el refresh termine y se reintente la petición
+        try {
+          final retryResponse = await completer.future;
+          if (kDebugMode) print('✅ Petición encolada reintentada exitosamente');
+          handler.resolve(retryResponse);
+          return;
+        } catch (e) {
+          if (kDebugMode) print('❌ Petición encolada falló después del refresh');
+          handler.next(err);
+          return;
+        }
       }
-      
+
       _isRefreshing = true;
       
       try {
@@ -110,17 +137,41 @@ class OptimizedAuthInterceptor extends Interceptor {
           return;
         }
         
-        // Intentar renovar el token
-        final dio = DioConfig.instance;
-        final response = await dio.post(
+        // ✅ Crear un Dio temporal SIN interceptores para evitar loops
+        final refreshDio = Dio(BaseOptions(
+          baseUrl: ApiConfig.baseUrl,
+          connectTimeout: Duration(seconds: 10),
+          receiveTimeout: Duration(seconds: 10),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          validateStatus: (status) => status != null && status < 500,
+        ));
+        
+        if (kDebugMode) print('📡 Llamando a /api/auth/refresh...');
+        
+        final response = await refreshDio.post(
           '/api/auth/refresh',
           data: {'refreshToken': refreshToken},
-          options: Options(
-            headers: {'skipAuthInterceptor': true}, // Evitar loop
-          ),
         );
         
+        if (kDebugMode) {
+          print('📡 Refresh response status: ${response.statusCode}');
+          print('📡 Refresh response data type: ${response.data.runtimeType}');
+          print('📡 Refresh response data: ${response.data}');
+        }
+        
         if (response.statusCode == 200 || response.statusCode == 201) {
+          // Verificar que response.data no sea null
+          if (response.data == null) {
+            if (kDebugMode) print('❌ Response data es null');
+            _clearTokenCache();
+            _isRefreshing = false;
+            handler.next(err);
+            return;
+          }
+          
           final authResponse = AuthResponse.fromJson(response.data);
           
           // Guardar nuevos tokens
@@ -134,11 +185,14 @@ class OptimizedAuthInterceptor extends Interceptor {
             
             // Actualizar user data completo
             final userData = await fastStorage.read('user');
-            if (userData != null) {
+            if (userData != null && userData is Map<String, dynamic>) {
               final updatedUserData = Map<String, dynamic>.from(userData);
-              updatedUserData['data']['accessToken'] = newAccessToken;
-              updatedUserData['data']['refreshToken'] = newRefreshToken;
-              await fastStorage.write('user', updatedUserData);
+              if (updatedUserData['data'] != null) {
+                updatedUserData['data'] = Map<String, dynamic>.from(updatedUserData['data']);
+                updatedUserData['data']['accessToken'] = newAccessToken;
+                updatedUserData['data']['refreshToken'] = newRefreshToken;
+                await fastStorage.write('user', updatedUserData);
+              }
             }
             
             _clearTokenCache();
@@ -147,26 +201,48 @@ class OptimizedAuthInterceptor extends Interceptor {
             
             // Reintentar la petición original con el nuevo token
             err.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
-            
-            _isRefreshing = false;
-            
+
             try {
-              final retryResponse = await dio.fetch(err.requestOptions);
+              final retryResponse = await DioConfig.instance.fetch(err.requestOptions);
+              if (kDebugMode) print('✅ Petición reintentada exitosamente');
+
+              // Procesar la cola de peticiones pendientes
+              _processRetryQueue();
+
+              _isRefreshing = false;
               handler.resolve(retryResponse);
               return;
             } catch (retryError) {
               if (kDebugMode) print('❌ Error al reintentar petición: $retryError');
+              _isRefreshing = false;
               handler.next(err);
               return;
             }
           }
+        } else {
+          // Refresh token inválido o expirado
+          if (kDebugMode) {
+            print('❌ Refresh token inválido o expirado (status: ${response.statusCode})');
+            print('   Response: ${response.data}');
+          }
+          _clearTokenCache();
+          _isRefreshing = false;
+
+          // Limpiar tokens del almacenamiento
+          try {
+            final fastStorage = GetIt.instance<FastStorageService>();
+            await fastStorage.delete('access_token');
+            await fastStorage.delete('refresh_token');
+            await fastStorage.delete('token');
+            await fastStorage.delete('user');
+            if (kDebugMode) print('🧹 Tokens limpiados - usuario debe hacer login nuevamente');
+          } catch (e) {
+            if (kDebugMode) print('⚠️ Error limpiando tokens: $e');
+          }
+
+          handler.next(err);
         }
-        
-        if (kDebugMode) print('❌ No se pudo renovar el token');
-        _clearTokenCache();
-        _isRefreshing = false;
-        handler.next(err);
-        
+
       } catch (e) {
         if (kDebugMode) print('❌ Error en refresh token: $e');
         _clearTokenCache();
@@ -174,6 +250,7 @@ class OptimizedAuthInterceptor extends Interceptor {
         handler.next(err);
       }
     } else {
+      // Error que no es 401 o es endpoint de auth
       if (err.response?.statusCode == 401) {
         _clearTokenCache();
       }
@@ -246,6 +323,21 @@ class OptimizedAuthInterceptor extends Interceptor {
 
   void forceTokenRefresh() {
     _clearTokenCache();
+  }
+
+  // Procesar la cola de peticiones que esperaban el refresh
+  void _processRetryQueue() {
+    if (_retryQueue.isEmpty) return;
+
+    if (kDebugMode) print('🔄 Procesando ${_retryQueue.length} peticiones en cola...');
+
+    // Ejecutar todas las peticiones en cola
+    for (final retryFunction in _retryQueue) {
+      retryFunction.call();
+    }
+
+    // Limpiar la cola
+    _retryQueue.clear();
   }
 }
 

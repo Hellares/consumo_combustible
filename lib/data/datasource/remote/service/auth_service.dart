@@ -74,7 +74,7 @@ class AuthService {
           totalStopwatch?.stop();
           
           print('⚡ Parsing: ${parseStopwatch?.elapsedMilliseconds}ms');
-          print('👤 Usuario: ${authResponse.data?.user.nombres}');
+          print('👤 Usuario: ${authResponse.data?.user?.nombres}');
           print('⏱️ Total AuthService: ${totalStopwatch?.elapsedMilliseconds}ms');
         }
         

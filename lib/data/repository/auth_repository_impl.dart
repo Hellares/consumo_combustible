@@ -215,13 +215,13 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Resource<AuthResponse>> refreshToken(String refreshToken) async {
     try {
       if (kDebugMode) print('🔄 Renovando tokens...');
-      
+
       final result = await authService.refreshToken(refreshToken);
-      
+
       if (result is Success<AuthResponse>) {
         // Guardar los nuevos tokens
         await saveUserSession(result.data);
-        
+
         if (kDebugMode) print('✅ Tokens renovados y guardados');
         return result;
       } else {
@@ -230,6 +230,39 @@ class AuthRepositoryImpl implements AuthRepository {
       }
     } catch (e) {
       if (kDebugMode) print('❌ Error en refreshToken: $e');
+      return Error('Error renovando tokens: $e');
+    }
+  }
+
+  // ✅ Método mejorado para refresh automático con validación
+  Future<Resource<AuthResponse>> refreshTokenWithValidation() async {
+    try {
+      final storedRefreshToken = await getRefreshToken();
+
+      if (storedRefreshToken == null || storedRefreshToken.isEmpty) {
+        return Error('No hay refresh token disponible');
+      }
+
+      final result = await refreshToken(storedRefreshToken);
+
+      if (result is Success<AuthResponse>) {
+        // Validar que los tokens sean válidos
+        final newAccessToken = result.data.data?.accessToken;
+        final newRefreshToken = result.data.data?.refreshToken;
+
+        if (newAccessToken != null && newRefreshToken != null &&
+            newAccessToken.isNotEmpty && newRefreshToken.isNotEmpty) {
+
+          if (kDebugMode) print('✅ Refresh validado exitosamente');
+          return result;
+        } else {
+          return Error('Tokens recibidos inválidos');
+        }
+      }
+
+      return result;
+    } catch (e) {
+      if (kDebugMode) print('❌ Error en refresh con validación: $e');
       return Error('Error renovando tokens: $e');
     }
   }
@@ -257,31 +290,46 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-/// ✅ MÉTODO PRIVADO: Limpiar sesión local
+/// ✅ MÉTODO PRIVADO: Limpiar sesión local MEJORADO
 Future<void> _clearLocalSession() async {
   try {
     if (kDebugMode) print('🧹 Limpiando almacenamiento local...');
     
-    // Limpiar en paralelo para mayor velocidad
-    await Future.wait([
-      fastStorage.delete('user'),              // Usuario
-      fastStorage.delete('token'),             // Token (compatibilidad)
-      fastStorage.delete('access_token'),      // Access Token
-      fastStorage.delete('refresh_token'),     // Refresh Token
-      fastStorage.delete('selected_role'),     // Rol seleccionado
-      fastStorage.delete('selected_location'), // Ubicación seleccionada
-      // fastStorage.delete('user_preferences'), // Preferencias (opcional)
-      // fastStorage.delete('app_settings'),     // Configuraciones (opcional)
-    ]);
+    // Lista de keys a eliminar
+    final keysToDelete = [
+      'user',
+      'token',
+      'access_token',
+      'refresh_token',
+      'selected_role',
+      'selected_location',
+    ];
     
+    // Eliminar cada key de forma secuencial para asegurar que se eliminen
+    for (final key in keysToDelete) {
+      try {
+        await fastStorage.delete(key);
+        if (kDebugMode) print('   ✓ $key: eliminado');
+      } catch (e) {
+        if (kDebugMode) print('   ✗ $key: error al eliminar - $e');
+      }
+    }
+
+    // ✅ CRÍTICO: Limpiar cache en memoria para evitar datos obsoletos
+    fastStorage.clearMemoryCache();
+    
+    // ✅ VERIFICACIÓN: Comprobar que los datos se eliminaron
     if (kDebugMode) {
-      print('✅ Almacenamiento local limpiado');
-      print('   - user: eliminado');
-      print('   - token: eliminado');
-      print('   - access_token: eliminado');
-      print('   - refresh_token: eliminado');
-      print('   - selected_role: eliminado');
-      print('   - selected_location: eliminado');
+      print('🔍 Verificando eliminación...');
+      for (final key in keysToDelete) {
+        final exists = await fastStorage.exists(key);
+        if (exists) {
+          print('   ⚠️ $key: AÚN EXISTE después de eliminar!');
+        } else {
+          print('   ✓ $key: confirmado eliminado');
+        }
+      }
+      print('✅ Limpieza completada y verificada');
     }
     
   } catch (e) {
@@ -317,10 +365,8 @@ Future<void> _clearLocalSession() async {
       if (userData != null) {
         final authResponse = AuthResponse.fromJson(userData);
         return {
-          'user_name': authResponse.data?.user.nombres,
-          'user_dni': authResponse.data?.user.dni,
-          // 'empresas_count': authResponse.data?.empresas.length ?? 0,
-          // 'needs_empresa_selection': authResponse.data?.needsEmpresaSelection ?? false,
+          'user_name': authResponse.data?.user?.nombres,
+          'user_dni': authResponse.data?.user?.dni,
           'token_exists': authResponse.data?.accessToken.isNotEmpty ?? false,
         };
       }

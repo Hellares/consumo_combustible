@@ -38,7 +38,7 @@ class _TicketsAprobacionPageState extends State<TicketsAprobacionPage> {
     final authUseCases = locator<AuthUseCases>();
     final session = await authUseCases.getUserSession.run();
     if (session?.data?.user != null) {
-      setState(() => _currentUserId = session!.data!.user.id);
+      setState(() => _currentUserId = session!.data!.user!.id);
     }
   }
 

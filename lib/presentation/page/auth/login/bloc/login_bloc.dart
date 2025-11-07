@@ -58,7 +58,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         if (kDebugMode) {
           stopwatch?.stop();
           print(
-            '✅ Sesión encontrada en ${stopwatch?.elapsedMilliseconds}ms para: ${authResponse.data?.user.nombres}',
+            '✅ Sesión encontrada en ${stopwatch?.elapsedMilliseconds}ms para: ${authResponse.data?.user?.nombres}',
           );
         }
         emit(state.copyWith(response: Success(authResponse), formKey: formKey));

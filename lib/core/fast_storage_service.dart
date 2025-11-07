@@ -22,8 +22,8 @@ class FastStorageService {
   SharedPreferences? _prefs;
   Completer<SharedPreferences>? _prefsCompleter;
   
-  // Solo el token va a SecureStorage
-  static const _criticalSecureKeys = {'token', 'password', 'pin'};
+  // Tokens y datos sensibles van a SecureStorage
+  static const _criticalSecureKeys = {'token', 'password', 'pin', 'access_token', 'refresh_token'};
   
   /// ✅ NUEVO: Obtener SharedPreferences de forma lazy y cached
   Future<SharedPreferences> _getPrefs() async {
@@ -180,49 +180,48 @@ class FastStorageService {
     if (kDebugMode) debugPrint('💾 [$key] Guardado async');
   }
   
-  /// ✅ ELIMINACIÓN
+  /// ✅ ELIMINACIÓN MEJORADA
   Future<void> delete(String key) async {
+    // 1. Eliminar del cache en memoria PRIMERO
     _memoryCache.remove(key);
     
     try {
-      final futures = <Future>[];
+      // 2. Eliminar de SharedPreferences de forma síncrona
+      final prefs = await _getPrefs();
+      await prefs.remove(key);
       
-      // Eliminar de SharedPreferences
-      futures.add(_getPrefs().then((prefs) => prefs.remove(key)).catchError((e) {
-        if (kDebugMode) debugPrint('⚠️ Error eliminando de SharedPrefs: $e');
-        return false; // Devolver un valor del tipo esperado
-      }));
+      // 3. Eliminar de SecureStorage también
+      await _secureStorage.delete(key: key);
       
-      // Eliminar de SecureStorage
-      futures.add(_secureStorage.delete(key: key));
-      
-      await Future.wait(futures);
-      
-      if (kDebugMode) debugPrint('🗑️ [$key] Eliminado');
+      if (kDebugMode) debugPrint('🗑️ [$key] Eliminado completamente');
     } catch (e) {
       if (kDebugMode) debugPrint('❌ Error deleting [$key]: $e');
+      rethrow; // Relanzar para que el llamador sepa que falló
     }
   }
   
-  /// ✅ LIMPIAR TODO
+  /// ✅ LIMPIAR TODO MEJORADO
   Future<void> clear() async {
+    // 1. Limpiar cache en memoria
     _memoryCache.clear();
     
     try {
-      final futures = <Future>[];
+      // 2. Limpiar SharedPreferences de forma síncrona
+      final prefs = await _getPrefs();
+      await prefs.clear();
       
-      futures.add(_secureStorage.deleteAll());
+      // 3. Limpiar SecureStorage
+      await _secureStorage.deleteAll();
       
-      futures.add(_getPrefs().then((prefs) => prefs.clear()).catchError((e) {
-        if (kDebugMode) debugPrint('⚠️ Error limpiando SharedPrefs: $e');
-        return false;
-      }));
-      
-      await Future.wait(futures);
-      
-      if (kDebugMode) debugPrint('🧹 Todo limpiado (cache + storage)');
+      if (kDebugMode) {
+        debugPrint('🧹 Todo limpiado completamente');
+        debugPrint('   - Cache en memoria: limpiado');
+        debugPrint('   - SharedPreferences: limpiado');
+        debugPrint('   - SecureStorage: limpiado');
+      }
     } catch (e) {
       if (kDebugMode) debugPrint('❌ Error clearing: $e');
+      rethrow;
     }
   }
   
@@ -301,215 +300,32 @@ class FastStorageService {
     'prefs_initialized': _prefs != null,
     'storage_strategy': 'Lazy SharedPrefs + SecureStorage(tokens only)',
   };
+  
+  /// ✅ NUEVO: Verificar si una key existe (útil para debugging)
+  Future<bool> exists(String key) async {
+    // Verificar en cache
+    if (_memoryCache.containsKey(key)) {
+      return true;
+    }
+    
+    // Verificar en SharedPreferences
+    try {
+      final prefs = await _getPrefs();
+      if (prefs.containsKey(key)) {
+        return true;
+      }
+      
+      // Verificar en SecureStorage si es crítico
+      if (_isCriticalSecureKey(key)) {
+        final value = await _secureStorage.read(key: key);
+        return value != null;
+      }
+      
+      return false;
+    } catch (e) {
+      if (kDebugMode) debugPrint('❌ Error verificando existencia de [$key]: $e');
+      return false;
+    }
+  }
 }
 
-// import 'package:flutter/foundation.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
-// import 'dart:async';
-// import 'dart:convert';
-
-// class FastStorageService {
-//   static SharedPreferences? _prefs;
-//   static Completer<SharedPreferences>? _initCompleter;
-  
-//   Cache en memoria para lecturas ultra-rápidas
-//   final Map<String, dynamic> _memoryCache = {};
-//   bool _cacheLoaded = false;
-
-//   ✅ NUEVO: Inicialización lazy - solo cuando se necesita
-//   Future<SharedPreferences> get _prefsInstance async {
-//     if (_prefs != null) return _prefs!;
-    
-//     Si ya está inicializando, esperar
-//     if (_initCompleter != null) {
-//       return _initCompleter!.future;
-//     }
-    
-//     Iniciar nueva inicialización
-//     _initCompleter = Completer<SharedPreferences>();
-    
-//     try {
-//       final stopwatch = Stopwatch()..start();
-//       _prefs = await SharedPreferences.getInstance();
-//       stopwatch.stop();
-      
-//       if (kDebugMode) {
-//         debugPrint('⚡ SharedPreferences inicializado en ${stopwatch.elapsedMilliseconds}ms');
-//       }
-      
-//       _initCompleter!.complete(_prefs!);
-//       return _prefs!;
-//     } catch (e) {
-//       _initCompleter!.completeError(e);
-//       _initCompleter = null;
-//       rethrow;
-//     }
-//   }
-
-//   / ✅ Inicialización explícita (llamar desde Splash)
-//   Future<void> initialize() async {
-//     if (_prefs != null && _cacheLoaded) {
-//       if (kDebugMode) debugPrint('⚡ FastStorage ya inicializado');
-//       return;
-//     }
-
-//     final stopwatch = Stopwatch()..start();
-    
-//     Obtener prefs
-//     await _prefsInstance;
-    
-//     Cargar cache crítico
-//     await _loadCriticalDataToCache();
-    
-//     stopwatch.stop();
-//     if (kDebugMode) {
-//       debugPrint('✅ FastStorage listo en ${stopwatch.elapsedMilliseconds}ms');
-//     }
-//   }
-
-//   / Cargar solo datos críticos al cache
-//   Future<void> _loadCriticalDataToCache() async {
-//     if (_cacheLoaded) return;
-    
-//     try {
-//       final prefs = await _prefsInstance;
-//       final criticalKeys = ['user', 'token']; // Solo lo esencial
-      
-//       int loadedCount = 0;
-//       for (final key in criticalKeys) {
-//         final value = prefs.getString(key);
-//         if (value != null) {
-//           try {
-//             _memoryCache[key] = jsonDecode(value);
-//             loadedCount++;
-//           } catch (_) {
-//             _memoryCache[key] = value;
-//             loadedCount++;
-//           }
-//         }
-//       }
-      
-//       _cacheLoaded = true;
-      
-//       if (kDebugMode) {
-//         debugPrint('⚡ Datos cargados al cache: $loadedCount keys');
-//       }
-//     } catch (e) {
-//       if (kDebugMode) debugPrint('⚠️ Error cargando cache: $e');
-//       _cacheLoaded = true; // Continuar sin cache
-//     }
-//   }
-
-//   / ✅ Lectura optimizada con cache
-//   Future<dynamic> read(String key) async {
-//     1. Intentar desde cache (ultra-rápido)
-//     if (_memoryCache.containsKey(key)) {
-//       if (kDebugMode) debugPrint('⚡ [$key] Cache hit');
-//       return _memoryCache[key];
-//     }
-    
-//     2. Cargar desde SharedPreferences
-//     try {
-//       final prefs = await _prefsInstance;
-//       final value = prefs.getString(key);
-      
-//       if (value != null) {
-//         try {
-//           final decoded = jsonDecode(value);
-//           _memoryCache[key] = decoded; // Guardar en cache
-//           if (kDebugMode) debugPrint('✅ [$key] Cargado desde prefs');
-//           return decoded;
-//         } catch (_) {
-//           _memoryCache[key] = value;
-//           return value;
-//         }
-//       }
-      
-//       if (kDebugMode) debugPrint('❌ [$key] No encontrado');
-//       return null;
-//     } catch (e) {
-//       if (kDebugMode) debugPrint('❌ Error leyendo [$key]: $e');
-//       return null;
-//     }
-//   }
-
-//   / ✅ Escritura síncrona con cache
-//   Future<bool> write(String key, dynamic value) async {
-//     try {
-//       final prefs = await _prefsInstance;
-//       final jsonString = jsonEncode(value);
-      
-//       Actualizar cache primero (instantáneo para la UI)
-//       _memoryCache[key] = value;
-      
-//       Luego guardar en disco
-//       final success = await prefs.setString(key, jsonString);
-      
-//       if (kDebugMode) {
-//         debugPrint(success ? '✅ [$key] Guardado' : '❌ [$key] Falló');
-//       }
-      
-//       return success;
-//     } catch (e) {
-//       if (kDebugMode) debugPrint('❌ Error escribiendo [$key]: $e');
-//       return false;
-//     }
-//   }
-
-//   / ✅ Escritura asíncrona (fire-and-forget para datos no críticos)
-//   Future<void> writeAsync(String key, dynamic value) async {
-//     Actualizar cache inmediatamente
-//     _memoryCache[key] = value;
-    
-//     Guardar en background sin esperar
-//     ignore: body_might_complete_normally_catch_error
-//     write(key, value).catchError((e) {
-//       if (kDebugMode) debugPrint('⚠️ Error async escribiendo [$key]: $e');
-//     });
-//   }
-
-//   / ✅ Eliminar con cache
-//   Future<bool> delete(String key) async {
-//     try {
-//       final prefs = await _prefsInstance;
-      
-//       Limpiar cache
-//       _memoryCache.remove(key);
-      
-//       Eliminar de disco
-//       final success = await prefs.remove(key);
-      
-//       if (kDebugMode) {
-//         debugPrint(success ? '✅ [$key] Eliminado' : '❌ [$key] No existía');
-//       }
-      
-//       return success;
-//     } catch (e) {
-//       if (kDebugMode) debugPrint('❌ Error eliminando [$key]: $e');
-//       return false;
-//     }
-//   }
-
-//   / Limpiar todo
-//   Future<void> clear() async {
-//     try {
-//       final prefs = await _prefsInstance;
-//       _memoryCache.clear();
-//       await prefs.clear();
-      
-//       if (kDebugMode) debugPrint('🗑️ Almacenamiento limpiado');
-//     } catch (e) {
-//       if (kDebugMode) debugPrint('❌ Error limpiando storage: $e');
-//     }
-//   }
-
-//   / Stats del cache
-//   Map<String, dynamic> getStats() {
-//     return {
-//       'cache_size': _memoryCache.length,
-//       'cache_loaded': _cacheLoaded,
-//       'prefs_initialized': _prefs != null,
-//       'cached_keys': _memoryCache.keys.toList(),
-//     };
-//   }
-// }

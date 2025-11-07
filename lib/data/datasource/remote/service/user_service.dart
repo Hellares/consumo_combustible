@@ -188,7 +188,7 @@ class UserService {
 
           if (kDebugMode) {
             print(
-              '✅ Usuario registrado exitosamente: ${authResponse.data?.user.nombres}',
+              '✅ Usuario registrado exitosamente: ${authResponse.data?.user?.nombres}',
             );
           }
 

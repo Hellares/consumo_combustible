@@ -27,14 +27,14 @@ class AuthResponse {
 }
 
 class Data {
-    User user;
+    User? user; // ✅ Opcional para refresh token
     String accessToken;
     String refreshToken;
     int expiresIn;
     String tokenType;
 
     Data({
-        required this.user,
+        this.user, // ✅ Opcional
         required this.accessToken,
         required this.refreshToken,
         required this.expiresIn,
@@ -42,7 +42,7 @@ class Data {
     });
 
     factory Data.fromJson(Map<String, dynamic> json) => Data(
-        user: User.fromJson(json["user"]),
+        user: json["user"] != null ? User.fromJson(json["user"]) : null, // ✅ Manejo de null
         accessToken: json["accessToken"] ?? '',
         refreshToken: json["refreshToken"] ?? '',
         expiresIn: json["expiresIn"] ?? 900, // 15 minutos por defecto
@@ -50,7 +50,7 @@ class Data {
     );
 
     Map<String, dynamic> toJson() => {
-        "user": user.toJson(),
+        if (user != null) "user": user!.toJson(), // ✅ Solo incluir si existe
         "accessToken": accessToken,
         "refreshToken": refreshToken,
         "expiresIn": expiresIn,

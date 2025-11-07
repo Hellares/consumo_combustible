@@ -594,14 +594,16 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
                   _tipoCombustibleController.text =
                       unidadSeleccionada.tipoCombustible;
                 });
-                //NUEVO: Cargar el último ticket de la unidad
+
+                // ✅ Cargar datos de la unidad (evitando peticiones concurrentes)
                 _bloc.add(LoadUltimoTicketByUnidad(value));
 
-                // 🔥 Detectar itinerario automáticamente
-                _bloc.add(DetectarItinerario(unidadId: value));
-
-                // ✅ Cargar último ticket
-                _bloc.add(LoadUltimoTicketByUnidad(value));
+                // 🔥 Detectar itinerario automáticamente con un pequeño delay para evitar colisión
+                Future.delayed(Duration(milliseconds: 100), () {
+                  if (mounted) {
+                    _bloc.add(DetectarItinerario(unidadId: value));
+                  }
+                });
               }
             } else {
               // NUEVO: Si deselecciona, limpiar el último ticket
@@ -978,6 +980,7 @@ class _CreateTicketPageState extends State<CreateTicketPage> {
       origenAsignacion: _origenAsignacion,
       motivoCambioItinerario: _motivoCambioItinerario,
       itinerarioOriginalDetectadoId: _itinerarioOriginalDetectadoId,
+      
     );
 
     _bloc.add(CreateTicket(request));
